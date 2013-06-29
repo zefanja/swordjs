@@ -1,4 +1,5470 @@
 // PouchDB.nightly - 2013-06-24T05:00:45
-(function(){function pathToTree(e){for(var t,n=e.shift(),r=[n.id,n.opts,[]],o=r;e.length;)n=e.shift(),t=[n.id,n.opts,[]],o[2].push(t),o=t;return r}function mergeTree(e,t){for(var n=[{tree1:e,tree2:t}],r=!1;n.length>0;){var o=n.pop(),a=o.tree1,i=o.tree2;(a[1].status||i[1].status)&&(a[1].status="available"===a[1].status||"available"===i[1].status?"available":"missing");for(var u=0;i[2].length>u;u++)if(a[2][0]){for(var s=!1,c=0;a[2].length>c;c++)a[2][c][0]===i[2][u][0]&&(n.push({tree1:a[2][c],tree2:i[2][u]}),s=!0);s||(r="new_branch",a[2].push(i[2][u]),a[2].sort())}else r="new_leaf",a[2][0]=i[2][u]}return{conflicts:r,tree:e}}function doMerge(e,t,n){var r,o=[],a=!1,i=!1;return e.length?(e.forEach(function(e){if(e.pos===t.pos&&e.ids[0]===t.ids[0])r=mergeTree(e.ids,t.ids),o.push({pos:e.pos,ids:r.tree}),a=a||r.conflicts,i=!0;else if(n!==!0){var u=e.pos<t.pos?e:t,s=e.pos<t.pos?t:e,c=s.pos-u.pos,d=[],l=[];for(l.push({ids:u.ids,diff:c,parent:null,parentIdx:null});l.length>0;){var f=l.pop();0!==f.diff?f.ids&&f.ids[2].forEach(function(e,t){l.push({ids:e,diff:f.diff-1,parent:f.ids,parentIdx:t})}):f.ids[0]===s.ids[0]&&d.push(f)}var p=d[0];p?(r=mergeTree(p.ids,s.ids),p.parent[2][p.parentIdx]=r.tree,o.push({pos:u.pos,ids:u.ids}),a=a||r.conflicts,i=!0):o.push(e)}else o.push(e)}),i||o.push(t),o.sort(function(e,t){return e.pos-t.pos}),{tree:o,conflicts:a||"internal_node"}):{tree:[t],conflicts:"new_leaf"}}function stem(e,t){var n=rootToLeaf(e).map(function(e){var n=e.ids.slice(-t);return{pos:e.pos+(e.ids.length-n.length),ids:pathToTree(n)}});return n.reduce(function(e,t){return doMerge(e,t,!0).tree},[n.shift()])}function replicate(e,t,n,r){function o(e,t,r){if(f.notifyRequestComplete(),n.onChange)for(var o=0;r>o;o++)n.onChange.apply(this,[S]);m-=r,S.docs_written+=r,l()}function a(){if(!p.length)return f.notifyRequestComplete();var e=p.length;t.bulkDocs({docs:p},{new_edits:!1},function(t,n){o(t,n,e)}),p=[]}function i(t,n){e.get(t,{revs:!0,rev:n,attachments:!0},function(e,t){f.notifyRequestComplete(),p.push(t),f.enqueue(a)})}function u(e,t){if(f.notifyRequestComplete(),e)return y&&r.cancel(),call(n.complete,e,null),void 0;if(0===Object.keys(t).length)return m--,l(),void 0;var o=function(e){f.enqueue(i,[a,e])};for(var a in t)t[a].missing.forEach(o)}function s(e){t.revsDiff(e,u)}function c(e){g=e.seq,_.push(e),S.docs_read++,m++;var t={};t[e.id]=e.changes.map(function(e){return e.rev}),f.enqueue(s,[t])}function d(){v=!0,l()}function l(){v&&0===m&&(S.end_time=Date.now(),writeCheckpoint(t,h,g,function(e){call(n.complete,e,S)}))}var f=new RequestManager,p=[],h=genReplicationId(e,t,n),_=[],v=!1,m=0,g=0,y=n.continuous||!1,E=n.doc_ids,S={ok:!0,start_time:new Date,docs_read:0,docs_written:0};fetchCheckpoint(t,h,function(t,o){if(t)return call(n.complete,t);if(g=o,!r.cancelled){var a={continuous:y,since:g,style:"all_docs",onChange:c,complete:d,doc_ids:E};n.filter&&(a.filter=n.filter),n.query_params&&(a.query_params=n.query_params);var i=e.changes(a);n.continuous&&(r.cancel=i.cancel)}})}function toPouch(e,t){return"string"==typeof e?new Pouch(e,t):(t(null,e),void 0)}function parseUri(e){for(var t=parseUri.options,n=t.parser[t.strictMode?"strict":"loose"].exec(e),r={},o=14;o--;)r[t.key[o]]=n[o]||"";return r[t.q.name]={},r[t.key[12]].replace(t.q.parser,function(e,n,o){n&&(r[t.q.name][n]=o)}),r}function encodeDocId(e){return/^_design/.test(e)?e:encodeURIComponent(e)}function getHost(e){if(/http(s?):/.test(e)){var t=parseUri(e);t.remote=!0,(t.user||t.password)&&(t.auth={username:t.user,password:t.password});var n=t.path.replace(/(^\/|\/$)/g,"").split("/");return t.db=n.pop(),t.path=n.join("/"),t}return{host:"",path:"/",db:e,auth:!1}}function genDBUrl(e,t){if(e.remote){var n=e.path?"/":"";return e.protocol+"://"+e.host+":"+e.port+"/"+e.path+n+e.db+"/"+t}return"/"+e.db+"/"+t}function genUrl(e,t){if(e.remote){var n=e.path?"/":"";return e.protocol+"://"+e.host+":"+e.port+"/"+e.path+n+t}return"/"+t}function quote(e){return"'"+e+"'"}(function(){var e="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".split("");Math.uuid=function(t,n){var r=e,o=[];if(n=n||r.length,t)for(var a=0;t>a;a++)o[a]=r[0|Math.random()*n];else{var i;o[8]=o[13]=o[18]=o[23]="-",o[14]="4";for(var a=0;36>a;a++)o[a]||(i=0|16*Math.random(),o[a]=r[19==a?8|3&i:i])}return o.join("")}})();var Crypto={};(function(){Crypto.MD5=function(e){function t(e,t){return e<<t|e>>>32-t}function n(e,t){var n,r,o,a,i;return o=2147483648&e,a=2147483648&t,n=1073741824&e,r=1073741824&t,i=(1073741823&e)+(1073741823&t),n&r?2147483648^i^o^a:n|r?1073741824&i?3221225472^i^o^a:1073741824^i^o^a:i^o^a}function r(e,t,n){return e&t|~e&n}function o(e,t,n){return e&n|t&~n}function a(e,t,n){return e^t^n}function i(e,t,n){return t^(e|~n)}function u(e,o,a,i,u,s,c){return e=n(e,n(n(r(o,a,i),u),c)),n(t(e,s),o)}function s(e,r,a,i,u,s,c){return e=n(e,n(n(o(r,a,i),u),c)),n(t(e,s),r)}function c(e,r,o,i,u,s,c){return e=n(e,n(n(a(r,o,i),u),c)),n(t(e,s),r)}function d(e,r,o,a,u,s,c){return e=n(e,n(n(i(r,o,a),u),c)),n(t(e,s),r)}function l(e){for(var t,n=e.length,r=n+8,o=(r-r%64)/64,a=16*(o+1),i=Array(a-1),u=0,s=0;n>s;)t=(s-s%4)/4,u=8*(s%4),i[t]=i[t]|e.charCodeAt(s)<<u,s++;return t=(s-s%4)/4,u=8*(s%4),i[t]=i[t]|128<<u,i[a-2]=n<<3,i[a-1]=n>>>29,i}function f(e){var t,n,r="",o="";for(n=0;3>=n;n++)t=255&e>>>8*n,o="0"+t.toString(16),r+=o.substr(o.length-2,2);return r}var p,h,_,v,m,g,y,E,S,O=[],b=7,T=12,R=17,P=22,q=5,D=9,C=14,k=20,w=4,I=11,A=16,j=23,x=6,N=10,B=15,L=21;for(O=l(e),g=1732584193,y=4023233417,E=2562383102,S=271733878,p=0;O.length>p;p+=16)h=g,_=y,v=E,m=S,g=u(g,y,E,S,O[p+0],b,3614090360),S=u(S,g,y,E,O[p+1],T,3905402710),E=u(E,S,g,y,O[p+2],R,606105819),y=u(y,E,S,g,O[p+3],P,3250441966),g=u(g,y,E,S,O[p+4],b,4118548399),S=u(S,g,y,E,O[p+5],T,1200080426),E=u(E,S,g,y,O[p+6],R,2821735955),y=u(y,E,S,g,O[p+7],P,4249261313),g=u(g,y,E,S,O[p+8],b,1770035416),S=u(S,g,y,E,O[p+9],T,2336552879),E=u(E,S,g,y,O[p+10],R,4294925233),y=u(y,E,S,g,O[p+11],P,2304563134),g=u(g,y,E,S,O[p+12],b,1804603682),S=u(S,g,y,E,O[p+13],T,4254626195),E=u(E,S,g,y,O[p+14],R,2792965006),y=u(y,E,S,g,O[p+15],P,1236535329),g=s(g,y,E,S,O[p+1],q,4129170786),S=s(S,g,y,E,O[p+6],D,3225465664),E=s(E,S,g,y,O[p+11],C,643717713),y=s(y,E,S,g,O[p+0],k,3921069994),g=s(g,y,E,S,O[p+5],q,3593408605),S=s(S,g,y,E,O[p+10],D,38016083),E=s(E,S,g,y,O[p+15],C,3634488961),y=s(y,E,S,g,O[p+4],k,3889429448),g=s(g,y,E,S,O[p+9],q,568446438),S=s(S,g,y,E,O[p+14],D,3275163606),E=s(E,S,g,y,O[p+3],C,4107603335),y=s(y,E,S,g,O[p+8],k,1163531501),g=s(g,y,E,S,O[p+13],q,2850285829),S=s(S,g,y,E,O[p+2],D,4243563512),E=s(E,S,g,y,O[p+7],C,1735328473),y=s(y,E,S,g,O[p+12],k,2368359562),g=c(g,y,E,S,O[p+5],w,4294588738),S=c(S,g,y,E,O[p+8],I,2272392833),E=c(E,S,g,y,O[p+11],A,1839030562),y=c(y,E,S,g,O[p+14],j,4259657740),g=c(g,y,E,S,O[p+1],w,2763975236),S=c(S,g,y,E,O[p+4],I,1272893353),E=c(E,S,g,y,O[p+7],A,4139469664),y=c(y,E,S,g,O[p+10],j,3200236656),g=c(g,y,E,S,O[p+13],w,681279174),S=c(S,g,y,E,O[p+0],I,3936430074),E=c(E,S,g,y,O[p+3],A,3572445317),y=c(y,E,S,g,O[p+6],j,76029189),g=c(g,y,E,S,O[p+9],w,3654602809),S=c(S,g,y,E,O[p+12],I,3873151461),E=c(E,S,g,y,O[p+15],A,530742520),y=c(y,E,S,g,O[p+2],j,3299628645),g=d(g,y,E,S,O[p+0],x,4096336452),S=d(S,g,y,E,O[p+7],N,1126891415),E=d(E,S,g,y,O[p+14],B,2878612391),y=d(y,E,S,g,O[p+5],L,4237533241),g=d(g,y,E,S,O[p+12],x,1700485571),S=d(S,g,y,E,O[p+3],N,2399980690),E=d(E,S,g,y,O[p+10],B,4293915773),y=d(y,E,S,g,O[p+1],L,2240044497),g=d(g,y,E,S,O[p+8],x,1873313359),S=d(S,g,y,E,O[p+15],N,4264355552),E=d(E,S,g,y,O[p+6],B,2734768916),y=d(y,E,S,g,O[p+13],L,1309151649),g=d(g,y,E,S,O[p+4],x,4149444226),S=d(S,g,y,E,O[p+11],N,3174756917),E=d(E,S,g,y,O[p+2],B,718787259),y=d(y,E,S,g,O[p+9],L,3951481745),g=n(g,h),y=n(y,_),E=n(E,v),S=n(S,m);var U=f(g)+f(y)+f(E)+f(S);return U.toLowerCase()}})(),function(){if(!Object.defineProperty||!function(){try{return Object.defineProperty({},"x",{}),!0}catch(e){return!1}}()){var e=Object.defineProperty;Object.defineProperty=function(t,n,r){"use strict";if(e)try{return e(t,n,r)}catch(o){}if(t!==Object(t))throw new TypeError("Object.defineProperty called on non-object");return Object.prototype.__defineGetter__&&"get"in r&&Object.prototype.__defineGetter__.call(t,n,r.get),Object.prototype.__defineSetter__&&"set"in r&&Object.prototype.__defineSetter__.call(t,n,r.set),"value"in r&&(t[n]=r.value),t}}}(),Object.keys||(Object.keys=function(e){if(e!==Object(e))throw new TypeError("Object.keys called on non-object");var t,n=[];for(t in e)Object.prototype.hasOwnProperty.call(e,t)&&n.push(t);return n}),Array.prototype.forEach||(Array.prototype.forEach=function(e){"use strict";if(void 0===this||null===this)throw new TypeError;var t=Object(this),n=t.length>>>0;if("function"!=typeof e)throw new TypeError;var r,o=arguments[1];for(r=0;n>r;r++)r in t&&e.call(o,t[r],r,t)}),Array.prototype.map||(Array.prototype.map=function(e){"use strict";if(void 0===this||null===this)throw new TypeError;var t=Object(this),n=t.length>>>0;if("function"!=typeof e)throw new TypeError;var r=[];r.length=n;var o,a=arguments[1];for(o=0;n>o;o++)o in t&&(r[o]=e.call(a,t[o],o,t));return r});for(var class2type={},types=["Boolean","Number","String","Function","Array","Date","RegExp","Object","Error"],i=0;types.length>i;i++){var typename=types[i];class2type["[object "+typename+"]"]=typename.toLowerCase()}var core_toString=class2type.toString,core_hasOwn=class2type.hasOwnProperty,type=function(e){return null===e?e+"":"object"==typeof e||"function"==typeof e?class2type[core_toString.call(e)]||"object":typeof e},isWindow=function(e){return null!==e&&e===e.window},isPlainObject=function(e){if(!e||"object"!==type(e)||e.nodeType||isWindow(e))return!1;try{if(e.constructor&&!core_hasOwn.call(e,"constructor")&&!core_hasOwn.call(e.constructor.prototype,"isPrototypeOf"))return!1}catch(t){return!1}var n;for(n in e);return void 0===n||core_hasOwn.call(e,n)},isFunction=function(e){return"function"===type(e)},isArray=Array.isArray||function(e){return"array"===type(e)},extend=function(){var e,t,n,r,o,a,i=arguments[0]||{},u=1,s=arguments.length,c=!1;for("boolean"==typeof i&&(c=i,i=arguments[1]||{},u=2),"object"==typeof i||isFunction(i)||(i={}),s===u&&(i=this,--u);s>u;u++)if(null!=(e=arguments[u]))for(t in e)n=i[t],r=e[t],i!==r&&(c&&r&&(isPlainObject(r)||(o=isArray(r)))?(o?(o=!1,a=n&&isArray(n)?n:[]):a=n&&isPlainObject(n)?n:{},i[t]=extend(c,a,r)):void 0!==r&&(i[t]=r));return i};"undefined"!=typeof module&&module.exports&&(module.exports=extend);var ajax=function ajax(e,t){"function"==typeof e&&(t=e,e={});var n=function(e){var t=Array.prototype.slice.call(arguments,1);typeof e==typeof Function&&e.apply(this,t)},r={method:"GET",headers:{},json:!0,processData:!0,timeout:1e4};if(e=extend(!0,r,e),e.auth){var o=btoa(e.auth.username+":"+e.auth.password);e.headers.Authorization="Basic "+o}var a=function(t,r,o){if(e.binary||e.json||!e.processData||"string"==typeof t){if(!e.binary&&e.json&&"string"==typeof t)try{t=JSON.parse(t)}catch(a){return n(o,a),void 0}}else t=JSON.stringify(t);n(o,null,t,r)},i=function(e,t){var r,o={status:e.status};try{r=JSON.parse(e.responseText),o=extend(!0,{},o,r)}catch(a){}n(t,o)};if("undefined"!=typeof window&&window.XMLHttpRequest){var u,s=!1,c=new XMLHttpRequest;c.open(e.method,e.url),e.json&&(e.headers.Accept="application/json",e.headers["Content-Type"]=e.headers["Content-Type"]||"application/json",e.body&&e.processData&&"string"!=typeof e.body&&(e.body=JSON.stringify(e.body))),e.binary&&(c.responseType="arraybuffer");for(var d in e.headers)c.setRequestHeader(d,e.headers[d]);"body"in e||(e.body=null);var l=function(){s=!0,c.abort(),n(i,c,t)};return c.onreadystatechange=function(){if(4===c.readyState&&!s)if(clearTimeout(u),c.status>=200&&300>c.status){var r;r=e.binary?new Blob([c.response||""],{type:c.getResponseHeader("Content-Type")}):c.responseText,n(a,r,c,t)}else n(i,c,t)},e.timeout>0&&(u=setTimeout(l,e.timeout)),c.send(e.body),{abort:l}}return e.json&&(e.binary||(e.headers.Accept="application/json"),e.headers["Content-Type"]=e.headers["Content-Type"]||"application/json"),e.binary&&(e.encoding=null,e.json=!1),e.processData||(e.json=!1),request(e,function(r,o,u){if(r)return r.status=o?o.statusCode:400,n(i,r,t);var s=o.headers["content-type"],c=u||"";if(e.binary||!e.json&&e.processData||"object"==typeof c||!(/json/.test(s)||/^[\s]*\{/.test(c)&&/\}[\s]*$/.test(c))||(c=JSON.parse(c)),o.statusCode>=200&&300>o.statusCode)n(a,c,o,t);else{if(e.binary)var c=JSON.parse(""+c);c.status=o.statusCode,n(t,c)}})};"undefined"!=typeof module&&module.exports&&(module.exports=ajax);var Pouch=function Pouch(e,t,n){if(!(this instanceof Pouch))return new Pouch(e,t,n);("function"==typeof t||t===void 0)&&(n=t,t={}),"object"==typeof e&&(t=e,e=void 0),n===void 0&&(n=function(){});var r=Pouch.parseAdapter(t.name||e);if(t.originalName=e,t.name=t.name||r.name,t.adapter=t.adapter||r.adapter,!Pouch.adapters[t.adapter])throw"Adapter is missing";if(!Pouch.adapters[t.adapter].valid())throw"Invalid Adapter";var o=new PouchAdapter(t,function(e,t){if(e)return n&&n(e),void 0;for(var r in Pouch.plugins){var o=Pouch.plugins[r](t);for(var a in o)a in t||(t[a]=o[a])}t.taskqueue.ready(!0),t.taskqueue.execute(t),n(null,t)});for(var a in o)this[a]=o[a];for(var i in Pouch.plugins){var u=Pouch.plugins[i](this);for(var s in u)s in this||(this[s]=u[s])}};if(Pouch.DEBUG=!1,Pouch.openReqList={},Pouch.adapters={},Pouch.plugins={},Pouch.prefix="_pouch_",Pouch.parseAdapter=function(e){var t,n=e.match(/([a-z\-]*):\/\/(.*)/);if(n){if(e=/http(s?)/.test(n[1])?n[1]+"://"+n[2]:n[2],t=n[1],!Pouch.adapters[t].valid())throw"Invalid adapter";return{name:e,adapter:n[1]}}for(var r=["idb","leveldb","websql"],o=0;r.length>o;++o)if(r[o]in Pouch.adapters){t=Pouch.adapters[r[o]];var a="use_prefix"in t?t.use_prefix:!0;return{name:a?Pouch.prefix+e:e,adapter:r[o]}}throw"No valid adapter found"},Pouch.destroy=function(e,t){var n=Pouch.parseAdapter(e),r=function(r){if(r)return t(r),void 0;for(var o in Pouch.plugins)Pouch.plugins[o]._delete(e);Pouch.DEBUG&&console.log(e+": Delete Database"),Pouch.adapters[n.adapter].destroy(n.name,t)};Pouch.removeFromAllDbs(n,r)},Pouch.removeFromAllDbs=function(e,t){if(!Pouch.enableAllDbs)return t(),void 0;var n=e.adapter;return"http"===n||"https"===n?(t(),void 0):(new Pouch(Pouch.allDBName(e.adapter),function(n,r){if(n)return console.error(n),t(),void 0;var o=Pouch.dbName(e.adapter,e.name);r.get(o,function(e,n){e?t():r.remove(n,function(e){e&&console.error(e),t()})})}),void 0)},Pouch.adapter=function(e,t){t.valid()&&(Pouch.adapters[e]=t)},Pouch.plugin=function(e,t){Pouch.plugins[e]=t},Pouch.enableAllDbs=!1,Pouch.ALL_DBS="_allDbs",Pouch.dbName=function(e,t){return[e,"-",t].join("")},Pouch.realDBName=function(e,t){return[e,"://",t].join("")},Pouch.allDBName=function(e){return[e,"://",Pouch.prefix+Pouch.ALL_DBS].join("")},Pouch.open=function(e,t){if(!Pouch.enableAllDbs)return t(),void 0;var n=e.adapter;return"http"===n||"https"===n?(t(),void 0):(new Pouch(Pouch.allDBName(n),function(r,o){if(r)return console.error(r),t(),void 0;var a=Pouch.dbName(n,e.name);o.get(a,function(n){n&&404===n.status?o.put({_id:a,dbname:e.originalName},function(e){e&&console.error(e),t()}):t()})}),void 0)},Pouch.allDbs=function(e){var t=function(n,r){if(0===n.length){var o=[];return r.forEach(function(e){var t=o.some(function(t){return t.id===e.id});t||o.push(e)}),e(null,o.map(function(e){return e.doc.dbname})),void 0}var a=n.shift();return"http"===a||"https"===a?(t(n,r),void 0):(new Pouch(Pouch.allDBName(a),function(o,a){return o?(e(o),void 0):(a.allDocs({include_docs:!0},function(o,a){return o?(e(o),void 0):(r.unshift.apply(r,a.rows),t(n,r),void 0)}),void 0)}),void 0)},n=Object.keys(Pouch.adapters);t(n,[])},Pouch.uuids=function(e,t){"object"!=typeof t&&(t={});for(var n=t.length,r=t.radix,o=[];e>o.push(Math.uuid(n,r)););return o},Pouch.uuid=function(e){return Pouch.uuids(1,e)[0]},Pouch.Errors={MISSING_BULK_DOCS:{status:400,error:"bad_request",reason:"Missing JSON list of 'docs'"},MISSING_DOC:{status:404,error:"not_found",reason:"missing"},REV_CONFLICT:{status:409,error:"conflict",reason:"Document update conflict"},INVALID_ID:{status:400,error:"invalid_id",reason:"_id field must contain a string"},MISSING_ID:{status:412,error:"missing_id",reason:"_id is required for puts"},RESERVED_ID:{status:400,error:"bad_request",reason:"Only reserved document ids may start with underscore."},NOT_OPEN:{status:412,error:"precondition_failed",reason:"Database not open so cannot close"},UNKNOWN_ERROR:{status:500,error:"unknown_error",reason:"Database encountered an unknown error"},BAD_ARG:{status:500,error:"badarg",reason:"Some query argument is invalid"},INVALID_REQUEST:{status:400,error:"invalid_request",reason:"Request was invalid"},QUERY_PARSE_ERROR:{status:400,error:"query_parse_error",reason:"Some query parameter is invalid"},DOC_VALIDATION:{status:500,error:"doc_validation",reason:"Bad special document member"},BAD_REQUEST:{status:400,error:"bad_request",reason:"Something wrong with the request"},NOT_AN_OBJECT:{status:400,error:"bad_request",reason:"Document must be a JSON object"}},Pouch.error=function(e,t){return extend({},e,{reason:t})},"undefined"!=typeof module&&module.exports){global.Pouch=Pouch,Pouch.merge=require("./pouch.merge.js").merge,Pouch.collate=require("./pouch.collate.js").collate,Pouch.replicate=require("./pouch.replicate.js").replicate,Pouch.utils=require("./pouch.utils.js"),extend=Pouch.utils.extend,module.exports=Pouch;var PouchAdapter=require("./pouch.adapter.js"),adapters=["leveldb","http"];adapters.map(function(e){var t="./adapters/pouch."+e+".js";require(t)}),require("./plugins/pouchdb.mapreduce.js"),require("./deps/uuid.js")}else window.Pouch=Pouch;"undefined"!=typeof module&&module.exports&&(module.exports=Pouch);var stringCollate=function(e,t){return e===t?0:e>t?1:-1},objectCollate=function(e,t){for(var n=Object.keys(e),r=Object.keys(t),o=Math.min(n.length,r.length),a=0;o>a;a++){var i=Pouch.collate(n[a],r[a]);if(0!==i)return i;if(i=Pouch.collate(e[n[a]],t[r[a]]),0!==i)return i}return n.length===r.length?0:n.length>r.length?1:-1},arrayCollate=function(e,t){for(var n=Math.min(e.length,t.length),r=0;n>r;r++){var o=Pouch.collate(e[r],t[r]);if(0!==o)return o}return e.length===t.length?0:e.length>t.length?1:-1},collationIndex=function(e){var t=["boolean","number","string","object"];return-1!==t.indexOf(typeof e)?null===e?1:t.indexOf(typeof e)+2:Array.isArray(e)?4.5:void 0};if(Pouch.collate=function(e,t){var n=collationIndex(e),r=collationIndex(t);return 0!==n-r?n-r:null===e?0:"number"==typeof e?e-t:"boolean"==typeof e?t>e?-1:1:"string"==typeof e?stringCollate(e,t):Array.isArray(e)?arrayCollate(e,t):"object"==typeof e?objectCollate(e,t):void 0},"undefined"!=typeof module&&module.exports){module.exports=Pouch;var utils=require("./pouch.utils.js");for(var k in utils)global[k]=utils[k]}Pouch.merge=function(e,t,n){e=extend(!0,[],e),t=extend(!0,{},t);var r=doMerge(e,t);return{tree:stem(r.tree,n),conflicts:r.conflicts}},Pouch.merge.winningRev=function(e){var t=[];return Pouch.merge.traverseRevTree(e.rev_tree,function(e,n,r,o,a){e&&t.push({pos:n,id:r,deleted:!!a.deleted})}),t.sort(function(e,t){return e.deleted!==t.deleted?e.deleted>t.deleted?1:-1:e.pos!==t.pos?t.pos-e.pos:e.id<t.id?1:-1}),t[0].pos+"-"+t[0].id},Pouch.merge.traverseRevTree=function(e,t){var n=[];for(e.forEach(function(e){n.push({pos:e.pos,ids:e.ids})});n.length>0;){var r=n.pop(),o=r.pos,a=r.ids,i=t(0===a[2].length,o,a[0],r.ctx,a[1]);a[2].forEach(function(e){n.push({pos:o+1,ids:e,ctx:i})})}},Pouch.merge.collectLeaves=function(e){var t=[];return Pouch.merge.traverseRevTree(e,function(e,n,r,o,a){e&&t.unshift({rev:n+"-"+r,pos:n,opts:a})}),t.sort(function(e,t){return t.pos-e.pos}),t.map(function(e){delete e.pos}),t},Pouch.merge.collectConflicts=function(e){var t=Pouch.merge.winningRev(e),n=Pouch.merge.collectLeaves(e.rev_tree),r=[];return n.forEach(function(e){e.rev===t||e.opts.deleted||r.push(e.rev)}),r},"undefined"!=typeof module&&module.exports&&(module.exports=Pouch);var Promise=function(){this.cancelled=!1,this.cancel=function(){this.cancelled=!0}},RequestManager=function(){var e=[],t={},n=!1;return t.enqueue=function(r,o){e.push({fun:r,args:o}),n||t.process()},t.process=function(){if(!n&&e.length){n=!0;var t=e.shift();t.fun.apply(null,t.args)}},t.notifyRequestComplete=function(){n=!1,t.process()},t},genReplicationId=function(e,t,n){var r=n.filter?""+n.filter:"";return"_local/"+Crypto.MD5(e.id()+t.id()+r)},fetchCheckpoint=function(e,t,n){e.get(t,function(e,t){e&&404===e.status?n(null,0):n(null,t.last_seq)})},writeCheckpoint=function(e,t,n,r){var o={_id:t,last_seq:n};e.get(o._id,function(t,n){n&&n._rev&&(o._rev=n._rev),e.put(o,function(){r()})})};Pouch.replicate=function(e,t,n,r){n instanceof Function&&(r=n,n={}),void 0===n&&(n={}),n.complete=r;var o=new Promise;return toPouch(e,function(e,a){return e?call(r,e):(toPouch(t,function(e,t){return e?call(r,e):(replicate(a,t,n,o),void 0)}),void 0)}),o};var call=function(e){var t=Array.prototype.slice.call(arguments,1);typeof e==typeof Function&&e.apply(this,t)},yankError=function(e){return function(t,n){t||n[0].error?call(e,t||n[0]):call(e,null,n[0])}},isLocalId=function(e){return/^_local/.test(e)},isAttachmentId=function(e){return/\//.test(e)&&!isLocalId(e)&&!/^_design/.test(e)},isValidId=function(e){return/^_/.test(e)?/^_(design|local)/.test(e):!0},reservedWords=["_id","_rev","_attachments","_deleted","_revisions","_revs_info","_conflicts","_deleted_conflicts","_local_seq","_rev_tree"],parseDoc=function(e,t){var n,r,o,a=null,i={status:"available"};if(e._deleted&&(i.deleted=!0),t)if(e._id||(e._id=Pouch.uuid()),r=Pouch.uuid({length:32,radix:16}).toLowerCase(),e._rev){if(o=/^(\d+)-(.+)$/.exec(e._rev),!o)throw"invalid value for property '_rev'";e._rev_tree=[{pos:parseInt(o[1],10),ids:[o[2],{status:"missing"},[[r,i,[]]]]}],n=parseInt(o[1],10)+1}else e._rev_tree=[{pos:1,ids:[r,i,[]]}],n=1;else if(e._revisions&&(e._rev_tree=[{pos:e._revisions.start-e._revisions.ids.length+1,ids:e._revisions.ids.reduce(function(e,t){return null===e?[t,i,[]]:[t,{status:"missing"},[e]]},null)}],n=e._revisions.start,r=e._revisions.ids[0]),!e._rev_tree){if(o=/^(\d+)-(.+)$/.exec(e._rev),!o)return Pouch.Errors.BAD_ARG;n=parseInt(o[1],10),r=o[2],e._rev_tree=[{pos:parseInt(o[1],10),ids:[o[2],i,[]]}]}"string"!=typeof e._id?a=Pouch.Errors.INVALID_ID:isValidId(e._id)||(a=Pouch.Errors.RESERVED_ID);for(var u in e)e.hasOwnProperty(u)&&"_"===u[0]&&-1===reservedWords.indexOf(u)&&(a=extend({},Pouch.Errors.DOC_VALIDATION),a.reason+=": "+u);return e._id=decodeURIComponent(e._id),e._rev=[n,r].join("-"),a?a:Object.keys(e).reduce(function(t,n){return/^_/.test(n)&&"_attachments"!==n?t.metadata[n.slice(1)]=e[n]:t.data[n]=e[n],t},{metadata:{},data:{}})},compareRevs=function(e,t){return e.id!==t.id?e.id<t.id?-1:1:e.deleted^t.deleted?e.deleted?-1:1:e.rev_tree[0].pos===t.rev_tree[0].pos?e.rev_tree[0].ids<t.rev_tree[0].ids?-1:1:e.rev_tree[0].start<t.rev_tree[0].start?-1:1},computeHeight=function(e){var t={},n=[];return Pouch.merge.traverseRevTree(e,function(e,r,o,a){var i=r+"-"+o;return e&&(t[i]=0),void 0!==a&&n.push({from:a,to:i}),i}),n.reverse(),n.forEach(function(e){t[e.from]=void 0===t[e.from]?1+t[e.to]:Math.min(t[e.from],1+t[e.to])}),t},arrayFirst=function(e,t){for(var n=0;e.length>n;n++)if(t(e[n],n)===!0)return e[n];return!1},filterChange=function(e){return function(t){var n={};return n.query=e.query_params,e.filter&&!e.filter.call(this,t.doc,n)?!1:e.doc_ids&&-1!==e.doc_ids.indexOf(t.id)?!1:(e.include_docs||delete t.doc,!0)}},processChanges=function(e,t,n){t=t.filter(filterChange(e)),e.limit&&e.limit<t.length&&(t.length=e.limit),t.forEach(function(t){call(e.onChange,t)}),call(e.complete,null,{results:t,last_seq:n})},rootToLeaf=function(e){var t=[];return Pouch.merge.traverseRevTree(e,function(e,n,r,o,a){if(o=o?o.slice(0):[],o.push({id:r,opts:a}),e){var i=n+1-o.length;t.unshift({pos:i,ids:o})}return o}),t},isDeleted=function(e,t){t||(t=Pouch.merge.winningRev(e)),t.indexOf("-")>=0&&(t=t.split("-")[1]);var n=!1;return Pouch.merge.traverseRevTree(e.rev_tree,function(e,r,o,a,i){o===t&&(n=!!i.deleted)}),n},isChromeApp=function(){return"undefined"!=typeof chrome&&chrome.storage!==void 0&&chrome.storage.local!==void 0},isCordova=function(){return"undefined"!=typeof cordova||"undefined"!=typeof PhoneGap||"undefined"!=typeof phonegap};if("undefined"!=typeof module&&module.exports){var crypto=require("crypto"),Crypto={MD5:function(e){return crypto.createHash("md5").update(e).digest("hex")}},extend=require("./deps/extend"),ajax=require("./deps/ajax");request=require("request"),_=require("underscore"),$=_,module.exports={Crypto:Crypto,call:call,yankError:yankError,isLocalId:isLocalId,isAttachmentId:isAttachmentId,parseDoc:parseDoc,isDeleted:isDeleted,compareRevs:compareRevs,computeHeight:computeHeight,arrayFirst:arrayFirst,filterChange:filterChange,processChanges:processChanges,atob:function(e){var t=new Buffer(e,"base64");if(t.toString("base64")!==e)throw"Cannot base64 encode full string";return t.toString("binary")},btoa:function(e){return new Buffer(e,"binary").toString("base64")},extend:extend,ajax:ajax,rootToLeaf:rootToLeaf,isChromeApp:isChromeApp,isCordova:isCordova}}var Changes=function(){var e={},t={};return isChromeApp()?chrome.storage.onChanged.addListener(function(t){e.notify(t.db_name.newValue)}):window.addEventListener("storage",function(t){e.notify(t.key)}),e.addListener=function(e,n,r,o){t[e]||(t[e]={}),t[e][n]={db:r,opts:o}},e.removeListener=function(e,n){delete t[e][n]},e.clearListeners=function(e){delete t[e]},e.notifyLocalWindows=function(e){isChromeApp()?chrome.storage.local.set({db_name:e}):localStorage[e]="a"===localStorage[e]?"b":"a"},e.notify=function(e){t[e]&&Object.keys(t[e]).forEach(function(n){var r=t[e][n].opts;t[e][n].db.changes({include_docs:r.include_docs,conflicts:r.conflicts,continuous:!1,descending:!1,filter:r.filter,since:r.since,query_params:r.query_params,onChange:function(e){e.seq>r.since&&!r.cancelled&&(r.since=e.seq,call(r.onChange,e))}})})},e},PouchAdapter=function(e,t){var n={},r=Pouch.adapters[e.adapter](e,function(r,o){if(r)return t&&t(r),void 0;for(var a in n)o.hasOwnProperty(a)||(o[a]=n[a]);e.name===Pouch.prefix+Pouch.ALL_DBS?t(r,o):Pouch.open(e,function(e){t(e,o)})}),o=e.auto_compaction===!0,a=function(e){return o?function(t,n){if(t)call(e,t);else{var r=n.length,o=function(){r--,r||call(e,null,n)};n.forEach(function(e){e.ok?i(e.id,1,o):o()})}}:e};n.post=function(e,t,n){return"function"==typeof t&&(n=t,t={}),"object"!=typeof e||Array.isArray(e)?call(n,Pouch.Errors.NOT_AN_OBJECT):r.bulkDocs({docs:[e]},t,a(yankError(n)))},n.put=function(e,t,n){return"function"==typeof t&&(n=t,t={}),"object"!=typeof e?call(n,Pouch.Errors.NOT_AN_OBJECT):"_id"in e?r.bulkDocs({docs:[e]},t,a(yankError(n))):call(n,Pouch.Errors.MISSING_ID)},n.putAttachment=function(e,t,r,o,a,i){function u(e){e._attachments=e._attachments||{},e._attachments[t]={content_type:a,data:o},n.put(e,i)}"function"==typeof a&&(i=a,a=o,o=r,r=null),a===void 0&&(a=o,o=r,r=null),n.get(e,function(t,n){return t&&t.error===Pouch.Errors.MISSING_DOC.error?(u({_id:e}),void 0):t?(call(i,t),void 0):n._rev!==r?(call(i,Pouch.Errors.REV_CONFLICT),void 0):(u(n),void 0)})},n.removeAttachment=function(e,t,r,o){n.get(e,function(e,a){return e?(call(o,e),void 0):a._rev!==r?(call(o,Pouch.Errors.REV_CONFLICT),void 0):a._attachments?(delete a._attachments[t],0===Object.keys(a._attachments).length&&delete a._attachments,n.put(a,o),void 0):call(o,null)})},n.remove=function(e,t,n){"function"==typeof t&&(n=t,t={}),void 0===t&&(t={}),t.was_delete=!0;var o={_id:e._id,_rev:e._rev};return o._deleted=!0,r.bulkDocs({docs:[o]},t,yankError(n))},n.revsDiff=function(e,t,r){function o(t,n,o){return e[o].map(function(e){var t=function(t){return t.rev!==e};(!n||n._revs_info.every(t))&&(u[o]||(u[o]={missing:[]}),u[o].missing.push(e))}),++i===a.length?call(r,null,u):void 0}"function"==typeof t&&(r=t,t={});var a=Object.keys(e),i=0,u={};a.map(function(e){n.get(e,{revs_info:!0},function(t,n){o(t,n,e)})})};var i=function(e,t,n){r._getRevisionTree(e,function(o,a){if(o)return call(n);var i=computeHeight(a),u=[],s=[];Object.keys(i).forEach(function(e){i[e]>t&&u.push(e)}),Pouch.merge.traverseRevTree(a,function(e,t,n,r,o){var a=t+"-"+n;"available"===o.status&&-1!==u.indexOf(a)&&(o.status="missing",s.push(a))}),r._doCompaction(e,a,s,n)})};n.compact=function(e){n.changes({complete:function(t,n){if(t)return call(e),void 0;var r=n.results.length;return r?(n.results.forEach(function(t){i(t.id,0,function(){r--,r||call(e)})}),void 0):(call(e),void 0)}})},n.get=function(e,t,o){function a(){var r=[],a=i.length;return a?(i.forEach(function(i){n.get(e,{rev:i,revs:t.revs},function(e,t){e?r.push({missing:i}):r.push({ok:t}),a--,a||call(o,null,r)})}),void 0):call(o,null,r)}if(!n.taskqueue.ready())return n.taskqueue.addTask("get",arguments),void 0;"function"==typeof t&&(o=t,t={});var i=[];{if(!t.open_revs)return r._get(e,t,function(e,n){if(e)return call(o,e);var a=n.doc,i=n.metadata,u=n.ctx;if(t.conflicts){var s=Pouch.merge.collectConflicts(i);s.length&&(a._conflicts=s)}if(t.revs||t.revs_info){var c=rootToLeaf(i.rev_tree),d=arrayFirst(c,function(e){return-1!==e.ids.map(function(e){return e.id}).indexOf(a._rev.split("-")[1])});if(d.ids.splice(d.ids.map(function(e){return e.id}).indexOf(a._rev.split("-")[1])+1),d.ids.reverse(),t.revs&&(a._revisions={start:d.pos+d.ids.length-1,ids:d.ids.map(function(e){return e.id})}),t.revs_info){var l=d.pos+d.ids.length;a._revs_info=d.ids.map(function(e){return l--,{rev:l+"-"+e.id,status:e.opts.status}})}}if(t.local_seq&&(a._local_seq=n.metadata.seq),t.attachments&&a._attachments){var f=a._attachments,p=Object.keys(f).length;if(0===p)return call(o,null,a);Object.keys(f).forEach(function(e){r._getAttachment(f[e],{encode:!0,ctx:u},function(t,n){a._attachments[e].data=n,--p||call(o,null,a)})})}else{if(a._attachments)for(var h in a._attachments)a._attachments[h].stub=!0;call(o,null,a)}});if("all"===t.open_revs)r._getRevisionTree(e,function(e,t){e&&(t=[]),i=Pouch.merge.collectLeaves(t).map(function(e){return e.rev}),a()});else{if(!Array.isArray(t.open_revs))return call(o,Pouch.error(Pouch.Errors.UNKNOWN_ERROR,"function_clause"));i=t.open_revs;for(var u=0;i.length>u;u++){var s=i[u];if("string"!=typeof s||!/^\d+-/.test(s))return call(o,Pouch.error(Pouch.Errors.BAD_REQUEST,"Invalid rev format"))}a()}}},n.getAttachment=function(e,t,n,o){n instanceof Function&&(o=n,n={}),r._get(e,n,function(e,a){return e?call(o,e):a.doc._attachments&&a.doc._attachments[t]?(n.ctx=a.ctx,r._getAttachment(a.doc._attachments[t],n,o),void 0):call(o,Pouch.Errors.MISSING_DOC)})},n.allDocs=function(e,t){if(!n.taskqueue.ready())return n.taskqueue.addTask("allDocs",arguments),void 0;if("function"==typeof e&&(t=e,e={}),"keys"in e){if("startkey"in e)return call(t,Pouch.error(Pouch.Errors.QUERY_PARSE_ERROR,"Query parameter `start_key` is not compatible with multi-get")),void 0;if("endkey"in e)return call(t,Pouch.error(Pouch.Errors.QUERY_PARSE_ERROR,"Query parameter `end_key` is not compatible with multi-get")),void 0}return r._allDocs(e,t)},n.changes=function(e){return n.taskqueue.ready()?(e=extend(!0,{},e),e.since||(e.since=0),"descending"in e||(e.descending=!1),e.limit=0===e.limit?1:e.limit,r._changes(e)):(n.taskqueue.addTask("changes",arguments),void 0)},n.close=function(e){return n.taskqueue.ready()?r._close(e):(n.taskqueue.addTask("close",arguments),void 0)},n.info=function(e){return n.taskqueue.ready()?r._info(e):(n.taskqueue.addTask("info",arguments),void 0)},n.id=function(){return r._id()},n.type=function(){return"function"==typeof r._type?r._type():e.adapter},n.bulkDocs=function(e,t,o){if(!n.taskqueue.ready())return n.taskqueue.addTask("bulkDocs",arguments),void 0;if("function"==typeof t&&(o=t,t={}),t=t?extend(!0,{},t):{},!e||!e.docs||1>e.docs.length)return call(o,Pouch.Errors.MISSING_BULK_DOCS);if(!Array.isArray(e.docs))return call(o,Pouch.Errors.QUERY_PARSE_ERROR);for(var i=0;e.docs.length>i;++i)if("object"!=typeof e.docs[i]||Array.isArray(e.docs[i]))return call(o,Pouch.Errors.NOT_AN_OBJECT);
-return e=extend(!0,{},e),"new_edits"in t||(t.new_edits=!0),r._bulkDocs(e,t,a(o))};var u={};u.ready=!1,u.queue=[],n.taskqueue={},n.taskqueue.execute=function(e){u.ready&&u.queue.forEach(function(t){e[t.task].apply(null,t.parameters)})},n.taskqueue.ready=function(){return 0===arguments.length?u.ready:(u.ready=arguments[0],void 0)},n.taskqueue.addTask=function(e,t){u.queue.push({task:e,parameters:t})},n.replicate={},n.replicate.from=function(e,t,n){return"function"==typeof t&&(n=t,t={}),Pouch.replicate(e,r,t,n)},n.replicate.to=function(e,t,n){return"function"==typeof t&&(n=t,t={}),Pouch.replicate(r,e,t,n)};for(var s in n)r.hasOwnProperty(s)||(r[s]=n[s]);return e.skipSetup&&(n.taskqueue.ready(!0),n.taskqueue.execute(n)),isCordova()&&cordova.fireWindowEvent(e.name+"_pouch",{}),r};"undefined"!=typeof module&&module.exports&&(module.exports=PouchAdapter);var HTTP_TIMEOUT=1e4;parseUri.options={strictMode:!1,key:["source","protocol","authority","userInfo","user","password","host","port","relative","path","directory","file","query","anchor"],q:{name:"queryKey",parser:/(?:^|&)([^&=]*)=?([^&]*)/g},parser:{strict:/^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/,loose:/^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/}};var HttpPouch=function(e,t){var n=getHost(e.name);e.auth&&(n.auth=e.auth);var r=genDBUrl(n,""),o={},a={list:[],get:function(e,t){"function"==typeof e&&(t=e,e={count:10});var r=function(e,n){!e&&"uuids"in n?(a.list=a.list.concat(n.uuids),call(t,null,"OK")):call(t,e||Pouch.Errors.UNKNOWN_ERROR)},o="?count="+e.count;ajax({auth:n.auth,method:"GET",url:genUrl(n,"_uuids")+o},r)}},i=function(){ajax({auth:n.auth,method:"PUT",url:r},function(e){e&&401===e.status?ajax({auth:n.auth,method:"HEAD",url:r},function(e){e?call(t,e):call(t,null,o)}):e&&412!==e.status?call(t,Pouch.Errors.UNKNOWN_ERROR):call(t,null,o)})};return e.skipSetup||ajax({auth:n.auth,method:"GET",url:r},function(e){e?404===e.status?i():call(t,e):call(t,null,o)}),o.type=function(){return"http"},o.id=function(){return genDBUrl(n,"")},o.request=function(e,t){return o.taskqueue.ready()?(e.auth=n.auth,e.url=genDBUrl(n,e.url),ajax(e,t),void 0):(o.taskqueue.addTask("request",arguments),void 0)},o.compact=function(e,t){return o.taskqueue.ready()?("function"==typeof e&&(t=e,e={}),ajax({auth:n.auth,url:genDBUrl(n,"_compact"),method:"POST"},function(){function n(){o.info(function(r,o){o.compact_running?setTimeout(n,e.interval||200):call(t,null)})}"function"==typeof t&&n()}),void 0):(o.taskqueue.addTask("compact",arguments),void 0)},o.info=function(e){return o.taskqueue.ready()?(ajax({auth:n.auth,method:"GET",url:genDBUrl(n,"")},e),void 0):(o.taskqueue.addTask("info",arguments),void 0)},o.get=function(e,t,r){if(!o.taskqueue.ready())return o.taskqueue.addTask("get",arguments),void 0;"function"==typeof t&&(r=t,t={}),void 0===t.auto_encode&&(t.auto_encode=!0);var a=[];t.revs&&a.push("revs=true"),t.revs_info&&a.push("revs_info=true"),t.local_seq&&a.push("local_seq=true"),t.open_revs&&("all"!==t.open_revs&&(t.open_revs=JSON.stringify(t.open_revs)),a.push("open_revs="+t.open_revs)),t.attachments&&a.push("attachments=true"),t.rev&&a.push("rev="+t.rev),t.conflicts&&a.push("conflicts="+t.conflicts),a=a.join("&"),a=""===a?"":"?"+a,t.auto_encode&&(e=encodeDocId(e));var i={auth:n.auth,method:"GET",url:genDBUrl(n,e+a)},u=e.split("/");(u.length>1&&"_design"!==u[0]&&"_local"!==u[0]||u.length>2&&"_design"===u[0]&&"_local"!==u[0])&&(i.binary=!0),ajax(i,function(e,t,n){return e?call(r,e):(call(r,null,t,n),void 0)})},o.remove=function(e,t,r){return o.taskqueue.ready()?("function"==typeof t&&(r=t,t={}),ajax({auth:n.auth,method:"DELETE",url:genDBUrl(n,encodeDocId(e._id))+"?rev="+e._rev},r),void 0):(o.taskqueue.addTask("remove",arguments),void 0)},o.getAttachment=function(e,t,n,r){"function"==typeof n&&(r=n,n={}),void 0===n.auto_encode&&(n.auto_encode=!0),n.auto_encode&&(e=encodeDocId(e)),n.auto_encode=!1,o.get(e+"/"+t,n,r)},o.removeAttachment=function(e,t,r,a){return o.taskqueue.ready()?(ajax({auth:n.auth,method:"DELETE",url:genDBUrl(n,encodeDocId(e)+"/"+t)+"?rev="+r},a),void 0):(o.taskqueue.addTask("removeAttachment",arguments),void 0)},o.putAttachment=function(e,t,r,a,i,u){if(!o.taskqueue.ready())return o.taskqueue.addTask("putAttachment",arguments),void 0;"function"==typeof i&&(u=i,i=a,a=r,r=null),i===void 0&&(i=a,a=r,r=null);var s=encodeDocId(e)+"/"+t,c=genDBUrl(n,s);r&&(c+="?rev="+r),ajax({auth:n.auth,method:"PUT",url:c,headers:{"Content-Type":i},processData:!1,body:a},u)},o.put=function(e,t,r){if(!o.taskqueue.ready())return o.taskqueue.addTask("put",arguments),void 0;if("function"==typeof t&&(r=t,t={}),"object"!=typeof e)return call(r,Pouch.Errors.NOT_AN_OBJECT);if(!("_id"in e))return call(r,Pouch.Errors.MISSING_ID);var a=[];t&&t.new_edits!==void 0&&a.push("new_edits="+t.new_edits),a=a.join("&"),""!==a&&(a="?"+a),ajax({auth:n.auth,method:"PUT",url:genDBUrl(n,encodeDocId(e._id))+a,body:e},r)},o.post=function(e,t,n){return o.taskqueue.ready()?("function"==typeof t&&(n=t,t={}),"object"!=typeof e?call(n,Pouch.Errors.NOT_AN_OBJECT):("_id"in e?o.put(e,t,n):a.list.length>0?(e._id=a.list.pop(),o.put(e,t,n)):a.get(function(r){return r?call(n,Pouch.Errors.UNKNOWN_ERROR):(e._id=a.list.pop(),o.put(e,t,n),void 0)}),void 0)):(o.taskqueue.addTask("post",arguments),void 0)},o.bulkDocs=function(e,t,r){return o.taskqueue.ready()?("function"==typeof t&&(r=t,t={}),t||(t={}),t.new_edits!==void 0&&(e.new_edits=t.new_edits),ajax({auth:n.auth,method:"POST",url:genDBUrl(n,"_bulk_docs"),body:e},r),void 0):(o.taskqueue.addTask("bulkDocs",arguments),void 0)},o.allDocs=function(e,t){if(!o.taskqueue.ready())return o.taskqueue.addTask("allDocs",arguments),void 0;"function"==typeof e&&(t=e,e={});var r,a=[],i="GET";e.conflicts&&a.push("conflicts=true"),e.descending&&a.push("descending=true"),e.include_docs&&a.push("include_docs=true"),e.startkey&&a.push("startkey="+encodeURIComponent(JSON.stringify(e.startkey))),e.endkey&&a.push("endkey="+encodeURIComponent(JSON.stringify(e.endkey))),e.limit&&a.push("limit="+e.limit),a=a.join("&"),""!==a&&(a="?"+a),e.keys!==void 0&&(i="POST",r=JSON.stringify({keys:e.keys})),ajax({auth:n.auth,method:i,url:genDBUrl(n,"_all_docs"+a),body:r},t)},o.changes=function(e){var t=25;if(!o.taskqueue.ready())return o.taskqueue.addTask("changes",arguments),void 0;Pouch.DEBUG&&console.log(r+": Start Changes Feed: continuous="+e.continuous);var a={},i=e.limit!==void 0?e.limit:!1;0===i&&(i=1);var u=i;if(e.style&&(a.style=e.style),(e.include_docs||e.filter&&"function"==typeof e.filter)&&(a.include_docs=!0),e.continuous&&(a.feed="longpoll"),e.conflicts&&(a.conflicts=!0),e.descending&&(a.descending=!0),e.filter&&"string"==typeof e.filter&&(a.filter=e.filter),e.query_params&&"object"==typeof e.query_params)for(var s in e.query_params)e.query_params.hasOwnProperty(s)&&(a[s]=e.query_params[s]);var c,d,l,f=function(r,o){a.since=r,a.limit=!i||u>t?t:u;var s="?"+Object.keys(a).map(function(e){return e+"="+a[e]}).join("&"),l={auth:n.auth,method:"GET",url:genDBUrl(n,"_changes"+s),timeout:null};d=r,e.aborted||(c=ajax(l,o))},p=10,h=0,_=function(t,n){if(n&&n.results){var r=e.filter&&"function"==typeof e.filter,o={};o.query=e.query_params,n.results=n.results.filter(function(t){return u--,e.aborted||r&&!e.filter.apply(this,[t.doc,o])?!1:e.doc_ids&&-1!==e.doc_ids.indexOf(t.id)?!1:(call(e.onChange,t),!0)})}n&&n.last_seq&&(d=n.last_seq);var a=i&&0>=u||!i&&d===l||e.descending&&0!==d;if(e.continuous||!a){t?h+=1:h=0;var s=1<<h,c=p*s,v=e.maximumWait||3e4;c>v&&call(e.complete,t||Pouch.Errors.UNKNOWN_ERROR,null),setTimeout(function(){f(d,_)},c)}else call(e.complete,null,n)};return e.continuous?f(e.since||0,_):o.info(function(t,n){l=n.update_seq,f(e.since||0,_)}),{cancel:function(){Pouch.DEBUG&&console.log(r+": Cancel Changes Feed"),e.aborted=!0,c.abort()}}},o.revsDiff=function(e,t,r){return o.taskqueue.ready()?("function"==typeof t&&(r=t,t={}),ajax({auth:n.auth,method:"POST",url:genDBUrl(n,"_revs_diff"),body:e},function(e,t){call(r,e,t)}),void 0):(o.taskqueue.addTask("revsDiff",arguments),void 0)},o.close=function(e){return o.taskqueue.ready()?(call(e,null),void 0):(o.taskqueue.addTask("close",arguments),void 0)},o};if(HttpPouch.destroy=function(e,t){var n=getHost(e);ajax({auth:n.auth,method:"DELETE",url:genDBUrl(n,"")},t)},HttpPouch.valid=function(){return!0},"undefined"!=typeof module&&module.exports){var pouchdir="../";Pouch=require(pouchdir+"pouch.js"),ajax=Pouch.utils.ajax}Pouch.adapter("http",HttpPouch),Pouch.adapter("https",HttpPouch);var indexedDB=window.indexedDB||window.mozIndexedDB||window.webkitIndexedDB,IDBTransaction=window.IDBTransaction&&window.IDBTransaction.READ_WRITE?window.IDBTransaction:window.webkitIDBTransaction&&window.webkitIDBTransaction.READ_WRITE?window.webkitIDBTransaction:{READ_WRITE:"readwrite"},IDBKeyRange=window.IDBKeyRange||window.webkitIDBKeyRange,idbError=function(e){return function(t){call(e,{status:500,error:t.type,reason:t.target})}},IdbPouch=function(opts,callback){function createSchema(e){e.createObjectStore(DOC_STORE,{keyPath:"id"}).createIndex("seq","seq",{unique:!0}),e.createObjectStore(BY_SEQ_STORE,{autoIncrement:!0}).createIndex("_doc_id_rev","_doc_id_rev",{unique:!0}),e.createObjectStore(ATTACH_STORE,{keyPath:"digest"}),e.createObjectStore(META_STORE,{keyPath:"id",autoIncrement:!1}),e.createObjectStore(DETECT_BLOB_SUPPORT_STORE)}function fixBinary(e){for(var t=e.length,n=new ArrayBuffer(t),r=new Uint8Array(n),o=0;t>o;o++)r[o]=e.charCodeAt(o);return n}function sortByBulkSeq(e,t){return e._bulk_seq-t._bulk_seq}var POUCH_VERSION=1,DOC_STORE="document-store",BY_SEQ_STORE="by-sequence",ATTACH_STORE="attach-store",META_STORE="meta-store",DETECT_BLOB_SUPPORT_STORE="detect-blob-support",name=opts.name,req=indexedDB.open(name,POUCH_VERSION);Pouch.openReqList&&(Pouch.openReqList[name]=req);var meta={id:"meta-store",updateSeq:0},blobSupport=null,instanceId=null,api={},idb=null;return Pouch.DEBUG&&console.log(name+": Open Database"),req.onupgradeneeded=function(e){for(var t=e.target.result,n=e.oldVersion;n!==e.newVersion;)0===n&&createSchema(t),n++},req.onsuccess=function(e){idb=e.target.result;var t=idb.transaction([META_STORE,DETECT_BLOB_SUPPORT_STORE],IDBTransaction.READ_WRITE);if(idb.onversionchange=function(){idb.close()},idb.setVersion&&Number(idb.version)!==POUCH_VERSION){var n=idb.setVersion(POUCH_VERSION);return n.onsuccess=function(t){function n(){r.onsuccess(e)}t.target.result.oncomplete=n,r.onupgradeneeded(e)},void 0}var r=t.objectStore(META_STORE).get("meta-store");r.onsuccess=function(e){var n;e.target.result&&(meta=e.target.result),name+"_id"in meta?instanceId=meta[name+"_id"]:(instanceId=Pouch.uuid(),meta[name+"_id"]=instanceId,n=t.objectStore(META_STORE).put(meta));try{t.objectStore(DETECT_BLOB_SUPPORT_STORE).put(new Blob,"key"),blobSupport=!0}catch(r){blobSupport=!1}finally{call(callback,null,api)}}},req.onerror=idbError(callback),api.type=function(){return"idb"},api.id=function idb_id(){return instanceId},api._bulkDocs=function idb_bulkDocs(e,t,n){function r(){if(h.length){var e=h.shift(),t=v.objectStore(DOC_STORE).get(e.metadata.id);t.onsuccess=function(t){var n=t.target.result;n?s(n,e):c(e)}}}function o(){var e=[];m.sort(sortByBulkSeq),m.forEach(function(t){if(delete t._bulk_seq,t.error)return e.push(t),void 0;var n=t.metadata,r=Pouch.merge.winningRev(n);e.push({ok:!0,id:n.id,rev:r}),isLocalId(n.id)||(IdbPouch.Changes.notify(name),IdbPouch.Changes.notifyLocalWindows(name))}),call(n,null,e)}function a(e,t){if(e.stub)return t();if("string"==typeof e.data){var r;try{r=atob(e.data)}catch(o){return call(n,Pouch.error(Pouch.Errors.BAD_ARG,"Attachments need to be base64 encoded"))}if(e.digest="md5-"+Crypto.MD5(r),blobSupport){var a=e.content_type;r=fixBinary(r),e.data=new Blob([r],{type:a})}return t()}var i=new FileReader;i.onloadend=function(){e.digest="md5-"+Crypto.MD5(this.result),blobSupport||(e.data=btoa(this.result)),t()},i.readAsBinaryString(e.data)}function i(e){function t(){n++,h.length===n&&e()}if(!h.length)return e();var n=0;h.forEach(function(e){function n(){o++,o===r.length&&t()}var r=e.data&&e.data._attachments?Object.keys(e.data._attachments):[];if(!r.length)return t();var o=0;for(var i in e.data._attachments)a(e.data._attachments[i],n)})}function u(e,t){function n(e){a||(e?(a=e,call(t,a)):i===u.length&&o())}function r(e){i++,n(e)}function o(){e.data._doc_id_rev=e.data._id+"::"+e.data._rev;var n=v.objectStore(BY_SEQ_STORE).put(e.data);n.onsuccess=function(n){Pouch.DEBUG&&console.log(name+": Wrote Document ",e.metadata.id),e.metadata.seq=n.target.result,delete e.metadata.rev;var r=v.objectStore(DOC_STORE).put(e.metadata);r.onsuccess=function(){m.push(e),call(t)}}}var a=null,i=0;e.data._id=e.metadata.id,e.data._rev=e.metadata.rev,meta.updateSeq++,v.objectStore(META_STORE).put(meta),isDeleted(e.metadata,e.metadata.rev)&&(e.data._deleted=!0);var u=e.data._attachments?Object.keys(e.data._attachments):[];for(var s in e.data._attachments)if(e.data._attachments[s].stub)i++,n();else{var c=e.data._attachments[s].data;delete e.data._attachments[s].data;var d=e.data._attachments[s].digest;l(e,d,c,r)}u.length||o()}function s(e,t){var n=Pouch.merge(e.rev_tree,t.metadata.rev_tree[0],1e3),o=isDeleted(e),a=o&&isDeleted(t.metadata)||!o&&f&&"new_leaf"!==n.conflicts;return a?(m.push(d(Pouch.Errors.REV_CONFLICT,t._bulk_seq)),r()):(t.metadata.rev_tree=n.tree,u(t,r),void 0)}function c(e){return"was_delete"in t&&isDeleted(e.metadata)?(m.push(Pouch.Errors.MISSING_DOC),r()):(u(e,r),void 0)}function d(e,t){return e._bulk_seq=t,e}function l(e,t,n,r){var o=v.objectStore(ATTACH_STORE);o.get(t).onsuccess=function(a){var i=a.target.result&&a.target.result.refs||{},u=[e.metadata.id,e.metadata.rev].join("@"),s={digest:t,body:n,refs:i};s.refs[u]=!0,o.put(s).onsuccess=function(){call(r)}}}var f=t.new_edits,p=e.docs,h=p.map(function(e,t){var n=parseDoc(e,f);return n._bulk_seq=t,n}),_=h.filter(function(e){return e.error});if(_.length)return call(n,_[0]);var v,m=[];i(function(){v=idb.transaction([DOC_STORE,BY_SEQ_STORE,ATTACH_STORE,META_STORE],IDBTransaction.READ_WRITE),v.onerror=idbError(n),v.ontimeout=idbError(n),v.oncomplete=o,r()})},api._get=function idb_get(e,t,n){function r(){call(n,i,{doc:o,metadata:a,ctx:u})}var o,a,i,u;u=t.ctx?t.ctx:idb.transaction([DOC_STORE,BY_SEQ_STORE,ATTACH_STORE],"readonly"),u.objectStore(DOC_STORE).get(e).onsuccess=function(e){if(a=e.target.result,!a)return i=Pouch.Errors.MISSING_DOC,r();if(isDeleted(a)&&!t.rev)return i=Pouch.error(Pouch.Errors.MISSING_DOC,"deleted"),r();var n=Pouch.merge.winningRev(a),s=a.id+"::"+(t.rev?t.rev:n),c=u.objectStore(BY_SEQ_STORE).index("_doc_id_rev");c.get(s).onsuccess=function(e){return o=e.target.result,o&&o._doc_id_rev&&delete o._doc_id_rev,o?(r(),void 0):(i=Pouch.Errors.MISSING_DOC,r())}}},api._getAttachment=function(e,t,n){var r,o;o=t.ctx?t.ctx:idb.transaction([DOC_STORE,BY_SEQ_STORE,ATTACH_STORE],"readonly");var a=e.digest,i=e.content_type;o.objectStore(ATTACH_STORE).get(a).onsuccess=function(e){var o=e.target.result.body;if(t.encode)if(blobSupport){var a=new FileReader;a.onloadend=function(){r=btoa(this.result),call(n,null,r)},a.readAsBinaryString(o)}else r=o,call(n,null,r);else blobSupport?r=o:(o=fixBinary(atob(o)),r=new Blob([o],{type:i})),call(n,null,r)}},api._allDocs=function idb_allDocs(e,t){var n="startkey"in e?e.startkey:!1,r="endkey"in e?e.endkey:!1,o="descending"in e?e.descending:!1;o=o?"prev":null;var a=n&&r?IDBKeyRange.bound(n,r):n?IDBKeyRange.lowerBound(n):r?IDBKeyRange.upperBound(r):null,i=idb.transaction([DOC_STORE,BY_SEQ_STORE],"readonly");i.oncomplete=function(){"keys"in e&&(e.keys.forEach(function(e){e in d?c.push(d[e]):c.push({key:e,error:"not_found"})}),e.descending&&c.reverse()),call(t,null,{total_rows:c.length,rows:"limit"in e?c.slice(0,e.limit):c})};var u=i.objectStore(DOC_STORE),s=o?u.openCursor(a,o):u.openCursor(a),c=[],d={};s.onsuccess=function(t){function n(t,n){if(isLocalId(t.id))return r["continue"]();var o={id:t.id,key:t.id,value:{rev:Pouch.merge.winningRev(t)}};e.include_docs&&(o.doc=n,o.doc._rev=Pouch.merge.winningRev(t),o.doc._doc_id_rev&&delete o.doc._doc_id_rev,e.conflicts&&(o.doc._conflicts=Pouch.merge.collectConflicts(t).map(function(e){return e}))),"keys"in e?e.keys.indexOf(t.id)>-1&&(isDeleted(t)&&(o.value.deleted=!0,o.doc=null),d[o.id]=o):isDeleted(t)||c.push(o),r["continue"]()}if(t.target.result){var r=t.target.result,o=r.value;if(e.include_docs){var a=i.objectStore(BY_SEQ_STORE).index("_doc_id_rev"),u=Pouch.merge.winningRev(o),s=o.id+"::"+u;a.get(s).onsuccess=function(e){n(r.value,e.target.result)}}else n(o)}}},api._info=function idb_info(e){var t,n=0,r=idb.transaction([DOC_STORE],"readonly");r.oncomplete=function(){e(null,t)},r.objectStore(DOC_STORE).openCursor().onsuccess=function(e){var r=e.target.result;return r?(r.value.deleted!==!0&&n++,r["continue"](),void 0):(t={db_name:name,doc_count:n,update_seq:meta.updateSeq},void 0)}},api._changes=function idb_changes(opts){function fetchChanges(){txn=idb.transaction([DOC_STORE,BY_SEQ_STORE]),txn.oncomplete=onTxnComplete;var e;e=descending?txn.objectStore(BY_SEQ_STORE).openCursor(IDBKeyRange.lowerBound(opts.since,!0),descending):txn.objectStore(BY_SEQ_STORE).openCursor(IDBKeyRange.lowerBound(opts.since,!0)),e.onsuccess=onsuccess,e.onerror=onerror}function onsuccess(e){if(!e.target.result){for(var t=0,n=results.length;n>t;t++){var r=results[t];r&&dedupResults.push(r)}return!1}var o=e.target.result,a=o.value._id,i=resultIndices[a];if(void 0!==i)return results[i].seq=o.key,results.push(results[i]),results[i]=null,resultIndices[a]=results.length-1,o["continue"]();var u=txn.objectStore(DOC_STORE);u.get(o.value._id).onsuccess=function(e){var t=e.target.result;if(isLocalId(t.id))return o["continue"]();t.seq>last_seq&&(last_seq=t.seq);var n=Pouch.merge.winningRev(t),r=t.id+"::"+n,a=txn.objectStore(BY_SEQ_STORE).index("_doc_id_rev");a.get(r).onsuccess=function(e){var r=e.target.result;delete r._doc_id_rev;var a=[{rev:n}];"all_docs"===opts.style&&(a=Pouch.merge.collectLeaves(t.rev_tree).map(function(e){return{rev:e.rev}}));var i={id:t.id,seq:o.key,changes:a,doc:r};isDeleted(t,n)&&(i.deleted=!0),opts.conflicts&&(i.doc._conflicts=Pouch.merge.collectConflicts(t).map(function(e){return e}));var u=i.id,s=resultIndices[u];void 0!==s&&(results[s]=null),results.push(i),resultIndices[u]=results.length-1,o["continue"]()}}}function onTxnComplete(){processChanges(opts,dedupResults,last_seq)}function onerror(){call(opts.complete)}if(Pouch.DEBUG&&console.log(name+": Start Changes Feed: continuous="+opts.continuous),opts.continuous){var id=name+":"+Pouch.uuid();return opts.cancelled=!1,IdbPouch.Changes.addListener(name,id,api,opts),IdbPouch.Changes.notify(name),{cancel:function(){Pouch.DEBUG&&console.log(name+": Cancel Changes Feed"),opts.cancelled=!0,IdbPouch.Changes.removeListener(name,id)}}}var descending=opts.descending?"prev":null,last_seq=0;opts.since=opts.since&&!descending?opts.since:0;var results=[],resultIndices={},dedupResults=[],txn;if(opts.filter&&"string"==typeof opts.filter){var filterName=opts.filter.split("/");api.get("_design/"+filterName[0],function(err,ddoc){var filter=eval("(function() { return "+ddoc.filters[filterName[1]]+" })()");opts.filter=filter,fetchChanges()})}else fetchChanges()},api._close=function(e){return null===idb?call(e,Pouch.Errors.NOT_OPEN):(idb.close(),call(e,null),void 0)},api._getRevisionTree=function(e,t){var n=idb.transaction([DOC_STORE],"readonly"),r=n.objectStore(DOC_STORE).get(e);r.onsuccess=function(e){var n=e.target.result;n?call(t,null,n.rev_tree):call(t,Pouch.Errors.MISSING_DOC)}},api._doCompaction=function(e,t,n,r){var o=idb.transaction([DOC_STORE,BY_SEQ_STORE],IDBTransaction.READ_WRITE),a=o.objectStore(DOC_STORE);a.get(e).onsuccess=function(r){var a=r.target.result;a.rev_tree=t;var i=n.length;n.forEach(function(t){var n=o.objectStore(BY_SEQ_STORE).index("_doc_id_rev"),r=e+"::"+t;n.getKey(r).onsuccess=function(e){var t=e.target.result;t&&(o.objectStore(BY_SEQ_STORE)["delete"](t),i--,i||o.objectStore(DOC_STORE).put(a))}})},o.oncomplete=function(){call(r)}},api};IdbPouch.valid=function idb_valid(){return!!indexedDB},IdbPouch.destroy=function idb_destroy(e,t){Pouch.DEBUG&&console.log(e+": Delete Database"),IdbPouch.Changes.clearListeners(e),Pouch.openReqList[e]&&Pouch.openReqList[e].result&&Pouch.openReqList[e].result.close();var n=indexedDB.deleteDatabase(e);n.onsuccess=function(){Pouch.openReqList[e]&&(Pouch.openReqList[e]=null),call(t,null)},n.onerror=idbError(t)},IdbPouch.Changes=new Changes,Pouch.adapter("idb",IdbPouch);var POUCH_VERSION=1,POUCH_SIZE=5242880,DOC_STORE=quote("document-store"),BY_SEQ_STORE=quote("by-sequence"),ATTACH_STORE=quote("attach-store"),META_STORE=quote("metadata-store"),unknownError=function(e){return function(t){call(e,{status:500,error:t.type,reason:t.target})}},webSqlPouch=function(opts,callback){function dbCreated(){callback(null,api)}function setup(){db.transaction(function(e){var t="CREATE TABLE IF NOT EXISTS "+META_STORE+" (update_seq, dbid)",n="CREATE TABLE IF NOT EXISTS "+ATTACH_STORE+" (digest, json, body BLOB)",r="CREATE TABLE IF NOT EXISTS "+DOC_STORE+" (id unique, seq, json, winningseq)",o="CREATE TABLE IF NOT EXISTS "+BY_SEQ_STORE+" (seq INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, doc_id_rev UNIQUE, json)";e.executeSql(n),e.executeSql(r),e.executeSql(o),e.executeSql(t);var a="SELECT update_seq FROM "+META_STORE;e.executeSql(a,[],function(e,t){if(!t.rows.length){var n="INSERT INTO "+META_STORE+" (update_seq) VALUES (?)";return Pouch.uuid(),e.executeSql(n,[0]),void 0}update_seq=t.rows.item(0).update_seq});var i="SELECT dbid FROM "+META_STORE+" WHERE dbid IS NOT NULL";e.executeSql(i,[],function(e,t){if(!t.rows.length){var n="UPDATE "+META_STORE+" SET dbid=?";return instanceId=Pouch.uuid(),e.executeSql(n,[instanceId]),void 0}instanceId=t.rows.item(0).dbid})},unknownError(callback),dbCreated)}function makeRevs(e){return e.map(function(e){return{rev:e.rev}})}function makeIds(e){return e.map(function(e){return e.id})}var api={},update_seq=0,instanceId=null,name=opts.name,db=openDatabase(name,POUCH_VERSION,name,POUCH_SIZE);return db?(isCordova()?window.addEventListener(name+"_pouch",setup,!1):setup(),api.type=function(){return"websql"},api.id=function(){return instanceId},api._info=function(e){db.transaction(function(t){var n="SELECT COUNT(id) AS count FROM "+DOC_STORE;t.executeSql(n,[],function(t,n){e(null,{db_name:name,doc_count:n.rows.item(0).count,update_seq:update_seq})})})},api._bulkDocs=function idb_bulkDocs(e,t,n){function r(e,t){return e._bulk_seq-t._bulk_seq}function o(){var e=[];y.sort(r),y.forEach(function(t){if(delete t._bulk_seq,t.error)return e.push(t),void 0;var n=t.metadata,r=Pouch.merge.winningRev(n);if(e.push({ok:!0,id:n.id,rev:r}),!isLocalId(n.id)){update_seq++;var o="UPDATE "+META_STORE+" SET update_seq=?";g.executeSql(o,[update_seq],function(){webSqlPouch.Changes.notify(name),webSqlPouch.Changes.notifyLocalWindows(name)})}}),call(n,null,e)}function a(e,t){if(e.stub)return t();if("string"==typeof e.data){try{e.data=atob(e.data)}catch(r){return call(n,Pouch.error(Pouch.Errors.BAD_ARG,"Attachments need to be base64 encoded"))}return e.digest="md5-"+Crypto.MD5(e.data),t()}var o=new FileReader;o.onloadend=function(){e.data=this.result,e.digest="md5-"+Crypto.MD5(this.result),t()},o.readAsBinaryString(e.data)}function i(e){function t(){n++,v.length===n&&e()}if(!v.length)return e();var n=0,r=0;v.forEach(function(e){function n(){r++,r===o.length&&t()}var o=e.data&&e.data._attachments?Object.keys(e.data._attachments):[];if(!o.length)return t();for(var i in e.data._attachments)a(e.data._attachments[i],n)})}function u(e,t,n){function r(){var t=e.data,n="INSERT INTO "+BY_SEQ_STORE+" (doc_id_rev, json) VALUES (?, ?);";g.executeSql(n,[t._id+"::"+t._rev,JSON.stringify(t)],i)}function o(e){u||(e?(u=e,call(t,u)):s===c.length&&r())}function a(e){s++,o(e)}function i(r,o){var a=e.metadata.seq=o.insertId;delete e.metadata.rev;var i=Pouch.merge.winningRev(e.metadata),u=n?"UPDATE "+DOC_STORE+" SET seq=?, json=?, winningseq=(SELECT seq FROM "+BY_SEQ_STORE+" WHERE doc_id_rev=?) WHERE id=?":"INSERT INTO "+DOC_STORE+" (id, seq, winningseq, json) VALUES (?, ?, ?, ?);",s=JSON.stringify(e.metadata),c=e.metadata.id+"::"+i,d=n?[a,s,c,e.metadata.id]:[e.metadata.id,a,a,s];r.executeSql(u,d,function(){y.push(e),call(t,null)})}var u=null,s=0;e.data._id=e.metadata.id,e.data._rev=e.metadata.rev,isDeleted(e.metadata,e.metadata.rev)&&(e.data._deleted=!0);var c=e.data._attachments?Object.keys(e.data._attachments):[];for(var d in e.data._attachments)if(e.data._attachments[d].stub)s++,o();else{var l=e.data._attachments[d].data;delete e.data._attachments[d].data;var p=e.data._attachments[d].digest;f(e,p,l,a)}c.length||r()}function s(e,t){var n=Pouch.merge(e.rev_tree,t.metadata.rev_tree[0],1e3),r=isDeleted(e)&&isDeleted(t.metadata)||!isDeleted(e)&&h&&"new_leaf"!==n.conflicts;return r?(y.push(l(Pouch.Errors.REV_CONFLICT,t._bulk_seq)),d()):(t.metadata.rev_tree=n.tree,u(t,d,!0),void 0)}function c(e){return"was_delete"in t&&isDeleted(e.metadata)?(y.push(Pouch.Errors.MISSING_DOC),d()):(u(e,d,!1),void 0)}function d(){if(!v.length)return o();var e=v.shift(),t=e.metadata.id;t in E?s(E[t],e):(E[t]=e.metadata,c(e))}function l(e,t){return e._bulk_seq=t,e}function f(e,t,n,r){var o=[e.metadata.id,e.metadata.rev].join("@"),a={digest:t},i="SELECT digest, json FROM "+ATTACH_STORE+" WHERE digest=?";g.executeSql(i,[t],function(e,u){u.rows.length?(a.refs=JSON.parse(u.rows.item(0).json).refs,i="UPDATE "+ATTACH_STORE+" SET json=?, body=? WHERE digest=?",e.executeSql(i,[JSON.stringify(a),n,t],function(){call(r,null)})):(a.refs={},a.refs[o]=!0,i="INSERT INTO "+ATTACH_STORE+"(digest, json, body) VALUES (?, ?, ?)",e.executeSql(i,[t,JSON.stringify(a),n],function(){call(r,null)}))})}function p(e,t){for(var n=0;t.rows.length>n;n++){var r=t.rows.item(n);E[r.id]=JSON.parse(r.json)}d()}var h=t.new_edits,_=e.docs,v=_.map(function(e,t){var n=parseDoc(e,h);return n._bulk_seq=t,n}),m=v.filter(function(e){return e.error});if(m.length)return call(n,m[0]);var g,y=[],E={};i(function(){db.transaction(function(e){g=e;var t="("+v.map(function(e){return quote(e.metadata.id)}).join(",")+")",n="SELECT * FROM "+DOC_STORE+" WHERE id IN "+t;g.executeSql(n,[],p)},unknownError(n))})},api._get=function(e,t,n){function r(){call(n,i,{doc:o,metadata:a,ctx:u})}var o,a,i;if(!t.ctx)return db.transaction(function(r){t.ctx=r,api._get(e,t,n)}),void 0;var u=t.ctx,s="SELECT * FROM "+DOC_STORE+" WHERE id=?";u.executeSql(s,[e],function(e,n){if(!n.rows.length)return i=Pouch.Errors.MISSING_DOC,r();if(a=JSON.parse(n.rows.item(0).json),isDeleted(a)&&!t.rev)return i=Pouch.error(Pouch.Errors.MISSING_DOC,"deleted"),r();var s=Pouch.merge.winningRev(a),c=t.rev?t.rev:s;c=a.id+"::"+c;var d="SELECT * FROM "+BY_SEQ_STORE+" WHERE doc_id_rev=?";u.executeSql(d,[c],function(e,t){return t.rows.length?(o=JSON.parse(t.rows.item(0).json),r(),void 0):(i=Pouch.Errors.MISSING_DOC,r())})})},api._allDocs=function(e,t){var n=[],r={},o="startkey"in e?e.startkey:!1,a="endkey"in e?e.endkey:!1,i="descending"in e?e.descending:!1,u="SELECT "+DOC_STORE+".id, "+BY_SEQ_STORE+".seq, "+BY_SEQ_STORE+".json AS data, "+DOC_STORE+".json AS metadata FROM "+BY_SEQ_STORE+" JOIN "+DOC_STORE+" ON "+BY_SEQ_STORE+".seq = "+DOC_STORE+".winningseq";"keys"in e?u+=" WHERE "+DOC_STORE+".id IN ("+e.keys.map(function(e){return quote(e)}).join(",")+")":(o&&(u+=" WHERE "+DOC_STORE+'.id >= "'+o+'"'),a&&(u+=(o?" AND ":" WHERE ")+DOC_STORE+'.id <= "'+a+'"'),u+=" ORDER BY "+DOC_STORE+".id "+(i?"DESC":"ASC")),db.transaction(function(t){t.executeSql(u,[],function(t,o){for(var a=0,i=o.rows.length;i>a;a++){var u=o.rows.item(a),s=JSON.parse(u.metadata),c=JSON.parse(u.data);isLocalId(s.id)||(u={id:s.id,key:s.id,value:{rev:Pouch.merge.winningRev(s)}},e.include_docs&&(u.doc=c,u.doc._rev=Pouch.merge.winningRev(s),e.conflicts&&(u.doc._conflicts=makeIds(Pouch.merge.collectConflicts(s)))),"keys"in e?e.keys.indexOf(s.id)>-1&&(isDeleted(s)&&(u.value.deleted=!0,u.doc=null),r[u.id]=u):isDeleted(s)||n.push(u))}})},unknownError(t),function(){"keys"in e&&(e.keys.forEach(function(e){e in r?n.push(r[e]):n.push({key:e,error:"not_found"})}),e.descending&&n.reverse()),call(t,null,{total_rows:n.length,rows:"limit"in e?n.slice(0,e.limit):n})})},api._changes=function idb_changes(opts){function fetchChanges(){var e="SELECT "+DOC_STORE+".id, "+BY_SEQ_STORE+".seq, "+BY_SEQ_STORE+".json AS data, "+DOC_STORE+".json AS metadata FROM "+BY_SEQ_STORE+" JOIN "+DOC_STORE+" ON "+BY_SEQ_STORE+".seq = "+DOC_STORE+".winningseq WHERE "+DOC_STORE+".seq > "+opts.since+" ORDER BY "+DOC_STORE+".seq "+(descending?"DESC":"ASC");db.transaction(function(t){t.executeSql(e,[],function(e,t){for(var n=0,r=0,o=t.rows.length;o>r;r++){var a=t.rows.item(r),i=JSON.parse(a.metadata);if(!isLocalId(i.id)){a.seq>n&&(n=a.seq);var u=JSON.parse(a.data),s=u._rev,c=[{rev:s}];"all_docs"===opts.style&&(c=makeRevs(Pouch.merge.collectLeaves(i.rev_tree)));var d={id:i.id,seq:a.seq,changes:c,doc:u};isDeleted(i,s)&&(d.deleted=!0),opts.conflicts&&(d.doc._conflicts=Pouch.merge.collectConflicts(i)),results.push(d)}}processChanges(opts,results,n)})})}if(Pouch.DEBUG&&console.log(name+": Start Changes Feed: continuous="+opts.continuous),opts.continuous){var id=name+":"+Pouch.uuid();return opts.cancelled=!1,webSqlPouch.Changes.addListener(name,id,api,opts),webSqlPouch.Changes.notify(name),{cancel:function(){Pouch.DEBUG&&console.log(name+": Cancel Changes Feed"),opts.cancelled=!0,webSqlPouch.Changes.removeListener(name,id)}}}var descending=opts.descending;opts.since=opts.since&&!descending?opts.since:0;var results=[],txn;if(opts.filter&&"string"==typeof opts.filter){var filterName=opts.filter.split("/");api.get("_design/"+filterName[0],function(err,ddoc){var filter=eval("(function() { return "+ddoc.filters[filterName[1]]+" })()");opts.filter=filter,fetchChanges()})}else fetchChanges()},api._close=function(e){call(e,null)},api._getAttachment=function(e,t,n){var r,o=t.ctx,a=e.digest,i=e.content_type,u="SELECT body FROM "+ATTACH_STORE+" WHERE digest=?";o.executeSql(u,[a],function(e,o){var a=o.rows.item(0).body;r=t.encode?btoa(a):new Blob([a],{type:i}),call(n,null,r)})},api._getRevisionTree=function(e,t){db.transaction(function(n){var r="SELECT json AS metadata FROM "+DOC_STORE+" WHERE id = ?";n.executeSql(r,[e],function(e,n){if(n.rows.length){var r=JSON.parse(n.rows.item(0).metadata);call(t,null,r.rev_tree)}else call(t,Pouch.Errors.MISSING_DOC)})})},api._doCompaction=function(e,t,n,r){db.transaction(function(o){var a="SELECT json AS metadata FROM "+DOC_STORE+" WHERE id = ?";o.executeSql(a,[e],function(o,a){if(!a.rows.length)return call(r);var i=JSON.parse(a.rows.item(0).metadata);i.rev_tree=t;var u="DELETE FROM "+BY_SEQ_STORE+" WHERE doc_id_rev IN ("+n.map(function(t){return quote(e+"::"+t)}).join(",")+")";o.executeSql(u,[],function(t){var n="UPDATE "+DOC_STORE+" SET json = ? WHERE id = ?";t.executeSql(n,[JSON.stringify(i),e],function(){r()})})})})},api):call(callback,Pouch.Errors.UNKNOWN_ERROR)};webSqlPouch.valid=function(){return!!window.openDatabase},webSqlPouch.destroy=function(e,t){var n=openDatabase(e,POUCH_VERSION,e,POUCH_SIZE);n.transaction(function(e){e.executeSql("DROP TABLE IF EXISTS "+DOC_STORE,[]),e.executeSql("DROP TABLE IF EXISTS "+BY_SEQ_STORE,[]),e.executeSql("DROP TABLE IF EXISTS "+ATTACH_STORE,[]),e.executeSql("DROP TABLE IF EXISTS "+META_STORE,[])},unknownError(t),function(){call(t,null)})},webSqlPouch.Changes=new Changes,Pouch.adapter("websql",webSqlPouch);var MapReduce=function(db){function viewQuery(fun,options){function sum(e){return e.reduce(function(e,t){return e+t},0)}if(options.complete){fun.reduce||(options.reduce=!1);var builtInReduce={_sum:function(e,t){return sum(t)},_count:function(e,t,n){return n?sum(t):t.length},_stats:function(e,t){return{sum:sum(t),min:Math.min.apply(null,t),max:Math.max.apply(null,t),count:t.length,sumsqr:function(){var e=0;
-for(var n in t)e+=t[n]*t[n];return e}()}}},results=[],current=null,num_started=0,completed=!1,emit=function(e,t){var n={id:current.doc._id,key:e,value:t};if(!(options.startkey&&0>Pouch.collate(e,options.startkey)||options.endkey&&Pouch.collate(e,options.endkey)>0||options.key&&0!==Pouch.collate(e,options.key))){if(num_started++,options.include_docs){if(t&&"object"==typeof t&&t._id)return db.get(t._id,function(e,t){t&&(n.doc=t),results.push(n),checkComplete()}),void 0;n.doc=current.doc}results.push(n)}};eval("fun.map = "+(""+fun.map)+";"),fun.reduce&&(builtInReduce[fun.reduce]&&(fun.reduce=builtInReduce[fun.reduce]),eval("fun.reduce = "+(""+fun.reduce)+";"));var checkComplete=function(){if(completed&&results.length==num_started){if(results.sort(function(e,t){return Pouch.collate(e.key,t.key)}),options.descending&&results.reverse(),options.reduce===!1)return options.complete(null,{rows:"limit"in options?results.slice(0,options.limit):results,total_rows:results.length});var e=[];results.forEach(function(t){var n=e[e.length-1]||null;return n&&0===Pouch.collate(n.key[0][0],t.key)?(n.key.push([t.key,t.id]),n.value.push(t.value),void 0):(e.push({key:[[t.key,t.id]],value:[t.value]}),void 0)}),e.forEach(function(e){e.value=fun.reduce(e.key,e.value)||null,e.key=e.key[0][0]}),options.complete(null,{rows:"limit"in options?e.slice(0,options.limit):e,total_rows:e.length})}};db.changes({conflicts:!0,include_docs:!0,onChange:function(e){"deleted"in e||(current={doc:e.doc},fun.map.call(this,e.doc))},complete:function(){completed=!0,checkComplete()}})}}function httpQuery(e,t,n){var r=[],o=void 0,a="GET";if(t.reduce!==void 0&&r.push("reduce="+t.reduce),t.include_docs!==void 0&&r.push("include_docs="+t.include_docs),t.limit!==void 0&&r.push("limit="+t.limit),t.descending!==void 0&&r.push("descending="+t.descending),t.startkey!==void 0&&r.push("startkey="+encodeURIComponent(JSON.stringify(t.startkey))),t.endkey!==void 0&&r.push("endkey="+encodeURIComponent(JSON.stringify(t.endkey))),t.key!==void 0&&r.push("key="+encodeURIComponent(JSON.stringify(t.key))),t.group!==void 0&&r.push("group="+t.group),t.group_level!==void 0&&r.push("group_level="+t.group_level),t.keys!==void 0&&(a="POST",o=JSON.stringify({keys:t.keys})),r=r.join("&"),r=""===r?"":"?"+r,"string"==typeof e){var i=e.split("/");return db.request({method:a,url:"_design/"+i[0]+"/_view/"+i[1]+r,body:o},n),void 0}var u=JSON.parse(JSON.stringify(e,function(e,t){return"function"==typeof t?t+"":t}));db.request({method:"POST",url:"_temp_view"+r,body:u},n)}function query(e,t,n){if("function"==typeof t&&(n=t,t={}),n&&(t.complete=n),"http"===db.type())return"function"==typeof e?httpQuery({map:e},t,n):httpQuery(e,t,n);if("object"==typeof e)return viewQuery(e,t);if("function"==typeof e)return viewQuery({map:e},t);var r=e.split("/");db.get("_design/"+r[0],function(e,o){return e?(n&&n(e),void 0):o.views[r[1]]?(viewQuery({map:o.views[r[1]].map,reduce:o.views[r[1]].reduce},t),void 0):(n&&n({error:"not_found",reason:"missing_named_view"}),void 0)})}return{query:query}};MapReduce._delete=function(){},Pouch.plugin("mapreduce",MapReduce)})(this);
+
+(function() {
+ // BEGIN Math.uuid.js
+
+/*!
+Math.uuid.js (v1.4)
+http://www.broofa.com
+mailto:robert@broofa.com
+
+Copyright (c) 2010 Robert Kieffer
+Dual licensed under the MIT and GPL licenses.
+*/
+
+/*
+ * Generate a random uuid.
+ *
+ * USAGE: Math.uuid(length, radix)
+ *   length - the desired number of characters
+ *   radix  - the number of allowable values for each character.
+ *
+ * EXAMPLES:
+ *   // No arguments  - returns RFC4122, version 4 ID
+ *   >>> Math.uuid()
+ *   "92329D39-6F5C-4520-ABFC-AAB64544E172"
+ *
+ *   // One argument - returns ID of the specified length
+ *   >>> Math.uuid(15)     // 15 character ID (default base=62)
+ *   "VcydxgltxrVZSTV"
+ *
+ *   // Two arguments - returns ID of the specified length, and radix. (Radix must be <= 62)
+ *   >>> Math.uuid(8, 2)  // 8 character ID (base=2)
+ *   "01001010"
+ *   >>> Math.uuid(8, 10) // 8 character ID (base=10)
+ *   "47473046"
+ *   >>> Math.uuid(8, 16) // 8 character ID (base=16)
+ *   "098F4D35"
+ */
+(function() {
+  // Private array of chars to use
+  var CHARS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split('');
+
+  Math.uuid = function (len, radix) {
+    var chars = CHARS, uuid = [];
+    radix = radix || chars.length;
+
+    if (len) {
+      // Compact form
+      for (var i = 0; i < len; i++) uuid[i] = chars[0 | Math.random()*radix];
+    } else {
+      // rfc4122, version 4 form
+      var r;
+
+      // rfc4122 requires these characters
+      uuid[8] = uuid[13] = uuid[18] = uuid[23] = '-';
+      uuid[14] = '4';
+
+      // Fill in random data.  At i==19 set the high bits of clock sequence as
+      // per rfc4122, sec. 4.1.5
+      for (var i = 0; i < 36; i++) {
+        if (!uuid[i]) {
+          r = 0 | Math.random()*16;
+          uuid[i] = chars[(i == 19) ? (r & 0x3) | 0x8 : r];
+        }
+      }
+    }
+
+    return uuid.join('');
+  };
+
+})();
+// END Math.uuid.js
+
+/**
+*
+*  MD5 (Message-Digest Algorithm)
+*
+*  For original source see http://www.webtoolkit.info/
+*  Download: 15.02.2009 from http://www.webtoolkit.info/javascript-md5.html
+*
+*  Licensed under CC-BY 2.0 License
+*  (http://creativecommons.org/licenses/by/2.0/uk/)
+*
+**/
+
+var Crypto = {};
+(function() {
+  Crypto.MD5 = function(string) {
+
+    function RotateLeft(lValue, iShiftBits) {
+      return (lValue<<iShiftBits) | (lValue>>>(32-iShiftBits));
+    }
+
+    function AddUnsigned(lX,lY) {
+      var lX4,lY4,lX8,lY8,lResult;
+      lX8 = (lX & 0x80000000);
+      lY8 = (lY & 0x80000000);
+      lX4 = (lX & 0x40000000);
+      lY4 = (lY & 0x40000000);
+      lResult = (lX & 0x3FFFFFFF)+(lY & 0x3FFFFFFF);
+      if (lX4 & lY4) {
+        return (lResult ^ 0x80000000 ^ lX8 ^ lY8);
+      }
+      if (lX4 | lY4) {
+        if (lResult & 0x40000000) {
+          return (lResult ^ 0xC0000000 ^ lX8 ^ lY8);
+        } else {
+          return (lResult ^ 0x40000000 ^ lX8 ^ lY8);
+        }
+      } else {
+        return (lResult ^ lX8 ^ lY8);
+      }
+    }
+
+    function F(x,y,z) { return (x & y) | ((~x) & z); }
+    function G(x,y,z) { return (x & z) | (y & (~z)); }
+    function H(x,y,z) { return (x ^ y ^ z); }
+    function I(x,y,z) { return (y ^ (x | (~z))); }
+
+    function FF(a,b,c,d,x,s,ac) {
+      a = AddUnsigned(a, AddUnsigned(AddUnsigned(F(b, c, d), x), ac));
+      return AddUnsigned(RotateLeft(a, s), b);
+    };
+
+    function GG(a,b,c,d,x,s,ac) {
+      a = AddUnsigned(a, AddUnsigned(AddUnsigned(G(b, c, d), x), ac));
+      return AddUnsigned(RotateLeft(a, s), b);
+    };
+
+    function HH(a,b,c,d,x,s,ac) {
+      a = AddUnsigned(a, AddUnsigned(AddUnsigned(H(b, c, d), x), ac));
+      return AddUnsigned(RotateLeft(a, s), b);
+    };
+
+    function II(a,b,c,d,x,s,ac) {
+      a = AddUnsigned(a, AddUnsigned(AddUnsigned(I(b, c, d), x), ac));
+      return AddUnsigned(RotateLeft(a, s), b);
+    };
+
+    function ConvertToWordArray(string) {
+      var lWordCount;
+      var lMessageLength = string.length;
+      var lNumberOfWords_temp1=lMessageLength + 8;
+      var lNumberOfWords_temp2=(lNumberOfWords_temp1-(lNumberOfWords_temp1 % 64))/64;
+      var lNumberOfWords = (lNumberOfWords_temp2+1)*16;
+      var lWordArray=Array(lNumberOfWords-1);
+      var lBytePosition = 0;
+      var lByteCount = 0;
+      while ( lByteCount < lMessageLength ) {
+        lWordCount = (lByteCount-(lByteCount % 4))/4;
+        lBytePosition = (lByteCount % 4)*8;
+        lWordArray[lWordCount] = (lWordArray[lWordCount] | (string.charCodeAt(lByteCount)<<lBytePosition));
+        lByteCount++;
+      }
+      lWordCount = (lByteCount-(lByteCount % 4))/4;
+      lBytePosition = (lByteCount % 4)*8;
+      lWordArray[lWordCount] = lWordArray[lWordCount] | (0x80<<lBytePosition);
+      lWordArray[lNumberOfWords-2] = lMessageLength<<3;
+      lWordArray[lNumberOfWords-1] = lMessageLength>>>29;
+      return lWordArray;
+    };
+
+    function WordToHex(lValue) {
+      var WordToHexValue="",WordToHexValue_temp="",lByte,lCount;
+      for (lCount = 0;lCount<=3;lCount++) {
+        lByte = (lValue>>>(lCount*8)) & 255;
+        WordToHexValue_temp = "0" + lByte.toString(16);
+        WordToHexValue = WordToHexValue + WordToHexValue_temp.substr(WordToHexValue_temp.length-2,2);
+      }
+      return WordToHexValue;
+    };
+
+    //**    function Utf8Encode(string) removed. Aready defined in pidcrypt_utils.js
+
+    var x=Array();
+    var k,AA,BB,CC,DD,a,b,c,d;
+    var S11=7, S12=12, S13=17, S14=22;
+    var S21=5, S22=9 , S23=14, S24=20;
+    var S31=4, S32=11, S33=16, S34=23;
+    var S41=6, S42=10, S43=15, S44=21;
+
+    //  string = Utf8Encode(string); #function call removed
+
+    x = ConvertToWordArray(string);
+
+    a = 0x67452301; b = 0xEFCDAB89; c = 0x98BADCFE; d = 0x10325476;
+
+    for (k=0;k<x.length;k+=16) {
+      AA=a; BB=b; CC=c; DD=d;
+      a=FF(a,b,c,d,x[k+0], S11,0xD76AA478);
+      d=FF(d,a,b,c,x[k+1], S12,0xE8C7B756);
+      c=FF(c,d,a,b,x[k+2], S13,0x242070DB);
+      b=FF(b,c,d,a,x[k+3], S14,0xC1BDCEEE);
+      a=FF(a,b,c,d,x[k+4], S11,0xF57C0FAF);
+      d=FF(d,a,b,c,x[k+5], S12,0x4787C62A);
+      c=FF(c,d,a,b,x[k+6], S13,0xA8304613);
+      b=FF(b,c,d,a,x[k+7], S14,0xFD469501);
+      a=FF(a,b,c,d,x[k+8], S11,0x698098D8);
+      d=FF(d,a,b,c,x[k+9], S12,0x8B44F7AF);
+      c=FF(c,d,a,b,x[k+10],S13,0xFFFF5BB1);
+      b=FF(b,c,d,a,x[k+11],S14,0x895CD7BE);
+      a=FF(a,b,c,d,x[k+12],S11,0x6B901122);
+      d=FF(d,a,b,c,x[k+13],S12,0xFD987193);
+      c=FF(c,d,a,b,x[k+14],S13,0xA679438E);
+      b=FF(b,c,d,a,x[k+15],S14,0x49B40821);
+      a=GG(a,b,c,d,x[k+1], S21,0xF61E2562);
+      d=GG(d,a,b,c,x[k+6], S22,0xC040B340);
+      c=GG(c,d,a,b,x[k+11],S23,0x265E5A51);
+      b=GG(b,c,d,a,x[k+0], S24,0xE9B6C7AA);
+      a=GG(a,b,c,d,x[k+5], S21,0xD62F105D);
+      d=GG(d,a,b,c,x[k+10],S22,0x2441453);
+      c=GG(c,d,a,b,x[k+15],S23,0xD8A1E681);
+      b=GG(b,c,d,a,x[k+4], S24,0xE7D3FBC8);
+      a=GG(a,b,c,d,x[k+9], S21,0x21E1CDE6);
+      d=GG(d,a,b,c,x[k+14],S22,0xC33707D6);
+      c=GG(c,d,a,b,x[k+3], S23,0xF4D50D87);
+      b=GG(b,c,d,a,x[k+8], S24,0x455A14ED);
+      a=GG(a,b,c,d,x[k+13],S21,0xA9E3E905);
+      d=GG(d,a,b,c,x[k+2], S22,0xFCEFA3F8);
+      c=GG(c,d,a,b,x[k+7], S23,0x676F02D9);
+      b=GG(b,c,d,a,x[k+12],S24,0x8D2A4C8A);
+      a=HH(a,b,c,d,x[k+5], S31,0xFFFA3942);
+      d=HH(d,a,b,c,x[k+8], S32,0x8771F681);
+      c=HH(c,d,a,b,x[k+11],S33,0x6D9D6122);
+      b=HH(b,c,d,a,x[k+14],S34,0xFDE5380C);
+      a=HH(a,b,c,d,x[k+1], S31,0xA4BEEA44);
+      d=HH(d,a,b,c,x[k+4], S32,0x4BDECFA9);
+      c=HH(c,d,a,b,x[k+7], S33,0xF6BB4B60);
+      b=HH(b,c,d,a,x[k+10],S34,0xBEBFBC70);
+      a=HH(a,b,c,d,x[k+13],S31,0x289B7EC6);
+      d=HH(d,a,b,c,x[k+0], S32,0xEAA127FA);
+      c=HH(c,d,a,b,x[k+3], S33,0xD4EF3085);
+      b=HH(b,c,d,a,x[k+6], S34,0x4881D05);
+      a=HH(a,b,c,d,x[k+9], S31,0xD9D4D039);
+      d=HH(d,a,b,c,x[k+12],S32,0xE6DB99E5);
+      c=HH(c,d,a,b,x[k+15],S33,0x1FA27CF8);
+      b=HH(b,c,d,a,x[k+2], S34,0xC4AC5665);
+      a=II(a,b,c,d,x[k+0], S41,0xF4292244);
+      d=II(d,a,b,c,x[k+7], S42,0x432AFF97);
+      c=II(c,d,a,b,x[k+14],S43,0xAB9423A7);
+      b=II(b,c,d,a,x[k+5], S44,0xFC93A039);
+      a=II(a,b,c,d,x[k+12],S41,0x655B59C3);
+      d=II(d,a,b,c,x[k+3], S42,0x8F0CCC92);
+      c=II(c,d,a,b,x[k+10],S43,0xFFEFF47D);
+      b=II(b,c,d,a,x[k+1], S44,0x85845DD1);
+      a=II(a,b,c,d,x[k+8], S41,0x6FA87E4F);
+      d=II(d,a,b,c,x[k+15],S42,0xFE2CE6E0);
+      c=II(c,d,a,b,x[k+6], S43,0xA3014314);
+      b=II(b,c,d,a,x[k+13],S44,0x4E0811A1);
+      a=II(a,b,c,d,x[k+4], S41,0xF7537E82);
+      d=II(d,a,b,c,x[k+11],S42,0xBD3AF235);
+      c=II(c,d,a,b,x[k+2], S43,0x2AD7D2BB);
+      b=II(b,c,d,a,x[k+9], S44,0xEB86D391);
+      a=AddUnsigned(a,AA);
+      b=AddUnsigned(b,BB);
+      c=AddUnsigned(c,CC);
+      d=AddUnsigned(d,DD);
+    }
+    var temp = WordToHex(a)+WordToHex(b)+WordToHex(c)+WordToHex(d);
+    return temp.toLowerCase();
+  }
+})();
+
+// END Crypto.md5.js
+
+//----------------------------------------------------------------------
+//
+// ECMAScript 5 Polyfills
+//  from www.calocomrmen./polyfill/
+//
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+// ES5 15.2 Object Objects
+//----------------------------------------------------------------------
+
+
+
+// ES 15.2.3.6 Object.defineProperty ( O, P, Attributes )
+// Partial support for most common case - getters, setters, and values
+(function() {
+  if (!Object.defineProperty ||
+      !(function () { try { Object.defineProperty({}, 'x', {}); return true; } catch (e) { return false; } } ())) {
+    var orig = Object.defineProperty;
+    Object.defineProperty = function (o, prop, desc) {
+      "use strict";
+
+      // In IE8 try built-in implementation for defining properties on DOM prototypes.
+      if (orig) { try { return orig(o, prop, desc); } catch (e) {} }
+
+      if (o !== Object(o)) { throw new TypeError("Object.defineProperty called on non-object"); }
+      if (Object.prototype.__defineGetter__ && ('get' in desc)) {
+        Object.prototype.__defineGetter__.call(o, prop, desc.get);
+      }
+      if (Object.prototype.__defineSetter__ && ('set' in desc)) {
+        Object.prototype.__defineSetter__.call(o, prop, desc.set);
+      }
+      if ('value' in desc) {
+        o[prop] = desc.value;
+      }
+      return o;
+    };
+  }
+}());
+
+
+
+// ES5 15.2.3.14 Object.keys ( O )
+// https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Object/keys
+if (!Object.keys) {
+  Object.keys = function (o) {
+    if (o !== Object(o)) { throw new TypeError('Object.keys called on non-object'); }
+    var ret = [], p;
+    for (p in o) {
+      if (Object.prototype.hasOwnProperty.call(o, p)) {
+        ret.push(p);
+      }
+    }
+    return ret;
+  };
+}
+
+//----------------------------------------------------------------------
+// ES5 15.4 Array Objects
+//----------------------------------------------------------------------
+
+
+
+// ES5 15.4.4.18 Array.prototype.forEach ( callbackfn [ , thisArg ] )
+// From https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Array/forEach
+if (!Array.prototype.forEach) {
+  Array.prototype.forEach = function (fun /*, thisp */) {
+    "use strict";
+
+    if (this === void 0 || this === null) { throw new TypeError(); }
+
+    var t = Object(this);
+    var len = t.length >>> 0;
+    if (typeof fun !== "function") { throw new TypeError(); }
+
+    var thisp = arguments[1], i;
+    for (i = 0; i < len; i++) {
+      if (i in t) {
+        fun.call(thisp, t[i], i, t);
+      }
+    }
+  };
+}
+
+
+// ES5 15.4.4.19 Array.prototype.map ( callbackfn [ , thisArg ] )
+// From https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Array/Map
+if (!Array.prototype.map) {
+  Array.prototype.map = function (fun /*, thisp */) {
+    "use strict";
+
+    if (this === void 0 || this === null) { throw new TypeError(); }
+
+    var t = Object(this);
+    var len = t.length >>> 0;
+    if (typeof fun !== "function") { throw new TypeError(); }
+
+    var res = []; res.length = len;
+    var thisp = arguments[1], i;
+    for (i = 0; i < len; i++) {
+      if (i in t) {
+        res[i] = fun.call(thisp, t[i], i, t);
+      }
+    }
+
+    return res;
+  };
+}
+
+
+// Extends method
+// (taken from http://code.jquery.com/jquery-1.9.0.js)
+// Populate the class2type map
+var class2type = {};
+
+var types = ["Boolean", "Number", "String", "Function", "Array", "Date", "RegExp", "Object", "Error"];
+for (var i = 0; i < types.length; i++) {
+  var typename = types[i];
+  class2type[ "[object " + typename + "]" ] = typename.toLowerCase();
+}
+
+var core_toString = class2type.toString;
+var core_hasOwn = class2type.hasOwnProperty;
+
+var type = function(obj) {
+  if (obj === null) {
+    return String( obj );
+  }
+  return typeof obj === "object" || typeof obj === "function" ?
+    class2type[core_toString.call(obj)] || "object" :
+    typeof obj;
+};
+
+var isWindow = function(obj) {
+  return obj !== null && obj === obj.window;
+};
+
+var isPlainObject = function( obj ) {
+  // Must be an Object.
+  // Because of IE, we also have to check the presence of the constructor property.
+  // Make sure that DOM nodes and window objects don't pass through, as well
+  if ( !obj || type(obj) !== "object" || obj.nodeType || isWindow( obj ) ) {
+    return false;
+  }
+
+  try {
+    // Not own constructor property must be Object
+    if ( obj.constructor &&
+      !core_hasOwn.call(obj, "constructor") &&
+      !core_hasOwn.call(obj.constructor.prototype, "isPrototypeOf") ) {
+      return false;
+    }
+  } catch ( e ) {
+    // IE8,9 Will throw exceptions on certain host objects #9897
+    return false;
+  }
+
+  // Own properties are enumerated firstly, so to speed up,
+  // if last one is own, then all properties are own.
+
+  var key;
+  for ( key in obj ) {}
+
+  return key === undefined || core_hasOwn.call( obj, key );
+};
+
+var isFunction = function(obj) {
+  return type(obj) === "function";
+};
+
+var isArray = Array.isArray || function(obj) {
+  return type(obj) === "array";
+};
+
+var extend = function() {
+  var options, name, src, copy, copyIsArray, clone,
+    target = arguments[0] || {},
+    i = 1,
+    length = arguments.length,
+    deep = false;
+
+  // Handle a deep copy situation
+  if ( typeof target === "boolean" ) {
+    deep = target;
+    target = arguments[1] || {};
+    // skip the boolean and the target
+    i = 2;
+  }
+
+  // Handle case when target is a string or something (possible in deep copy)
+  if ( typeof target !== "object" && !isFunction(target) ) {
+    target = {};
+  }
+
+  // extend jQuery itself if only one argument is passed
+  if ( length === i ) {
+    target = this;
+    --i;
+  }
+
+  for ( ; i < length; i++ ) {
+    // Only deal with non-null/undefined values
+    if ((options = arguments[ i ]) != null) {
+      // Extend the base object
+      for ( name in options ) {
+        src = target[ name ];
+        copy = options[ name ];
+
+        // Prevent never-ending loop
+        if ( target === copy ) {
+          continue;
+        }
+
+        // Recurse if we're merging plain objects or arrays
+        if ( deep && copy && ( isPlainObject(copy) || (copyIsArray = isArray(copy)) ) ) {
+          if ( copyIsArray ) {
+            copyIsArray = false;
+            clone = src && isArray(src) ? src : [];
+
+          } else {
+            clone = src && isPlainObject(src) ? src : {};
+          }
+
+          // Never move original objects, clone them
+          target[ name ] = extend( deep, clone, copy );
+
+        // Don't bring in undefined values
+        } else if ( copy !== undefined ) {
+          target[ name ] = copy;
+        }
+      }
+    }
+  }
+
+  // Return the modified object
+  return target;
+};
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = extend;
+}
+
+var ajax = function ajax(options, callback) {
+  if (typeof options === "function") {
+    callback = options;
+    options = {};
+  }
+  var call = function(fun) {
+    var args = Array.prototype.slice.call(arguments, 1);
+    if (typeof fun === typeof Function) {
+      fun.apply(this, args);
+    }
+  };
+  var defaultOptions = {
+    method : "GET",
+    headers: {},
+    json: true,
+    processData: true,
+    timeout: 10000
+  };
+  options = extend(true, defaultOptions, options);
+  if (options.auth) {
+      var token = btoa(options.auth.username + ':' + options.auth.password);
+      options.headers.Authorization = 'Basic ' + token;
+  }
+  var onSuccess = function(obj, resp, cb){
+    if (!options.binary && !options.json && options.processData && typeof obj !== 'string') {
+      obj = JSON.stringify(obj);
+    } else if (!options.binary && options.json && typeof obj === 'string') {
+      try {
+        obj = JSON.parse(obj);
+      } catch (e) {
+        // Probably a malformed JSON from server
+        call(cb, e);
+        return;
+      }
+    }
+    call(cb, null, obj, resp);
+  };
+  var onError = function(err, cb){
+    var errParsed;
+    var errObj = {status: err.status};
+    try{
+      errParsed = JSON.parse(err.responseText); //would prefer not to have a try/catch clause
+      errObj = extend(true, {}, errObj, errParsed);
+    } catch(e){}
+    call(cb, errObj);
+  };
+  if (typeof window !== 'undefined' && window.XMLHttpRequest) {
+    var timer,timedout  = false;
+    var xhr = new XMLHttpRequest();
+    xhr.open(options.method, options.url);
+    if (options.json) {
+      options.headers.Accept = 'application/json';
+      options.headers['Content-Type'] = options.headers['Content-Type'] || 'application/json';
+      if (options.body && options.processData && typeof options.body !== "string") {
+        options.body = JSON.stringify(options.body);
+      }
+    }
+    if (options.binary) {
+      xhr.responseType = 'arraybuffer';
+    }
+    for (var key in options.headers){
+      xhr.setRequestHeader(key, options.headers[key]);
+    }
+    if (!("body" in options)) {
+      options.body = null;
+    }
+
+    var abortReq = function() {
+        timedout=true;
+        xhr.abort();
+        call(onError, xhr, callback);
+    };
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState !== 4 || timedout) {
+        return;
+      }
+      clearTimeout(timer);
+      if (xhr.status >= 200 && xhr.status < 300) {
+        var data;
+        if (options.binary) {
+          data = new Blob([xhr.response || ''], {type: xhr.getResponseHeader('Content-Type')});
+        } else {
+          data = xhr.responseText;
+        }
+        call(onSuccess, data, xhr, callback);
+      } else {
+         call(onError, xhr, callback);
+      }
+    };
+    if (options.timeout > 0) {
+      timer = setTimeout(abortReq, options.timeout);
+    }
+    xhr.send(options.body);
+    return {abort:abortReq};
+  } else {
+    if (options.json) {
+      if (!options.binary) {
+        options.headers.Accept = 'application/json';
+      }
+      options.headers['Content-Type'] = options.headers['Content-Type'] || 'application/json';
+    }
+    if (options.binary) {
+      options.encoding = null;
+      options.json = false;
+    }
+    if (!options.processData) {
+      options.json = false;
+    }
+    return request(options, function(err, response, body) {
+      if (err) {
+        err.status = response ? response.statusCode : 400;
+        return call(onError, err, callback);
+      }
+
+      var content_type = response.headers['content-type'];
+      var data = (body || '');
+
+      // CouchDB doesn't always return the right content-type for JSON data, so
+      // we check for ^{ and }$ (ignoring leading/trailing whitespace)
+      if (!options.binary && (options.json || !options.processData) && typeof data !== 'object' &&
+          (/json/.test(content_type) ||
+           (/^[\s]*\{/.test(data) && /\}[\s]*$/.test(data)))) {
+        data = JSON.parse(data);
+      }
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        call(onSuccess, data, response, callback);
+      }
+      else {
+        if (options.binary) {
+          var data = JSON.parse(data.toString());
+        }
+        data.status = response.statusCode;
+        call(callback, data);
+      }
+    });
+  }
+};
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = ajax;
+}
+
+/*globals PouchAdapter: true, extend: true */
+
+"use strict";
+
+var Pouch = function Pouch(name, opts, callback) {
+
+  if (!(this instanceof Pouch)) {
+    return new Pouch(name, opts, callback);
+  }
+
+  if (typeof opts === 'function' || typeof opts === 'undefined') {
+    callback = opts;
+    opts = {};
+  }
+
+  if (typeof name === 'object') {
+    opts = name;
+    name = undefined;
+  }
+
+  if (typeof callback === 'undefined') {
+    callback = function() {};
+  }
+
+  var backend = Pouch.parseAdapter(opts.name || name);
+  opts.originalName = name;
+  opts.name = opts.name || backend.name;
+  opts.adapter = opts.adapter || backend.adapter;
+
+  if (!Pouch.adapters[opts.adapter]) {
+    throw 'Adapter is missing';
+  }
+
+  if (!Pouch.adapters[opts.adapter].valid()) {
+    throw 'Invalid Adapter';
+  }
+
+  var adapter = new PouchAdapter(opts, function(err, db) {
+    if (err) {
+      if (callback) {
+        callback(err);
+      }
+      return;
+    }
+
+    for (var plugin in Pouch.plugins) {
+      // In future these will likely need to be async to allow the plugin
+      // to initialise
+      var pluginObj = Pouch.plugins[plugin](db);
+      for (var api in pluginObj) {
+        // We let things like the http adapter use its own implementation
+        // as it shares a lot of code
+        if (!(api in db)) {
+          db[api] = pluginObj[api];
+        }
+      }
+    }
+    db.taskqueue.ready(true);
+    db.taskqueue.execute(db);
+    callback(null, db);
+  });
+  for (var j in adapter) {
+    this[j] = adapter[j];
+  }
+  for (var plugin in Pouch.plugins) {
+    // In future these will likely need to be async to allow the plugin
+    // to initialise
+    var pluginObj = Pouch.plugins[plugin](this);
+    for (var api in pluginObj) {
+      // We let things like the http adapter use its own implementation
+      // as it shares a lot of code
+      if (!(api in this)) {
+        this[api] = pluginObj[api];
+      }
+    }
+  }
+};
+
+Pouch.DEBUG = false;
+Pouch.openReqList = {};
+Pouch.adapters = {};
+Pouch.plugins = {};
+
+Pouch.prefix = '_pouch_';
+
+Pouch.parseAdapter = function(name) {
+  var match = name.match(/([a-z\-]*):\/\/(.*)/);
+  var adapter;
+  if (match) {
+    // the http adapter expects the fully qualified name
+    name = /http(s?)/.test(match[1]) ? match[1] + '://' + match[2] : match[2];
+    adapter = match[1];
+    if (!Pouch.adapters[adapter].valid()) {
+      throw 'Invalid adapter';
+    }
+    return {name: name, adapter: match[1]};
+  }
+
+  var preferredAdapters = ['idb', 'leveldb', 'websql'];
+  for (var i = 0; i < preferredAdapters.length; ++i) {
+    if (preferredAdapters[i] in Pouch.adapters) {
+      adapter = Pouch.adapters[preferredAdapters[i]];
+      var use_prefix = 'use_prefix' in adapter ? adapter.use_prefix : true;
+
+      return {
+        name: use_prefix ? Pouch.prefix + name : name,
+        adapter: preferredAdapters[i]
+      };
+    }
+  }
+
+  throw 'No valid adapter found';
+};
+
+Pouch.destroy = function(name, callback) {
+  var opts = Pouch.parseAdapter(name);
+  var cb = function(err, response) {
+    if (err) {
+      callback(err);
+      return;
+    }
+
+    for (var plugin in Pouch.plugins) {
+      Pouch.plugins[plugin]._delete(name);
+    }
+    if (Pouch.DEBUG) {
+      console.log(name + ': Delete Database');
+    }
+
+    // call destroy method of the particular adaptor
+    Pouch.adapters[opts.adapter].destroy(opts.name, callback);
+  };
+
+  // remove Pouch from allDBs
+  Pouch.removeFromAllDbs(opts, cb);
+};
+
+Pouch.removeFromAllDbs = function(opts, callback) {
+  // Only execute function if flag is enabled
+  if (!Pouch.enableAllDbs) {
+    callback();
+    return;
+  }
+
+  // skip http and https adaptors for allDbs
+  var adapter = opts.adapter;
+  if (adapter === "http" || adapter === "https") {
+    callback();
+    return;
+  }
+
+  // remove db from Pouch.ALL_DBS
+  new Pouch(Pouch.allDBName(opts.adapter), function(err, db) {
+    if (err) {
+      // don't fail when allDbs fail
+      console.error(err);
+      callback();
+      return;
+    }
+    // check if db has been registered in Pouch.ALL_DBS
+    var dbname = Pouch.dbName(opts.adapter, opts.name);
+    db.get(dbname, function(err, doc) {
+      if (err) {
+        callback();
+      } else {
+        db.remove(doc, function(err, response) {
+          if (err) {
+            console.error(err);
+          }
+          callback();
+        });
+      }
+    });
+  });
+
+};
+
+Pouch.adapter = function (id, obj) {
+  if (obj.valid()) {
+    Pouch.adapters[id] = obj;
+  }
+};
+
+Pouch.plugin = function(id, obj) {
+  Pouch.plugins[id] = obj;
+};
+
+// flag to toggle allDbs (off by default)
+Pouch.enableAllDbs = false;
+
+// name of database used to keep track of databases
+Pouch.ALL_DBS = "_allDbs";
+Pouch.dbName = function(adapter, name) {
+  return [adapter, "-", name].join('');
+};
+Pouch.realDBName = function(adapter, name) {
+  return [adapter, "://", name].join('');
+};
+Pouch.allDBName = function(adapter) {
+  return [adapter, "://", Pouch.prefix + Pouch.ALL_DBS].join('');
+};
+
+Pouch.open = function(opts, callback) {
+  // Only register pouch with allDbs if flag is enabled
+  if (!Pouch.enableAllDbs) {
+    callback();
+    return;
+  }
+
+  var adapter = opts.adapter;
+  // skip http and https adaptors for allDbs
+  if (adapter === "http" || adapter === "https") {
+    callback();
+    return;
+  }
+
+  new Pouch(Pouch.allDBName(adapter), function(err, db) {
+    if (err) {
+      // don't fail when allDb registration fails
+      console.error(err);
+      callback();
+      return;
+    }
+
+    // check if db has been registered in Pouch.ALL_DBS
+    var dbname = Pouch.dbName(adapter, opts.name);
+    db.get(dbname, function(err, response) {
+      if (err && err.status === 404) {
+        db.put({
+          _id: dbname,
+          dbname: opts.originalName
+        }, function(err) {
+            if (err) {
+                console.error(err);
+            }
+
+            callback();
+        });
+      } else {
+        callback();
+      }
+    });
+  });
+};
+
+Pouch.allDbs = function(callback) {
+  var accumulate = function(adapters, all_dbs) {
+    if (adapters.length === 0) {
+      // remove duplicates
+      var result = [];
+      all_dbs.forEach(function(doc) {
+        var exists = result.some(function(db) {
+          return db.id === doc.id;
+        });
+
+        if (!exists) {
+          result.push(doc);
+        }
+      });
+
+      // return an array of dbname
+      callback(null, result.map(function(row) {
+          return row.doc.dbname;
+      }));
+      return;
+    }
+
+    var adapter = adapters.shift();
+
+    // skip http and https adaptors for allDbs
+    if (adapter === "http" || adapter === "https") {
+      accumulate(adapters, all_dbs);
+      return;
+    }
+
+    new Pouch(Pouch.allDBName(adapter), function(err, db) {
+      if (err) {
+        callback(err);
+        return;
+      }
+      db.allDocs({include_docs: true}, function(err, response) {
+        if (err) {
+          callback(err);
+          return;
+        }
+
+        // append from current adapter rows
+        all_dbs.unshift.apply(all_dbs, response.rows);
+
+        // code to clear allDbs.
+        // response.rows.forEach(function(row) {
+        //   db.remove(row.doc, function() {
+        //     console.log(arguments);
+        //   });
+        // });
+
+        // recurse
+        accumulate(adapters, all_dbs);
+      });
+    });
+  };
+  var adapters = Object.keys(Pouch.adapters);
+  accumulate(adapters, []);
+};
+
+/*
+  Examples:
+
+  >>> Pouch.uuids()
+  "92329D39-6F5C-4520-ABFC-AAB64544E172"]
+
+  >>> Pouch.uuids(10, {length: 32, radix: 5})
+  [ '04422200002240221333300140323100',
+    '02304411022101001312440440020110',
+    '41432430322114143303343433433030',
+    '21234330022303431304443100330401',
+    '23044133434242034101422131301213',
+    '43142032223224403322031032232041',
+    '41121132424023141101403324200330',
+    '00341042023103204342124004122342',
+    '01001141433040113422403034004214',
+    '30221232324132303123433131020020' ]
+ */
+Pouch.uuids = function (count, options) {
+  if (typeof(options) !== 'object') {
+    options = {};
+  }
+
+  var length = options.length;
+  var radix = options.radix;
+
+  var uuids = [];
+
+  while (uuids.push(Math.uuid(length, radix)) < count) {
+  }
+
+  return uuids;
+};
+
+// Give back one UUID
+Pouch.uuid = function (options) {
+  return Pouch.uuids(1, options)[0];
+};
+
+// Enumerate errors, add the status code so we can reflect the HTTP api
+// in future
+Pouch.Errors = {
+  MISSING_BULK_DOCS: {
+    status: 400,
+    error: 'bad_request',
+    reason: "Missing JSON list of 'docs'"
+  },
+  MISSING_DOC: {
+    status: 404,
+    error: 'not_found',
+    reason: 'missing'
+  },
+  REV_CONFLICT: {
+    status: 409,
+    error: 'conflict',
+    reason: 'Document update conflict'
+  },
+  INVALID_ID: {
+    status: 400,
+    error: 'invalid_id',
+    reason: '_id field must contain a string'
+  },
+  MISSING_ID: {
+    status: 412,
+    error: 'missing_id',
+    reason: '_id is required for puts'
+  },
+  RESERVED_ID: {
+    status: 400,
+    error: 'bad_request',
+    reason: 'Only reserved document ids may start with underscore.'
+  },
+  NOT_OPEN: {
+    status: 412,
+    error: 'precondition_failed',
+    reason: 'Database not open so cannot close'
+  },
+  UNKNOWN_ERROR: {
+    status: 500,
+    error: 'unknown_error',
+    reason: 'Database encountered an unknown error'
+  },
+  BAD_ARG: {
+    status: 500,
+    error: 'badarg',
+    reason: 'Some query argument is invalid'
+  },
+  INVALID_REQUEST: {
+    status: 400,
+    error: 'invalid_request',
+    reason: 'Request was invalid'
+  },
+  QUERY_PARSE_ERROR: {
+    status: 400,
+    error: 'query_parse_error',
+    reason: 'Some query parameter is invalid'
+  },
+  DOC_VALIDATION: {
+    status: 500,
+    error: 'doc_validation',
+    reason: 'Bad special document member'
+  },
+  BAD_REQUEST: {
+    status: 400,
+    error: 'bad_request',
+    reason: 'Something wrong with the request'
+  },
+  NOT_AN_OBJECT: {
+    status: 400,
+    error: 'bad_request',
+    reason: 'Document must be a JSON object'
+  }
+};
+Pouch.error = function(error, reason){
+ return extend({}, error, {reason: reason});
+};
+if (typeof module !== 'undefined' && module.exports) {
+  global.Pouch = Pouch;
+  Pouch.merge = require('./pouch.merge.js').merge;
+  Pouch.collate = require('./pouch.collate.js').collate;
+  Pouch.replicate = require('./pouch.replicate.js').replicate;
+  Pouch.utils = require('./pouch.utils.js');
+  extend = Pouch.utils.extend;
+  module.exports = Pouch;
+  var PouchAdapter = require('./pouch.adapter.js');
+  //load adapters known to work under node
+  var adapters = ['leveldb', 'http'];
+  adapters.map(function(adapter) {
+    var adapter_path = './adapters/pouch.'+adapter+'.js';
+    require(adapter_path);
+  });
+  require('./plugins/pouchdb.mapreduce.js');
+  require('./deps/uuid.js');
+} else {
+  window.Pouch = Pouch;
+}
+
+'use strict';
+
+// a few hacks to get things in the right place for node.js
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = Pouch;
+}
+
+var stringCollate = function(a, b) {
+  // See: https://github.com/daleharvey/pouchdb/issues/40
+  // This is incompatible with the CouchDB implementation, but its the
+  // best we can do for now
+  return (a === b) ? 0 : ((a > b) ? 1 : -1);
+};
+
+var objectCollate = function(a, b) {
+  var ak = Object.keys(a), bk = Object.keys(b);
+  var len = Math.min(ak.length, bk.length);
+  for (var i = 0; i < len; i++) {
+    // First sort the keys
+    var sort = Pouch.collate(ak[i], bk[i]);
+    if (sort !== 0) {
+      return sort;
+    }
+    // if the keys are equal sort the values
+    sort = Pouch.collate(a[ak[i]], b[bk[i]]);
+    if (sort !== 0) {
+      return sort;
+    }
+
+  }
+  return (ak.length === bk.length) ? 0 :
+    (ak.length > bk.length) ? 1 : -1;
+};
+
+var arrayCollate = function(a, b) {
+  var len = Math.min(a.length, b.length);
+  for (var i = 0; i < len; i++) {
+    var sort = Pouch.collate(a[i], b[i]);
+    if (sort !== 0) {
+      return sort;
+    }
+  }
+  return (a.length === b.length) ? 0 :
+    (a.length > b.length) ? 1 : -1;
+};
+
+// The collation is defined by erlangs ordered terms
+// the atoms null, true, false come first, then numbers, strings,
+// arrays, then objects
+var collationIndex = function(x) {
+  var id = ['boolean', 'number', 'string', 'object'];
+  if (id.indexOf(typeof x) !== -1) {
+    if (x === null) {
+      return 1;
+    }
+    return id.indexOf(typeof x) + 2;
+  }
+  if (Array.isArray(x)) {
+    return 4.5;
+  }
+};
+
+Pouch.collate = function(a, b) {
+  var ai = collationIndex(a);
+  var bi = collationIndex(b);
+  if ((ai - bi) !== 0) {
+    return ai - bi;
+  }
+  if (a === null) {
+    return 0;
+  }
+  if (typeof a === 'number') {
+    return a - b;
+  }
+  if (typeof a === 'boolean') {
+    return a < b ? -1 : 1;
+  }
+  if (typeof a === 'string') {
+    return stringCollate(a, b);
+  }
+  if (Array.isArray(a)) {
+    return arrayCollate(a, b);
+  }
+  if (typeof a === 'object') {
+    return objectCollate(a, b);
+  }
+};
+/*globals rootToLeaf: false, extend: false */
+
+'use strict';
+
+// a few hacks to get things in the right place for node.js
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = Pouch;
+  var utils = require('./pouch.utils.js');
+  for (var k in utils) {
+    global[k] = utils[k];
+  }
+}
+
+// for a better overview of what this is doing, read:
+// https://github.com/apache/couchdb/blob/master/src/couchdb/couch_key_tree.erl
+//
+// But for a quick intro, CouchDB uses a revision tree to store a documents
+// history, A -> B -> C, when a document has conflicts, that is a branch in the
+// tree, A -> (B1 | B2 -> C), We store these as a nested array in the format
+//
+// KeyTree = [Path ... ]
+// Path = {pos: position_from_root, ids: Tree}
+// Tree = [Key, Opts, [Tree, ...]], in particular single node: [Key, []]
+
+// Turn a path as a flat array into a tree with a single branch
+function pathToTree(path) {
+  var doc = path.shift();
+  var root = [doc.id, doc.opts, []];
+  var leaf = root;
+  var nleaf;
+
+  while (path.length) {
+    doc = path.shift();
+    nleaf = [doc.id, doc.opts, []];
+    leaf[2].push(nleaf);
+    leaf = nleaf;
+  }
+  return root;
+}
+
+// Merge two trees together
+// The roots of tree1 and tree2 must be the same revision
+function mergeTree(in_tree1, in_tree2) {
+  var queue = [{tree1: in_tree1, tree2: in_tree2}];
+  var conflicts = false;
+  while (queue.length > 0) {
+    var item = queue.pop();
+    var tree1 = item.tree1;
+    var tree2 = item.tree2;
+
+    if (tree1[1].status || tree2[1].status) {
+      tree1[1].status = (tree1[1].status ===  'available' ||
+                         tree2[1].status === 'available') ? 'available' : 'missing';
+    }
+
+    for (var i = 0; i < tree2[2].length; i++) {
+      if (!tree1[2][0]) {
+        conflicts = 'new_leaf';
+        tree1[2][0] = tree2[2][i];
+        continue;
+      }
+
+      var merged = false;
+      for (var j = 0; j < tree1[2].length; j++) {
+        if (tree1[2][j][0] === tree2[2][i][0]) {
+          queue.push({tree1: tree1[2][j], tree2: tree2[2][i]});
+          merged = true;
+        }
+      }
+      if (!merged) {
+        conflicts = 'new_branch';
+        tree1[2].push(tree2[2][i]);
+        tree1[2].sort();
+      }
+    }
+  }
+  return {conflicts: conflicts, tree: in_tree1};
+}
+
+function doMerge(tree, path, dontExpand) {
+  var restree = [];
+  var conflicts = false;
+  var merged = false;
+  var res, branch;
+
+  if (!tree.length) {
+    return {tree: [path], conflicts: 'new_leaf'};
+  }
+
+  tree.forEach(function(branch) {
+    if (branch.pos === path.pos && branch.ids[0] === path.ids[0]) {
+      // Paths start at the same position and have the same root, so they need
+      // merged
+      res = mergeTree(branch.ids, path.ids);
+      restree.push({pos: branch.pos, ids: res.tree});
+      conflicts = conflicts || res.conflicts;
+      merged = true;
+    } else if (dontExpand !== true) {
+      // The paths start at a different position, take the earliest path and
+      // traverse up until it as at the same point from root as the path we want to
+      // merge.  If the keys match we return the longer path with the other merged
+      // After stemming we dont want to expand the trees
+
+      var t1 = branch.pos < path.pos ? branch : path;
+      var t2 = branch.pos < path.pos ? path : branch;
+      var diff = t2.pos - t1.pos;
+
+      var candidateParents = [];
+
+      var trees = [];
+      trees.push({ids: t1.ids, diff: diff, parent: null, parentIdx: null});
+      while (trees.length > 0) {
+        var item = trees.pop();
+        if (item.diff === 0) {
+          if (item.ids[0] === t2.ids[0]) {
+            candidateParents.push(item);
+          }
+          continue;
+        }
+        if (!item.ids) {
+          continue;
+        }
+        /*jshint loopfunc:true */
+        item.ids[2].forEach(function(el, idx) {
+          trees.push({ids: el, diff: item.diff-1, parent: item.ids, parentIdx: idx});
+        });
+      }
+
+      var el = candidateParents[0];
+
+      if (!el) {
+        restree.push(branch);
+      } else {
+        res = mergeTree(el.ids, t2.ids);
+        el.parent[2][el.parentIdx] = res.tree;
+        restree.push({pos: t1.pos, ids: t1.ids});
+        conflicts = conflicts || res.conflicts;
+        merged = true;
+      }
+    } else {
+      restree.push(branch);
+    }
+  });
+
+  // We didnt find
+  if (!merged) {
+    restree.push(path);
+  }
+
+  restree.sort(function(a, b) {
+    return a.pos - b.pos;
+  });
+
+  return {
+    tree: restree,
+    conflicts: conflicts || 'internal_node'
+  };
+}
+
+// To ensure we dont grow the revision tree infinitely, we stem old revisions
+function stem(tree, depth) {
+  // First we break out the tree into a complete list of root to leaf paths,
+  // we cut off the start of the path and generate a new set of flat trees
+  var stemmedPaths = rootToLeaf(tree).map(function(path) {
+    var stemmed = path.ids.slice(-depth);
+    return {
+      pos: path.pos + (path.ids.length - stemmed.length),
+      ids: pathToTree(stemmed)
+    };
+  });
+  // Then we remerge all those flat trees together, ensuring that we dont
+  // connect trees that would go beyond the depth limit
+  return stemmedPaths.reduce(function(prev, current, i, arr) {
+    return doMerge(prev, current, true).tree;
+  }, [stemmedPaths.shift()]);
+}
+
+Pouch.merge = function(tree, path, depth) {
+  // Ugh, nicer way to not modify arguments in place?
+  tree = extend(true, [], tree);
+  path = extend(true, {}, path);
+  var newTree = doMerge(tree, path);
+  return {
+    tree: stem(newTree.tree, depth),
+    conflicts: newTree.conflicts
+  };
+};
+
+// We fetch all leafs of the revision tree, and sort them based on tree length
+// and whether they were deleted, undeleted documents with the longest revision
+// tree (most edits) win
+// The final sort algorithm is slightly documented in a sidebar here:
+// http://guide.couchdb.org/draft/conflicts.html
+Pouch.merge.winningRev = function(metadata) {
+  var leafs = [];
+  Pouch.merge.traverseRevTree(metadata.rev_tree,
+                              function(isLeaf, pos, id, something, opts) {
+    if (isLeaf) {
+      leafs.push({pos: pos, id: id, deleted: !!opts.deleted});
+    }
+  });
+  leafs.sort(function(a, b) {
+    if (a.deleted !== b.deleted) {
+      return a.deleted > b.deleted ? 1 : -1;
+    }
+    if (a.pos !== b.pos) {
+      return b.pos - a.pos;
+    }
+    return a.id < b.id ? 1 : -1;
+  });
+
+  return leafs[0].pos + '-' + leafs[0].id;
+};
+
+// Pretty much all below can be combined into a higher order function to
+// traverse revisions
+// The return value from the callback will be passed as context to all
+// children of that node
+Pouch.merge.traverseRevTree = function(revs, callback) {
+  var toVisit = [];
+
+  revs.forEach(function(tree) {
+    toVisit.push({pos: tree.pos, ids: tree.ids});
+  });
+  while (toVisit.length > 0) {
+    var node = toVisit.pop();
+    var pos = node.pos;
+    var tree = node.ids;
+    var newCtx = callback(tree[2].length === 0, pos, tree[0], node.ctx, tree[1]);
+    /*jshint loopfunc: true */
+    tree[2].forEach(function(branch) {
+      toVisit.push({pos: pos+1, ids: branch, ctx: newCtx});
+    });
+  }
+};
+
+Pouch.merge.collectLeaves = function(revs) {
+  var leaves = [];
+  Pouch.merge.traverseRevTree(revs, function(isLeaf, pos, id, acc, opts) {
+    if (isLeaf) {
+      leaves.unshift({rev: pos + "-" + id, pos: pos, opts: opts});
+    }
+  });
+  leaves.sort(function(a, b) {
+    return b.pos - a.pos;
+  });
+  leaves.map(function(leaf) { delete leaf.pos; });
+  return leaves;
+};
+
+// returns all conflicts that is leaves such that
+// 1. are not deleted and
+// 2. are different than winning revision
+Pouch.merge.collectConflicts = function(metadata) {
+  var win = Pouch.merge.winningRev(metadata);
+  var leaves = Pouch.merge.collectLeaves(metadata.rev_tree);
+  var conflicts = [];
+  leaves.forEach(function(leaf) {
+    if (leaf.rev !== win && !leaf.opts.deleted) {
+      conflicts.push(leaf.rev);
+    }
+  });
+  return conflicts;
+};
+
+
+/*globals call: false, Crypto: false*/
+
+'use strict';
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = Pouch;
+}
+
+// We create a basic promise so the caller can cancel the replication possibly
+// before we have actually started listening to changes etc
+var Promise = function() {
+  this.cancelled = false;
+  this.cancel = function() {
+    this.cancelled = true;
+  };
+};
+
+// The RequestManager ensures that only one database request is active at
+// at time, it ensures we dont max out simultaneous HTTP requests and makes
+// the replication process easier to reason about
+var RequestManager = function() {
+
+  var queue = [];
+  var api = {};
+  var processing = false;
+
+  // Add a new request to the queue, if we arent currently processing anything
+  // then process it immediately
+  api.enqueue = function(fun, args) {
+    queue.push({fun: fun, args: args});
+    if (!processing) {
+      api.process();
+    }
+  };
+
+  // Process the next request
+  api.process = function() {
+    if (processing || !queue.length) {
+      return;
+    }
+    processing = true;
+    var task = queue.shift();
+    task.fun.apply(null, task.args);
+  };
+
+  // We need to be notified whenever a request is complete to process
+  // the next request
+  api.notifyRequestComplete = function() {
+    processing = false;
+    api.process();
+  };
+
+  return api;
+};
+
+// TODO: check CouchDB's replication id generation, generate a unique id particular
+// to this replication
+var genReplicationId = function(src, target, opts) {
+  var filterFun = opts.filter ? opts.filter.toString() : '';
+  return '_local/' + Crypto.MD5(src.id() + target.id() + filterFun);
+};
+
+// A checkpoint lets us restart replications from when they were last cancelled
+var fetchCheckpoint = function(target, id, callback) {
+  target.get(id, function(err, doc) {
+    if (err && err.status === 404) {
+      callback(null, 0);
+    } else {
+      callback(null, doc.last_seq);
+    }
+  });
+};
+
+var writeCheckpoint = function(target, id, checkpoint, callback) {
+  var check = {
+    _id: id,
+    last_seq: checkpoint
+  };
+  target.get(check._id, function(err, doc) {
+    if (doc && doc._rev) {
+      check._rev = doc._rev;
+    }
+    target.put(check, function(err, doc) {
+      callback();
+    });
+  });
+};
+
+function replicate(src, target, opts, promise) {
+
+  var requests = new RequestManager();
+  var writeQueue = [];
+  var repId = genReplicationId(src, target, opts);
+  var results = [];
+  var completed = false;
+  var pending = 0;
+  var last_seq = 0;
+  var continuous = opts.continuous || false;
+  var doc_ids = opts.doc_ids;
+  var result = {
+    ok: true,
+    start_time: new Date(),
+    docs_read: 0,
+    docs_written: 0
+  };
+
+  function docsWritten(err, res, len) {
+    requests.notifyRequestComplete();
+    if (opts.onChange) {
+      for (var i = 0; i < len; i++) {
+        /*jshint validthis:true */
+        opts.onChange.apply(this, [result]);
+      }
+    }
+    pending -= len;
+    result.docs_written += len;
+    isCompleted();
+  }
+
+  function writeDocs() {
+    if (!writeQueue.length) {
+      return requests.notifyRequestComplete();
+    }
+    var len = writeQueue.length;
+    target.bulkDocs({docs: writeQueue}, {new_edits: false}, function(err, res) {
+      docsWritten(err, res, len);
+    });
+    writeQueue = [];
+  }
+
+  function eachRev(id, rev) {
+    src.get(id, {revs: true, rev: rev, attachments: true}, function(err, doc) {
+      requests.notifyRequestComplete();
+      writeQueue.push(doc);
+      requests.enqueue(writeDocs);
+    });
+  }
+
+  function onRevsDiff(err, diffs) {
+    requests.notifyRequestComplete();
+    if (err) {
+      if (continuous) {
+        promise.cancel();
+      }
+      call(opts.complete, err, null);
+      return;
+    }
+
+    // We already have the full document stored
+    if (Object.keys(diffs).length === 0) {
+      pending--;
+      isCompleted();
+      return;
+    }
+
+    var _enqueuer = function (rev) {
+        requests.enqueue(eachRev, [id, rev]);
+    };
+
+    for (var id in diffs) {
+      diffs[id].missing.forEach(_enqueuer);
+    }
+  }
+
+  function fetchRevsDiff(diff) {
+    target.revsDiff(diff, onRevsDiff);
+  }
+
+  function onChange(change) {
+    last_seq = change.seq;
+    results.push(change);
+    result.docs_read++;
+    pending++;
+    var diff = {};
+    diff[change.id] = change.changes.map(function(x) { return x.rev; });
+    requests.enqueue(fetchRevsDiff, [diff]);
+  }
+
+  function complete() {
+    completed = true;
+    isCompleted();
+  }
+
+  function isCompleted() {
+    if (completed && pending === 0) {
+      result.end_time = Date.now();
+      writeCheckpoint(target, repId, last_seq, function(err, res) {
+        call(opts.complete, err, result);
+      });
+    }
+  }
+
+  fetchCheckpoint(target, repId, function(err, checkpoint) {
+
+    if (err) {
+      return call(opts.complete, err);
+    }
+
+    last_seq = checkpoint;
+
+    // Was the replication cancelled by the caller before it had a chance
+    // to start. Shouldnt we be calling complete?
+    if (promise.cancelled) {
+      return;
+    }
+
+    var repOpts = {
+      continuous: continuous,
+      since: last_seq,
+      style: 'all_docs',
+      onChange: onChange,
+      complete: complete,
+      doc_ids: doc_ids
+    };
+
+    if (opts.filter) {
+      repOpts.filter = opts.filter;
+    }
+
+    if (opts.query_params) {
+      repOpts.query_params = opts.query_params;
+    }
+
+    var changes = src.changes(repOpts);
+
+    if (opts.continuous) {
+      promise.cancel = changes.cancel;
+    }
+  });
+
+}
+
+function toPouch(db, callback) {
+  if (typeof db === 'string') {
+    return new Pouch(db, callback);
+  }
+  callback(null, db);
+}
+
+Pouch.replicate = function(src, target, opts, callback) {
+  if (opts instanceof Function) {
+    callback = opts;
+    opts = {};
+  }
+  if (opts === undefined) {
+    opts = {};
+  }
+  opts.complete = callback;
+  var replicateRet = new Promise();
+  toPouch(src, function(err, src) {
+    if (err) {
+      return call(callback, err);
+    }
+    toPouch(target, function(err, target) {
+      if (err) {
+        return call(callback, err);
+      }
+      replicate(src, target, opts, replicateRet);
+    });
+  });
+  return replicateRet;
+};
+
+/*jshint strict: false */
+/*global request: true, Buffer: true, escape: true, $:true */
+/*global extend: true, Crypto: true */
+/*global chrome*/
+
+// Pretty dumb name for a function, just wraps callback calls so we dont
+// to if (callback) callback() everywhere
+var call = function(fun) {
+  var args = Array.prototype.slice.call(arguments, 1);
+  if (typeof fun === typeof Function) {
+    fun.apply(this, args);
+  }
+};
+
+// Wrapper for functions that call the bulkdocs api with a single doc,
+// if the first result is an error, return an error
+var yankError = function(callback) {
+  return function(err, results) {
+    if (err || results[0].error) {
+      call(callback, err || results[0]);
+    } else {
+      call(callback, null, results[0]);
+    }
+  };
+};
+
+var isLocalId = function(id) {
+  return (/^_local/).test(id);
+};
+
+var isAttachmentId = function(id) {
+  return (/\//.test(id) && !isLocalId(id) && !/^_design/.test(id));
+};
+
+// Determine id an ID is valid
+//   - invalid IDs begin with an underescore that does not begin '_design' or '_local'
+//   - any other string value is a valid id
+var isValidId = function(id) {
+  if (/^_/.test(id)) {
+    return (/^_(design|local)/).test(id);
+  }
+  return true;
+};
+
+// List of top level reserved words for doc
+var reservedWords = [
+  '_id',
+  '_rev',
+  '_attachments',
+  '_deleted',
+  '_revisions',
+  '_revs_info',
+  '_conflicts',
+  '_deleted_conflicts',
+  '_local_seq',
+  '_rev_tree'
+];
+
+// Preprocess documents, parse their revisions, assign an id and a
+// revision for new writes that are missing them, etc
+var parseDoc = function(doc, newEdits) {
+  var error = null;
+  var nRevNum;
+  var newRevId;
+  var revInfo;
+  var opts = {status: 'available'};
+  if (doc._deleted) {
+    opts.deleted = true;
+  }
+
+  if (newEdits) {
+    if (!doc._id) {
+      doc._id = Pouch.uuid();
+    }
+    newRevId = Pouch.uuid({length: 32, radix: 16}).toLowerCase();
+    if (doc._rev) {
+      revInfo = /^(\d+)-(.+)$/.exec(doc._rev);
+      if (!revInfo) {
+        throw "invalid value for property '_rev'";
+      }
+      doc._rev_tree = [{
+        pos: parseInt(revInfo[1], 10),
+        ids: [revInfo[2], {status: 'missing'}, [[newRevId, opts, []]]]
+      }];
+      nRevNum = parseInt(revInfo[1], 10) + 1;
+    } else {
+      doc._rev_tree = [{
+        pos: 1,
+        ids : [newRevId, opts, []]
+      }];
+      nRevNum = 1;
+    }
+  } else {
+    if (doc._revisions) {
+      doc._rev_tree = [{
+        pos: doc._revisions.start - doc._revisions.ids.length + 1,
+        ids: doc._revisions.ids.reduce(function(acc, x) {
+          if (acc === null) {
+            return [x, opts, []];
+          } else {
+            return [x, {status: 'missing'}, [acc]];
+          }
+        }, null)
+      }];
+      nRevNum = doc._revisions.start;
+      newRevId = doc._revisions.ids[0];
+    }
+    if (!doc._rev_tree) {
+      revInfo = /^(\d+)-(.+)$/.exec(doc._rev);
+      if (!revInfo) {
+        return Pouch.Errors.BAD_ARG;
+      }
+      nRevNum = parseInt(revInfo[1], 10);
+      newRevId = revInfo[2];
+      doc._rev_tree = [{
+        pos: parseInt(revInfo[1], 10),
+        ids: [revInfo[2], opts, []]
+      }];
+    }
+  }
+
+  if (typeof doc._id !== 'string') {
+    error = Pouch.Errors.INVALID_ID;
+  }
+  else if (!isValidId(doc._id)) {
+    error = Pouch.Errors.RESERVED_ID;
+  }
+
+  for (var key in doc) {
+    if (doc.hasOwnProperty(key) && key[0] === '_' && reservedWords.indexOf(key) === -1) {
+      error = extend({}, Pouch.Errors.DOC_VALIDATION);
+      error.reason += ': ' + key;
+    }
+  }
+
+  doc._id = decodeURIComponent(doc._id);
+  doc._rev = [nRevNum, newRevId].join('-');
+
+  if (error) {
+    return error;
+  }
+
+  return Object.keys(doc).reduce(function(acc, key) {
+    if (/^_/.test(key) && key !== '_attachments') {
+      acc.metadata[key.slice(1)] = doc[key];
+    } else {
+      acc.data[key] = doc[key];
+    }
+    return acc;
+  }, {metadata : {}, data : {}});
+};
+
+var compareRevs = function(a, b) {
+  // Sort by id
+  if (a.id !== b.id) {
+    return (a.id < b.id ? -1 : 1);
+  }
+  // Then by deleted
+  if (a.deleted ^ b.deleted) {
+    return (a.deleted ? -1 : 1);
+  }
+  // Then by rev id
+  if (a.rev_tree[0].pos === b.rev_tree[0].pos) {
+    return (a.rev_tree[0].ids < b.rev_tree[0].ids ? -1 : 1);
+  }
+  // Then by depth of edits
+  return (a.rev_tree[0].start < b.rev_tree[0].start ? -1 : 1);
+};
+
+
+// for every node in a revision tree computes its distance from the closest
+// leaf
+var computeHeight = function(revs) {
+  var height = {};
+  var edges = [];
+  Pouch.merge.traverseRevTree(revs, function(isLeaf, pos, id, prnt) {
+    var rev = pos + "-" + id;
+    if (isLeaf) {
+      height[rev] = 0;
+    }
+    if (prnt !== undefined) {
+      edges.push({from: prnt, to: rev});
+    }
+    return rev;
+  });
+
+  edges.reverse();
+  edges.forEach(function(edge) {
+    if (height[edge.from] === undefined) {
+      height[edge.from] = 1 + height[edge.to];
+    } else {
+      height[edge.from] = Math.min(height[edge.from], 1 + height[edge.to]);
+    }
+  });
+  return height;
+};
+
+// returns first element of arr satisfying callback predicate
+var arrayFirst = function(arr, callback) {
+  for (var i = 0; i < arr.length; i++) {
+    if (callback(arr[i], i) === true) {
+      return arr[i];
+    }
+  }
+  return false;
+};
+
+var filterChange = function(opts) {
+  return function(change) {
+    var req = {};
+    req.query = opts.query_params;
+    if (opts.filter && !opts.filter.call(this, change.doc, req)) {
+      return false;
+    }
+    if (opts.doc_ids && opts.doc_ids.indexOf(change.id) !== -1) {
+      return false;
+    }
+    if (!opts.include_docs) {
+      delete change.doc;
+    }
+    return true;
+  };
+};
+
+var processChanges = function(opts, changes, last_seq) {
+  // TODO: we should try to filter and limit as soon as possible
+  changes = changes.filter(filterChange(opts));
+  if (opts.limit) {
+    if (opts.limit < changes.length) {
+      changes.length = opts.limit;
+    }
+  }
+  changes.forEach(function(change){
+    call(opts.onChange, change);
+  });
+  call(opts.complete, null, {results: changes, last_seq: last_seq});
+};
+
+var rootToLeaf = function(tree) {
+  var paths = [];
+  Pouch.merge.traverseRevTree(tree, function(isLeaf, pos, id, history, opts) {
+    history = history ? history.slice(0) : [];
+    history.push({id: id, opts: opts});
+    if (isLeaf) {
+      var rootPos = pos + 1 - history.length;
+      paths.unshift({pos: rootPos, ids: history});
+    }
+    return history;
+  });
+  return paths;
+};
+
+// check if a specific revision of a doc has been deleted
+//  - metadata: the metadata object from the doc store
+//  - rev: (optional) the revision to check. defaults to winning revision
+var isDeleted = function(metadata, rev) {
+  if (!rev) {
+    rev = Pouch.merge.winningRev(metadata);
+  }
+  if (rev.indexOf('-') >= 0) {
+    rev = rev.split('-')[1];
+  }
+  var deleted = false;
+  Pouch.merge.traverseRevTree(metadata.rev_tree, function(isLeaf, pos, id, acc, opts) {
+    if (id === rev) {
+      deleted = !!opts.deleted;
+    }
+  });
+
+  return deleted;
+};
+
+var isChromeApp = function(){
+  return (typeof chrome !== "undefined" && typeof chrome.storage !== "undefined" && typeof chrome.storage.local !== "undefined");
+};
+
+var isCordova = function(){
+  return (typeof cordova !== "undefined" || typeof PhoneGap !== "undefined" || typeof phonegap !== "undefined");
+};
+
+if (typeof module !== 'undefined' && module.exports) {
+  // use node.js's crypto library instead of the Crypto object created by deps/uuid.js
+  var crypto = require('crypto');
+  var Crypto = {
+    MD5: function(str) {
+      return crypto.createHash('md5').update(str).digest('hex');
+    }
+  };
+  var extend = require('./deps/extend');
+  var ajax = require('./deps/ajax');
+
+  request = require('request');
+  _ = require('underscore');
+  $ = _;
+
+  module.exports = {
+    Crypto: Crypto,
+    call: call,
+    yankError: yankError,
+    isLocalId: isLocalId,
+    isAttachmentId: isAttachmentId,
+    parseDoc: parseDoc,
+    isDeleted: isDeleted,
+    compareRevs: compareRevs,
+    computeHeight: computeHeight,
+    arrayFirst: arrayFirst,
+    filterChange: filterChange,
+    processChanges: processChanges,
+    atob: function(str) {
+      var base64 = new Buffer(str, 'base64');
+      // Node.js will just skip the characters it can't encode instead of
+      // throwing and exception
+      if (base64.toString('base64') !== str) {
+        throw("Cannot base64 encode full string");
+      }
+      return base64.toString('binary');
+    },
+    btoa: function(str) {
+      return new Buffer(str, 'binary').toString('base64');
+    },
+    extend: extend,
+    ajax: ajax,
+    rootToLeaf: rootToLeaf,
+    isChromeApp: isChromeApp,
+    isCordova: isCordova
+  };
+}
+
+var Changes = function() {
+
+  var api = {};
+  var listeners = {};
+
+  if (isChromeApp()){
+    chrome.storage.onChanged.addListener(function(e){
+      api.notify(e.db_name.newValue);//object only has oldValue, newValue members
+    });
+  }
+  else {
+    window.addEventListener("storage", function(e) {
+      api.notify(e.key);
+    });
+  }
+
+  api.addListener = function(db_name, id, db, opts) {
+    if (!listeners[db_name]) {
+      listeners[db_name] = {};
+    }
+    listeners[db_name][id] = {
+      db: db,
+      opts: opts
+    };
+  };
+
+  api.removeListener = function(db_name, id) {
+    delete listeners[db_name][id];
+  };
+
+  api.clearListeners = function(db_name) {
+    delete listeners[db_name];
+  };
+
+  api.notifyLocalWindows = function(db_name){
+    //do a useless change on a storage thing
+    //in order to get other windows's listeners to activate
+    if (!isChromeApp()){
+      localStorage[db_name] = (localStorage[db_name] === "a") ? "b" : "a";
+    } else {
+      chrome.storage.local.set({db_name: db_name});
+    }
+  };
+
+  api.notify = function(db_name) {
+    if (!listeners[db_name]) { return; }
+
+    Object.keys(listeners[db_name]).forEach(function (i) {
+      var opts = listeners[db_name][i].opts;
+      listeners[db_name][i].db.changes({
+        include_docs: opts.include_docs,
+        conflicts: opts.conflicts,
+        continuous: false,
+        descending: false,
+        filter: opts.filter,
+        since: opts.since,
+        query_params: opts.query_params,
+        onChange: function(c) {
+          if (c.seq > opts.since && !opts.cancelled) {
+            opts.since = c.seq;
+            call(opts.onChange, c);
+          }
+        }
+      });
+    });
+  };
+
+  return api;
+};
+
+/*globals Pouch: true, yankError: false, extend: false, call: false, parseDocId: false, traverseRevTree: false */
+/*globals arrayFirst: false, rootToLeaf: false, computeHeight: false */
+/*globals cordova, isCordova */
+
+"use strict";
+
+/*
+ * A generic pouch adapter
+ */
+var PouchAdapter = function(opts, callback) {
+
+  var api = {};
+
+  var customApi = Pouch.adapters[opts.adapter](opts, function(err, db) {
+    if (err) {
+      if (callback) {
+        callback(err);
+      }
+      return;
+    }
+
+    for (var j in api) {
+      if (!db.hasOwnProperty(j)) {
+        db[j] = api[j];
+      }
+    }
+
+    // Don't call Pouch.open for ALL_DBS
+    // Pouch.open saves the db's name into ALL_DBS
+    if (opts.name === Pouch.prefix + Pouch.ALL_DBS) {
+      callback(err, db);
+    } else {
+      Pouch.open(opts, function(err) {
+        callback(err, db);
+      });
+    }
+  });
+
+  var auto_compaction = (opts.auto_compaction === true);
+
+  // wraps a callback with a function that runs compaction after each edit
+  var autoCompact = function(callback) {
+    if (!auto_compaction) {
+      return callback;
+    }
+    return function(err, res) {
+      if (err) {
+        call(callback, err);
+      } else {
+        var count = res.length;
+        var decCount = function() {
+          count--;
+          if (!count) {
+            call(callback, null, res);
+          }
+        };
+        res.forEach(function(doc) {
+          if (doc.ok) {
+            // TODO: we need better error handling
+            compactDocument(doc.id, 1, decCount);
+          } else {
+            decCount();
+          }
+        });
+      }
+    };
+  };
+
+  api.post = function (doc, opts, callback) {
+    if (typeof opts === 'function') {
+      callback = opts;
+      opts = {};
+    }
+    if (typeof doc !== 'object' || Array.isArray(doc)) {
+      return call(callback, Pouch.Errors.NOT_AN_OBJECT);
+    }
+    return customApi.bulkDocs({docs: [doc]}, opts,
+        autoCompact(yankError(callback)));
+  };
+
+  api.put = function(doc, opts, callback) {
+    if (typeof opts === 'function') {
+      callback = opts;
+      opts = {};
+    }
+    if (typeof doc !== 'object') {
+      return call(callback, Pouch.Errors.NOT_AN_OBJECT);
+    }
+    if (!('_id' in doc)) {
+      return call(callback, Pouch.Errors.MISSING_ID);
+    }
+    return customApi.bulkDocs({docs: [doc]}, opts,
+        autoCompact(yankError(callback)));
+  };
+
+  api.putAttachment = function (docId, attachmentId, rev, blob, type, callback) {
+    if (typeof type === 'function') {
+      callback = type;
+      type = blob;
+      blob = rev;
+      rev = null;
+    }
+    if (typeof type === 'undefined') {
+      type = blob;
+      blob = rev;
+      rev = null;
+    }
+
+    function createAttachment(doc) {
+      doc._attachments = doc._attachments || {};
+      doc._attachments[attachmentId] = {
+        content_type: type,
+        data: blob
+      };
+      api.put(doc, callback);
+    }
+
+    api.get(docId, function(err, doc) {
+      // create new doc
+      if (err && err.error === Pouch.Errors.MISSING_DOC.error) {
+        createAttachment({_id: docId});
+        return;
+      }
+      if (err) {
+        call(callback, err);
+        return;
+      }
+
+      if (doc._rev !== rev) {
+        call(callback, Pouch.Errors.REV_CONFLICT);
+        return;
+      }
+
+      createAttachment(doc);
+    });
+  };
+
+  api.removeAttachment = function (docId, attachmentId, rev, callback) {
+    api.get(docId, function(err, obj) {
+      if (err) {
+        call(callback, err);
+        return;
+      }
+      if (obj._rev !== rev) {
+        call(callback, Pouch.Errors.REV_CONFLICT);
+        return;
+      }
+      if (!obj._attachments) {
+        return call(callback, null);
+      }
+      delete obj._attachments[attachmentId];
+      if (Object.keys(obj._attachments).length === 0){
+        delete obj._attachments;
+      }
+      api.put(obj, callback);
+    });
+  };
+
+  api.remove = function (doc, opts, callback) {
+    if (typeof opts === 'function') {
+      callback = opts;
+      opts = {};
+    }
+    if (opts === undefined) {
+      opts = {};
+    }
+    opts.was_delete = true;
+    var newDoc = {_id: doc._id, _rev: doc._rev};
+    newDoc._deleted = true;
+    return customApi.bulkDocs({docs: [newDoc]}, opts, yankError(callback));
+  };
+
+  api.revsDiff = function (req, opts, callback) {
+    if (typeof opts === 'function') {
+      callback = opts;
+      opts = {};
+    }
+    var ids = Object.keys(req);
+    var count = 0;
+    var missing = {};
+
+    function readDoc(err, doc, id) {
+      req[id].map(function(revId) {
+        var matches = function(x) { return x.rev !== revId; };
+        if (!doc || doc._revs_info.every(matches)) {
+          if (!missing[id]) {
+            missing[id] = {missing: []};
+          }
+          missing[id].missing.push(revId);
+        }
+      });
+
+      if (++count === ids.length) {
+        return call(callback, null, missing);
+      }
+    }
+
+    ids.map(function(id) {
+      api.get(id, {revs_info: true}, function(err, doc) {
+        readDoc(err, doc, id);
+      });
+    });
+  };
+
+  // compact one document and fire callback
+  // by compacting we mean removing all revisions which
+  // are further from the leaf in revision tree than max_height
+  var compactDocument = function(docId, max_height, callback) {
+    customApi._getRevisionTree(docId, function(err, rev_tree){
+      if (err) {
+        return call(callback);
+      }
+      var height = computeHeight(rev_tree);
+      var candidates = [];
+      var revs = [];
+      Object.keys(height).forEach(function(rev) {
+        if (height[rev] > max_height) {
+          candidates.push(rev);
+        }
+      });
+
+      Pouch.merge.traverseRevTree(rev_tree, function(isLeaf, pos, revHash, ctx, opts) {
+        var rev = pos + '-' + revHash;
+        if (opts.status === 'available' && candidates.indexOf(rev) !== -1) {
+          opts.status = 'missing';
+          revs.push(rev);
+        }
+      });
+      customApi._doCompaction(docId, rev_tree, revs, callback);
+    });
+  };
+
+  // compact the whole database using single document
+  // compaction
+  api.compact = function(callback) {
+    api.changes({complete: function(err, res) {
+      if (err) {
+        call(callback); // TODO: silently fail
+        return;
+      }
+      var count = res.results.length;
+      if (!count) {
+        call(callback);
+        return;
+      }
+      res.results.forEach(function(row) {
+        compactDocument(row.id, 0, function() {
+          count--;
+          if (!count) {
+            call(callback);
+          }
+        });
+      });
+    }});
+  };
+
+  /* Begin api wrappers. Specific functionality to storage belongs in the _[method] */
+  api.get = function (id, opts, callback) {
+    if (!api.taskqueue.ready()) {
+      api.taskqueue.addTask('get', arguments);
+      return;
+    }
+    if (typeof opts === 'function') {
+      callback = opts;
+      opts = {};
+    }
+
+    var leaves = [];
+    function finishOpenRevs() {
+      var result = [];
+      var count = leaves.length;
+      if (!count) {
+        return call(callback, null, result);
+      }
+      // order with open_revs is unspecified
+      leaves.forEach(function(leaf){
+        api.get(id, {rev: leaf, revs: opts.revs}, function(err, doc){
+          if (!err) {
+            result.push({ok: doc});
+          } else {
+            result.push({missing: leaf});
+          }
+          count--;
+          if(!count) {
+            call(callback, null, result);
+          }
+        });
+      });
+    }
+
+    if (opts.open_revs) {
+      if (opts.open_revs === "all") {
+        customApi._getRevisionTree(id, function(err, rev_tree){
+          if (err) {
+            // if there's no such document we should treat this
+            // situation the same way as if revision tree was empty
+            rev_tree = [];
+          }
+          leaves = Pouch.merge.collectLeaves(rev_tree).map(function(leaf){
+            return leaf.rev;
+          });
+          finishOpenRevs();
+        });
+      } else {
+        if (Array.isArray(opts.open_revs)) {
+          leaves = opts.open_revs;
+          for (var i = 0; i < leaves.length; i++) {
+            var l = leaves[i];
+            // looks like it's the only thing couchdb checks
+            if (!(typeof(l) === "string" && /^\d+-/.test(l))) {
+              return call(callback, Pouch.error(Pouch.Errors.BAD_REQUEST,
+                "Invalid rev format" ));
+            }
+          }
+          finishOpenRevs();
+        } else {
+          return call(callback, Pouch.error(Pouch.Errors.UNKNOWN_ERROR,
+            'function_clause'));
+        }
+      }
+      return; // open_revs does not like other options
+    }
+
+    return customApi._get(id, opts, function(err, result) {
+      if (err) {
+        return call(callback, err);
+      }
+
+      var doc = result.doc;
+      var metadata = result.metadata;
+      var ctx = result.ctx;
+
+      if (opts.conflicts) {
+        var conflicts = Pouch.merge.collectConflicts(metadata);
+        if (conflicts.length) {
+          doc._conflicts = conflicts;
+        }
+      }
+
+      if (opts.revs || opts.revs_info) {
+        var paths = rootToLeaf(metadata.rev_tree);
+        var path = arrayFirst(paths, function(arr) {
+          return arr.ids.map(function(x) { return x.id; })
+            .indexOf(doc._rev.split('-')[1]) !== -1;
+        });
+
+        path.ids.splice(path.ids.map(function(x) {return x.id;})
+                        .indexOf(doc._rev.split('-')[1]) + 1);
+        path.ids.reverse();
+
+        if (opts.revs) {
+          doc._revisions = {
+            start: (path.pos + path.ids.length) - 1,
+            ids: path.ids.map(function(rev) {
+              return rev.id;
+            })
+          };
+        }
+        if (opts.revs_info) {
+          var pos =  path.pos + path.ids.length;
+          doc._revs_info = path.ids.map(function(rev) {
+            pos--;
+            return {
+              rev: pos + '-' + rev.id,
+              status: rev.opts.status
+            };
+          });
+        }
+      }
+
+      if (opts.local_seq) {
+        doc._local_seq = result.metadata.seq;
+      }
+
+      if (opts.attachments && doc._attachments) {
+        var attachments = doc._attachments;
+        var count = Object.keys(attachments).length;
+        if (count === 0) {
+          return call(callback, null, doc);
+        }
+        Object.keys(attachments).forEach(function(key) {
+          customApi._getAttachment(attachments[key], {encode: true, ctx: ctx}, function(err, data) {
+            doc._attachments[key].data = data;
+            if (!--count){
+              call(callback, null, doc);
+            }
+          });
+        });
+      } else {
+        if (doc._attachments){
+          for (var key in doc._attachments) {
+            doc._attachments[key].stub = true;
+          }
+        }
+        call(callback, null, doc);
+      }
+    });
+  };
+
+  api.getAttachment = function(docId, attachmentId, opts, callback) {
+    if (opts instanceof Function) {
+      callback = opts;
+      opts = {};
+    }
+    customApi._get(docId, opts, function(err, res) {
+      if (err) {
+        return call(callback, err);
+      }
+      if (res.doc._attachments && res.doc._attachments[attachmentId]) {
+        opts.ctx = res.ctx;
+        customApi._getAttachment(res.doc._attachments[attachmentId], opts, callback);
+      } else {
+        return call(callback, Pouch.Errors.MISSING_DOC);
+      }
+    });
+  };
+
+  api.allDocs = function(opts, callback) {
+    if (!api.taskqueue.ready()) {
+      api.taskqueue.addTask('allDocs', arguments);
+      return;
+    }
+    if (typeof opts === 'function') {
+      callback = opts;
+      opts = {};
+    }
+    if ('keys' in opts) {
+      if ('startkey' in opts) {
+        call(callback, Pouch.error(Pouch.Errors.QUERY_PARSE_ERROR,
+          'Query parameter `start_key` is not compatible with multi-get'
+        ));
+        return;
+      }
+      if ('endkey' in opts) {
+        call(callback, Pouch.error(Pouch.Errors.QUERY_PARSE_ERROR,
+          'Query parameter `end_key` is not compatible with multi-get'
+        ));
+        return;
+      }
+    }
+
+    return customApi._allDocs(opts, callback);
+  };
+
+  api.changes = function(opts) {
+    if (!api.taskqueue.ready()) {
+      api.taskqueue.addTask('changes', arguments);
+      return;
+    }
+    opts = extend(true, {}, opts);
+
+    if (!opts.since) {
+      opts.since = 0;
+    }
+
+    if (!('descending' in opts)) {
+      opts.descending = false;
+    }
+
+    // 0 and 1 should return 1 document
+    opts.limit = opts.limit === 0 ? 1 : opts.limit;
+    return customApi._changes(opts);
+  };
+
+  api.close = function(callback) {
+    if (!api.taskqueue.ready()) {
+      api.taskqueue.addTask('close', arguments);
+      return;
+    }
+    return customApi._close(callback);
+  };
+
+  api.info = function(callback) {
+    if (!api.taskqueue.ready()) {
+      api.taskqueue.addTask('info', arguments);
+      return;
+    }
+    return customApi._info(callback);
+  };
+
+  api.id = function() {
+    return customApi._id();
+  };
+
+  api.type = function() {
+    return (typeof customApi._type === 'function') ? customApi._type() : opts.adapter;
+  };
+
+  api.bulkDocs = function(req, opts, callback) {
+    if (!api.taskqueue.ready()) {
+      api.taskqueue.addTask('bulkDocs', arguments);
+      return;
+    }
+    if (typeof opts === 'function') {
+      callback = opts;
+      opts = {};
+    }
+    if (!opts) {
+      opts = {};
+    } else {
+      opts = extend(true, {}, opts);
+    }
+
+    if (!req || !req.docs || req.docs.length < 1) {
+      return call(callback, Pouch.Errors.MISSING_BULK_DOCS);
+    }
+
+    if (!Array.isArray(req.docs)) {
+      return call(callback, Pouch.Errors.QUERY_PARSE_ERROR);
+    }
+
+    for (var i = 0; i < req.docs.length; ++i) {
+      if (typeof req.docs[i] !== 'object' || Array.isArray(req.docs[i])) {
+        return call(callback, Pouch.Errors.NOT_AN_OBJECT);
+      }
+    }
+
+    req = extend(true, {}, req);
+    if (!('new_edits' in opts)) {
+      opts.new_edits = true;
+    }
+
+    return customApi._bulkDocs(req, opts, autoCompact(callback));
+  };
+
+  /* End Wrappers */
+  var taskqueue = {};
+
+  taskqueue.ready = false;
+  taskqueue.queue = [];
+
+  api.taskqueue = {};
+
+  api.taskqueue.execute = function (db) {
+    if (taskqueue.ready) {
+      taskqueue.queue.forEach(function(d) {
+        db[d.task].apply(null, d.parameters);
+      });
+    }
+  };
+
+  api.taskqueue.ready = function() {
+    if (arguments.length === 0) {
+      return taskqueue.ready;
+    }
+    taskqueue.ready = arguments[0];
+  };
+
+  api.taskqueue.addTask = function(task, parameters) {
+    taskqueue.queue.push({ task: task, parameters: parameters });
+  };
+
+  api.replicate = {};
+
+  api.replicate.from = function (url, opts, callback) {
+    if (typeof opts === 'function') {
+      callback = opts;
+      opts = {};
+    }
+    return Pouch.replicate(url, customApi, opts, callback);
+  };
+
+  api.replicate.to = function (dbName, opts, callback) {
+    if (typeof opts === 'function') {
+      callback = opts;
+      opts = {};
+    }
+    return Pouch.replicate(customApi, dbName, opts, callback);
+  };
+
+  for (var j in api) {
+    if (!customApi.hasOwnProperty(j)) {
+      customApi[j] = api[j];
+    }
+  }
+
+  // Http adapter can skip setup so we force the db to be ready and execute any jobs
+  if (opts.skipSetup) {
+    api.taskqueue.ready(true);
+    api.taskqueue.execute(api);
+  }
+
+  if (isCordova()){
+    //to inform websql adapter that we can use api
+    cordova.fireWindowEvent(opts.name + "_pouch", {});
+  }
+  return customApi;
+};
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = PouchAdapter;
+}
+
+/*globals Pouch: true, call: false, ajax: true */
+/*globals require: false, console: false */
+
+"use strict";
+
+var HTTP_TIMEOUT = 10000;
+
+// parseUri 1.2.2
+// (c) Steven Levithan <stevenlevithan.com>
+// MIT License
+function parseUri (str) {
+  var o = parseUri.options;
+  var m = o.parser[o.strictMode ? "strict" : "loose"].exec(str);
+  var uri = {};
+  var i = 14;
+
+  while (i--) {
+    uri[o.key[i]] = m[i] || "";
+  }
+
+  uri[o.q.name] = {};
+  uri[o.key[12]].replace(o.q.parser, function ($0, $1, $2) {
+    if ($1) {
+      uri[o.q.name][$1] = $2;
+    }
+  });
+
+  return uri;
+}
+
+function encodeDocId(id) {
+  if (/^_design/.test(id)) {
+    return id;
+  }
+  return encodeURIComponent(id);
+}
+
+parseUri.options = {
+  strictMode: false,
+  key: ["source","protocol","authority","userInfo","user","password","host",
+        "port","relative","path","directory","file","query","anchor"],
+  q:   {
+    name:   "queryKey",
+    parser: /(?:^|&)([^&=]*)=?([^&]*)/g
+  },
+  parser: {
+    strict: /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/,
+    loose:  /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/
+  }
+};
+
+// Get all the information you possibly can about the URI given by name and
+// return it as a suitable object.
+function getHost(name) {
+  // If the given name contains "http:"
+  if (/http(s?):/.test(name)) {
+    // Prase the URI into all its little bits
+    var uri = parseUri(name);
+
+    // Store the fact that it is a remote URI
+    uri.remote = true;
+
+    // Store the user and password as a separate auth object
+    if (uri.user || uri.password) {
+      uri.auth = {username: uri.user, password: uri.password};
+    }
+
+    // Split the path part of the URI into parts using '/' as the delimiter
+    // after removing any leading '/' and any trailing '/'
+    var parts = uri.path.replace(/(^\/|\/$)/g, '').split('/');
+
+    // Store the first part as the database name and remove it from the parts
+    // array
+    uri.db = parts.pop();
+
+    // Restore the path by joining all the remaining parts (all the parts
+    // except for the database name) with '/'s
+    uri.path = parts.join('/');
+
+    return uri;
+  }
+
+  // If the given name does not contain 'http:' then return a very basic object
+  // with no host, the current path, the given name as the database name and no
+  // username/password
+  return {host: '', path: '/', db: name, auth: false};
+}
+
+// Generate a URL with the host data given by opts and the given path
+function genDBUrl(opts, path) {
+  // If the host is remote
+  if (opts.remote) {
+    // If the host already has a path, then we need to have a path delimiter
+    // Otherwise, the path delimiter is the empty string
+    var pathDel = !opts.path ? '' : '/';
+
+    // Return the URL made up of all the host's information and the given path
+    return opts.protocol + '://' + opts.host + ':' + opts.port + '/' +
+      opts.path + pathDel + opts.db + '/' + path;
+  }
+
+  // If the host is not remote, then return the URL made up of just the
+  // database name and the given path
+  return '/' + opts.db + '/' + path;
+}
+
+// Generate a URL with the host data given by opts and the given path
+function genUrl(opts, path) {
+  if (opts.remote) {
+    // If the host already has a path, then we need to have a path delimiter
+    // Otherwise, the path delimiter is the empty string
+    var pathDel = !opts.path ? '' : '/';
+
+    // If the host already has a path, then we need to have a path delimiter
+    // Otherwise, the path delimiter is the empty string
+    return opts.protocol + '://' + opts.host + ':' + opts.port + '/' + opts.path + pathDel + path;
+  }
+
+  return '/' + path;
+}
+
+// Implements the PouchDB API for dealing with CouchDB instances over HTTP
+var HttpPouch = function(opts, callback) {
+
+  // Parse the URI given by opts.name into an easy-to-use object
+  var host = getHost(opts.name);
+  if (opts.auth) {
+    host.auth = opts.auth;
+  }
+
+  // Generate the database URL based on the host
+  var db_url = genDBUrl(host, '');
+
+  // The functions that will be publically available for HttpPouch
+  var api = {};
+
+  var uuids = {
+    list: [],
+    get: function(opts, callback) {
+      if (typeof opts === 'function') {
+        callback = opts;
+        opts = {count: 10};
+      }
+      var cb = function(err, body) {
+        if (err || !('uuids' in body)) {
+          call(callback, err || Pouch.Errors.UNKNOWN_ERROR);
+        } else {
+          uuids.list = uuids.list.concat(body.uuids);
+          call(callback, null, "OK");
+        }
+      };
+      var params = '?count=' + opts.count;
+      ajax({
+        auth: host.auth,
+        method: 'GET',
+        url: genUrl(host, '_uuids') + params
+      }, cb);
+    }
+  };
+
+  // Create a new CouchDB database based on the given opts
+  var createDB = function(){
+    ajax({auth: host.auth, method: 'PUT', url: db_url}, function(err, ret) {
+      // If we get an "Unauthorized" error
+      if (err && err.status === 401) {
+        // Test if the database already exists
+        ajax({auth: host.auth, method: 'HEAD', url: db_url}, function (err, ret) {
+          // If there is still an error
+          if (err) {
+            // Give the error to the callback to deal with
+            call(callback, err);
+          } else {
+            // Continue as if there had been no errors
+            call(callback, null, api);
+          }
+        });
+        // If there were no errros or if the only error is "Precondition Failed"
+        // (note: "Precondition Failed" occurs when we try to create a database
+        // that already exists)
+      } else if (!err || err.status === 412) {
+        // Continue as if there had been no errors
+        call(callback, null, api);
+      } else {
+        call(callback, Pouch.Errors.UNKNOWN_ERROR);
+      }
+    });
+  };
+  if (!opts.skipSetup) {
+    ajax({auth: host.auth, method: 'GET', url: db_url}, function(err, ret) {
+      //check if the db exists
+      if (err) {
+        if (err.status === 404) {
+          //if it doesn't, create it
+          createDB();
+        } else {
+          call(callback, err);
+        }
+      } else {
+        //go do stuff with the db
+        call(callback, null, api);
+        }
+    });
+  }
+
+  api.type = function() {
+    return 'http';
+  };
+
+  // The HttpPouch's ID is its URL
+  api.id = function() {
+    return genDBUrl(host, '');
+  };
+
+  api.request = function(options, callback) {
+    if (!api.taskqueue.ready()) {
+      api.taskqueue.addTask('request', arguments);
+      return;
+    }
+    options.auth = host.auth;
+    options.url = genDBUrl(host, options.url);
+    ajax(options, callback);
+  };
+
+  // Sends a POST request to the host calling the couchdb _compact function
+  //    version: The version of CouchDB it is running
+  api.compact = function(opts, callback) {
+    if (!api.taskqueue.ready()) {
+      api.taskqueue.addTask('compact', arguments);
+      return;
+    }
+    if (typeof opts === 'function') {
+      callback = opts;
+      opts = {};
+    }
+    ajax({
+      auth: host.auth,
+      url: genDBUrl(host, '_compact'),
+      method: 'POST'
+    }, function() {
+      function ping() {
+        api.info(function(err, res) {
+          if (!res.compact_running) {
+            call(callback, null);
+          } else {
+            setTimeout(ping, opts.interval || 200);
+          }
+        });
+      }
+      // Ping the http if it's finished compaction
+      if (typeof callback === "function") {
+        ping();
+      }
+    });
+  };
+
+  // Calls GET on the host, which gets back a JSON string containing
+  //    couchdb: A welcome string
+  //    version: The version of CouchDB it is running
+  api.info = function(callback) {
+    if (!api.taskqueue.ready()) {
+      api.taskqueue.addTask('info', arguments);
+      return;
+    }
+    ajax({
+      auth: host.auth,
+      method:'GET',
+      url: genDBUrl(host, '')
+    }, callback);
+  };
+
+  // Get the document with the given id from the database given by host.
+  // The id could be solely the _id in the database, or it may be a
+  // _design/ID or _local/ID path
+  api.get = function(id, opts, callback) {
+    if (!api.taskqueue.ready()) {
+      api.taskqueue.addTask('get', arguments);
+      return;
+    }
+    // If no options were given, set the callback to the second parameter
+    if (typeof opts === 'function') {
+      callback = opts;
+      opts = {};
+    }
+
+    if (opts.auto_encode === undefined) {
+      opts.auto_encode = true;
+    }
+
+    // List of parameters to add to the GET request
+    var params = [];
+
+    // If it exists, add the opts.revs value to the list of parameters.
+    // If revs=true then the resulting JSON will include a field
+    // _revisions containing an array of the revision IDs.
+    if (opts.revs) {
+      params.push('revs=true');
+    }
+
+    // If it exists, add the opts.revs_info value to the list of parameters.
+    // If revs_info=true then the resulting JSON will include the field
+    // _revs_info containing an array of objects in which each object
+    // representing an available revision.
+    if (opts.revs_info) {
+      params.push('revs_info=true');
+    }
+
+    if (opts.local_seq) {
+      params.push('local_seq=true');
+    }
+    // If it exists, add the opts.open_revs value to the list of parameters.
+    // If open_revs=all then the resulting JSON will include all the leaf
+    // revisions. If open_revs=["rev1", "rev2",...] then the resulting JSON
+    // will contain an array of objects containing data of all revisions
+    if (opts.open_revs) {
+      if (opts.open_revs !== "all") {
+        opts.open_revs = JSON.stringify(opts.open_revs);
+      }
+      params.push('open_revs=' + opts.open_revs);
+    }
+
+    // If it exists, add the opts.attachments value to the list of parameters.
+    // If attachments=true the resulting JSON will include the base64-encoded
+    // contents in the "data" property of each attachment.
+    if (opts.attachments) {
+      params.push('attachments=true');
+    }
+
+    // If it exists, add the opts.rev value to the list of parameters.
+    // If rev is given a revision number then get the specified revision.
+    if (opts.rev) {
+      params.push('rev=' + opts.rev);
+    }
+
+    // If it exists, add the opts.conflicts value to the list of parameters.
+    // If conflicts=true then the resulting JSON will include the field
+    // _conflicts containing all the conflicting revisions.
+    if (opts.conflicts) {
+      params.push('conflicts=' + opts.conflicts);
+    }
+
+    // Format the list of parameters into a valid URI query string
+    params = params.join('&');
+    params = params === '' ? '' : '?' + params;
+
+    if (opts.auto_encode) {
+      id = encodeDocId(id);
+    }
+
+    // Set the options for the ajax call
+    var options = {
+      auth: host.auth,
+      method: 'GET',
+      url: genDBUrl(host, id + params)
+    };
+
+    // If the given id contains at least one '/' and the part before the '/'
+    // is NOT "_design" and is NOT "_local"
+    // OR
+    // If the given id contains at least two '/' and the part before the first
+    // '/' is "_design".
+    // TODO This second condition seems strange since if parts[0] === '_design'
+    // then we already know that parts[0] !== '_local'.
+    var parts = id.split('/');
+    if ((parts.length > 1 && parts[0] !== '_design' && parts[0] !== '_local') ||
+        (parts.length > 2 && parts[0] === '_design' && parts[0] !== '_local')) {
+      // Binary is expected back from the server
+      options.binary = true;
+    }
+
+    // Get the document
+    ajax(options, function(err, doc, xhr) {
+      // If the document does not exist, send an error to the callback
+      if (err) {
+        return call(callback, err);
+      }
+
+      // Send the document to the callback
+      call(callback, null, doc, xhr);
+    });
+  };
+
+  // Delete the document given by doc from the database given by host.
+  api.remove = function(doc, opts, callback) {
+    if (!api.taskqueue.ready()) {
+      api.taskqueue.addTask('remove', arguments);
+      return;
+    }
+    // If no options were given, set the callback to be the second parameter
+    if (typeof opts === 'function') {
+      callback = opts;
+      opts = {};
+    }
+
+    // Delete the document
+    ajax({
+      auth: host.auth,
+      method:'DELETE',
+      url: genDBUrl(host, encodeDocId(doc._id)) + '?rev=' + doc._rev
+    }, callback);
+  };
+
+  // Get the attachment
+  api.getAttachment = function(docId, attachmentId, opts, callback) {
+    if (typeof opts === 'function') {
+      callback = opts;
+      opts = {};
+    }
+    if (opts.auto_encode === undefined) {
+      opts.auto_encode = true;
+    }
+    if (opts.auto_encode) {
+      docId = encodeDocId(docId);
+    }
+    opts.auto_encode = false;
+    api.get(docId + '/' + attachmentId, opts, callback);
+  };
+
+  // Remove the attachment given by the id and rev
+  api.removeAttachment = function(docId, attachmentId, rev, callback) {
+    if (!api.taskqueue.ready()) {
+      api.taskqueue.addTask('removeAttachment', arguments);
+      return;
+    }
+    ajax({
+      auth: host.auth,
+      method: 'DELETE',
+      url: genDBUrl(host, encodeDocId(docId) + '/' + attachmentId) + '?rev=' + rev
+    }, callback);
+  };
+
+  // Add the attachment given by blob and its contentType property
+  // to the document with the given id, the revision given by rev, and
+  // add it to the database given by host.
+  api.putAttachment = function(docId, attachmentId, rev, blob, type, callback) {
+    if (!api.taskqueue.ready()) {
+      api.taskqueue.addTask('putAttachment', arguments);
+      return;
+    }
+    if (typeof type === 'function') {
+      callback = type;
+      type = blob;
+      blob = rev;
+      rev = null;
+    }
+    if (typeof type === 'undefined') {
+      type = blob;
+      blob = rev;
+      rev = null;
+    }
+    var id = encodeDocId(docId) + '/' + attachmentId;
+    var url = genDBUrl(host, id);
+    if (rev) {
+      url += '?rev=' + rev;
+    }
+    // Add the attachment
+    ajax({
+      auth: host.auth,
+      method:'PUT',
+      url: url,
+      headers: {'Content-Type': type},
+      processData: false,
+      body: blob
+    }, callback);
+  };
+
+  // Add the document given by doc (in JSON string format) to the database
+  // given by host. This fails if the doc has no _id field.
+  api.put = function(doc, opts, callback) {
+    if (!api.taskqueue.ready()) {
+      api.taskqueue.addTask('put', arguments);
+      return;
+    }
+    // If no options were given, set the callback to be the second parameter
+    if (typeof opts === 'function') {
+      callback = opts;
+      opts = {};
+    }
+    if (typeof doc !== 'object') {
+      return call(callback, Pouch.Errors.NOT_AN_OBJECT);
+    }
+    if (!('_id' in doc)) {
+      return call(callback, Pouch.Errors.MISSING_ID);
+    }
+
+    // List of parameter to add to the PUT request
+    var params = [];
+
+    // If it exists, add the opts.new_edits value to the list of parameters.
+    // If new_edits = false then the database will NOT assign this document a
+    // new revision number
+    if (opts && typeof opts.new_edits !== 'undefined') {
+      params.push('new_edits=' + opts.new_edits);
+    }
+
+    // Format the list of parameters into a valid URI query string
+    params = params.join('&');
+    if (params !== '') {
+      params = '?' + params;
+    }
+
+    // Add the document
+    ajax({
+      auth: host.auth,
+      method: 'PUT',
+      url: genDBUrl(host, encodeDocId(doc._id)) + params,
+      body: doc
+    }, callback);
+  };
+
+  // Add the document given by doc (in JSON string format) to the database
+  // given by host. This does not assume that doc is a new document (i.e. does not
+  // have a _id or a _rev field.
+  api.post = function(doc, opts, callback) {
+    if (!api.taskqueue.ready()) {
+      api.taskqueue.addTask('post', arguments);
+      return;
+    }
+    // If no options were given, set the callback to be the second parameter
+    if (typeof opts === 'function') {
+      callback = opts;
+      opts = {};
+    }
+    if (typeof doc !== 'object') {
+      return call(callback, Pouch.Errors.NOT_AN_OBJECT);
+    }
+    if (! ("_id" in doc)) {
+      if (uuids.list.length > 0) {
+        doc._id = uuids.list.pop();
+        api.put(doc, opts, callback);
+      }else {
+        uuids.get(function(err, resp) {
+          if (err) {
+            return call(callback, Pouch.Errors.UNKNOWN_ERROR);
+          }
+          doc._id = uuids.list.pop();
+          api.put(doc, opts, callback);
+        });
+      }
+    } else {
+      api.put(doc, opts, callback);
+    }
+  };
+
+  // Update/create multiple documents given by req in the database
+  // given by host.
+  api.bulkDocs = function(req, opts, callback) {
+    if (!api.taskqueue.ready()) {
+      api.taskqueue.addTask('bulkDocs', arguments);
+      return;
+    }
+    // If no options were given, set the callback to be the second parameter
+    if (typeof opts === 'function') {
+      callback = opts;
+      opts = {};
+    }
+    if (!opts) {
+      opts = {};
+    }
+
+    // If opts.new_edits exists add it to the document data to be
+    // send to the database.
+    // If new_edits=false then it prevents the database from creating
+    // new revision numbers for the documents. Instead it just uses
+    // the old ones. This is used in database replication.
+    if (typeof opts.new_edits !== 'undefined') {
+      req.new_edits = opts.new_edits;
+    }
+
+    // Update/create the documents
+    ajax({
+      auth: host.auth,
+      method:'POST',
+      url: genDBUrl(host, '_bulk_docs'),
+      body: req
+    }, callback);
+  };
+
+  // Get a listing of the documents in the database given
+  // by host and ordered by increasing id.
+  api.allDocs = function(opts, callback) {
+    // If no options were given, set the callback to be the second parameter
+    if (!api.taskqueue.ready()) {
+      api.taskqueue.addTask('allDocs', arguments);
+      return;
+    }
+    if (typeof opts === 'function') {
+      callback = opts;
+      opts = {};
+    }
+
+    // List of parameters to add to the GET request
+    var params = [];
+    var body;
+    var method = 'GET';
+
+    // TODO I don't see conflicts as a valid parameter for a
+    // _all_docs request (see http://wiki.apache.org/couchdb/HTTP_Document_API#all_docs)
+    if (opts.conflicts) {
+      params.push('conflicts=true');
+    }
+
+    // If opts.descending is truthy add it to params
+    if (opts.descending) {
+      params.push('descending=true');
+    }
+
+    // If opts.include_docs exists, add the include_docs value to the
+    // list of parameters.
+    // If include_docs=true then include the associated document with each
+    // result.
+    if (opts.include_docs) {
+      params.push('include_docs=true');
+    }
+
+    // If opts.startkey exists, add the startkey value to the list of
+    // parameters.
+    // If startkey is given then the returned list of documents will
+    // start with the document whose id is startkey.
+    if (opts.startkey) {
+      params.push('startkey=' +
+                  encodeURIComponent(JSON.stringify(opts.startkey)));
+    }
+
+    // If opts.endkey exists, add the endkey value to the list of parameters.
+    // If endkey is given then the returned list of docuemnts will
+    // end with the document whose id is endkey.
+    if (opts.endkey) {
+      params.push('endkey=' + encodeURIComponent(JSON.stringify(opts.endkey)));
+    }
+
+    // If opts.limit exists, add the limit value to the parameter list.
+    if (opts.limit) {
+      params.push('limit=' + opts.limit);
+    }
+
+    // Format the list of parameters into a valid URI query string
+    params = params.join('&');
+    if (params !== '') {
+      params = '?' + params;
+    }
+
+    // If keys are supplied, issue a POST request to circumvent GET query string limits
+    // see http://wiki.apache.org/couchdb/HTTP_view_API#Querying_Options
+    if (typeof opts.keys !== 'undefined') {
+      method = 'POST';
+      body = JSON.stringify({keys:opts.keys});
+    }
+
+    // Get the document listing
+    ajax({
+      auth: host.auth,
+      method: method,
+      url: genDBUrl(host, '_all_docs' + params),
+      body: body
+    }, callback);
+  };
+
+  // Get a list of changes made to documents in the database given by host.
+  // TODO According to the README, there should be two other methods here,
+  // api.changes.addListener and api.changes.removeListener.
+  api.changes = function(opts) {
+
+    // We internally page the results of a changes request, this means
+    // if there is a large set of changes to be returned we can start
+    // processing them quicker instead of waiting on the entire
+    // set of changes to return and attempting to process them at once
+    var CHANGES_LIMIT = 25;
+
+    if (!api.taskqueue.ready()) {
+      api.taskqueue.addTask('changes', arguments);
+      return;
+    }
+
+    if (Pouch.DEBUG) {
+      console.log(db_url + ': Start Changes Feed: continuous=' + opts.continuous);
+    }
+
+    var params = {};
+    var limit = (typeof opts.limit !== 'undefined') ? opts.limit : false;
+    if (limit === 0) {
+      limit = 1;
+    }
+    //
+    var leftToFetch = limit;
+
+    if (opts.style) {
+      params.style = opts.style;
+    }
+
+    if (opts.include_docs || opts.filter && typeof opts.filter === 'function') {
+      params.include_docs = true;
+    }
+
+    if (opts.continuous) {
+      params.feed = 'longpoll';
+    }
+
+    if (opts.conflicts) {
+      params.conflicts = true;
+    }
+
+    if (opts.descending) {
+      params.descending = true;
+    }
+
+    if (opts.filter && typeof opts.filter === 'string') {
+      params.filter = opts.filter;
+    }
+
+    // If opts.query_params exists, pass it through to the changes request.
+    // These parameters may be used by the filter on the source database.
+    if (opts.query_params && typeof opts.query_params === 'object') {
+      for (var param_name in opts.query_params) {
+        if (opts.query_params.hasOwnProperty(param_name)) {
+          params[param_name] = opts.query_params[param_name];
+        }
+      }
+    }
+
+    var xhr;
+    var lastFetchedSeq;
+    var remoteLastSeq;
+
+    // Get all the changes starting wtih the one immediately after the
+    // sequence number given by since.
+    var fetch = function(since, callback) {
+
+      params.since = since;
+      params.limit = (!limit || leftToFetch > CHANGES_LIMIT) ?
+        CHANGES_LIMIT : leftToFetch;
+
+      var paramStr = '?' + Object.keys(params).map(function(k) {
+        return k + '=' + params[k];
+      }).join('&');
+
+      // Set the options for the ajax call
+      var xhrOpts = {
+        auth: host.auth, method:'GET',
+        url: genDBUrl(host, '_changes' + paramStr),
+        // _changes can take a long time to generate, especially when filtered
+        timeout: null
+      };
+      lastFetchedSeq = since;
+
+      if (opts.aborted) {
+        return;
+      }
+
+      // Get the changes
+      xhr = ajax(xhrOpts, callback);
+    };
+
+    // If opts.since exists, get all the changes from the sequence
+    // number given by opts.since. Otherwise, get all the changes
+    // from the sequence number 0.
+    var fetchTimeout = 10;
+    var fetchRetryCount = 0;
+
+    var fetched = function(err, res) {
+      // If the result of the ajax call (res) contains changes (res.results)
+      if (res && res.results) {
+        // For each change
+        var hasFilter = opts.filter && typeof opts.filter === 'function';
+        var req = {};
+        req.query = opts.query_params;
+        res.results = res.results.filter(function(c) {
+          leftToFetch--;
+          if (opts.aborted || hasFilter && !opts.filter.apply(this, [c.doc, req])) {
+            return false;
+          }
+          if (opts.doc_ids && opts.doc_ids.indexOf(c.id) !== -1) {
+            return false;
+          }
+          call(opts.onChange, c);
+          return true;
+        });
+      }
+
+      // The changes feed may have timed out with no results
+      // if so reuse last update sequence
+      if (res && res.last_seq) {
+        lastFetchedSeq = res.last_seq;
+      }
+
+      var finished = (limit && leftToFetch <= 0) ||
+        (!limit && lastFetchedSeq === remoteLastSeq) ||
+        (opts.descending && lastFetchedSeq !== 0);
+
+      if (opts.continuous || !finished) {
+        // Increase retry delay exponentially as long as errors persist
+        if (err) {
+          fetchRetryCount += 1;
+        } else {
+          fetchRetryCount = 0;
+        }
+        var timeoutMultiplier = 1 << fetchRetryCount;
+        var retryWait = fetchTimeout * timeoutMultiplier;
+        var maximumWait = opts.maximumWait || 30000;
+
+        if (retryWait > maximumWait) {
+          call(opts.complete, err || Pouch.Errors.UNKNOWN_ERROR, null);
+        }
+
+        // Queue a call to fetch again with the newest sequence number
+        setTimeout(function() { fetch(lastFetchedSeq, fetched); }, retryWait);
+      } else {
+        // We're done, call the callback
+        call(opts.complete, null, res);
+      }
+    };
+
+    // If we arent doing a continuous changes request we need to know
+    // the current update_seq so we know when to stop processing the
+    // changes
+    if (opts.continuous) {
+      fetch(opts.since || 0, fetched);
+    } else {
+      api.info(function(err, res) {
+        remoteLastSeq = res.update_seq;
+        fetch(opts.since || 0, fetched);
+      });
+    }
+
+    // Return a method to cancel this method from processing any more
+    return {
+      cancel: function() {
+        if (Pouch.DEBUG) {
+          console.log(db_url + ': Cancel Changes Feed');
+        }
+        opts.aborted = true;
+        xhr.abort();
+      }
+    };
+  };
+
+  // Given a set of document/revision IDs (given by req), tets the subset of
+  // those that do NOT correspond to revisions stored in the database.
+  // See http://wiki.apache.org/couchdb/HttpPostRevsDiff
+  api.revsDiff = function(req, opts, callback) {
+    if (!api.taskqueue.ready()) {
+      api.taskqueue.addTask('revsDiff', arguments);
+      return;
+    }
+    // If no options were given, set the callback to be the second parameter
+    if (typeof opts === 'function') {
+      callback = opts;
+      opts = {};
+    }
+
+    // Get the missing document/revision IDs
+    ajax({
+      auth: host.auth,
+      method:'POST',
+      url: genDBUrl(host, '_revs_diff'),
+      body: req
+    }, function(err, res) {
+      call(callback, err, res);
+    });
+  };
+
+  api.close = function(callback) {
+    if (!api.taskqueue.ready()) {
+      api.taskqueue.addTask('close', arguments);
+      return;
+    }
+    call(callback, null);
+  };
+
+  return api;
+};
+
+// Delete the HttpPouch specified by the given name.
+HttpPouch.destroy = function(name, callback) {
+  var host = getHost(name);
+  ajax({auth: host.auth, method: 'DELETE', url: genDBUrl(host, '')}, callback);
+};
+
+// HttpPouch is a valid adapter.
+HttpPouch.valid = function() {
+  return true;
+};
+
+if (typeof module !== 'undefined' && module.exports) {
+  // running in node
+  var pouchdir = '../';
+  Pouch = require(pouchdir + 'pouch.js');
+  ajax = Pouch.utils.ajax;
+}
+
+// Set HttpPouch to be the adapter used with the http scheme.
+Pouch.adapter('http', HttpPouch);
+Pouch.adapter('https', HttpPouch);
+
+/*globals call: false, extend: false, parseDoc: false, Crypto: false */
+/*globals isLocalId: false, isDeleted: false, Changes: false, filterChange: false, processChanges: false */
+
+'use strict';
+
+// While most of the IDB behaviors match between implementations a
+// lot of the names still differ. This section tries to normalize the
+// different objects & methods.
+var indexedDB = window.indexedDB ||
+  window.mozIndexedDB ||
+  window.webkitIndexedDB;
+
+// still needed for R/W transactions in Android Chrome. follow MDN example:
+// https://developer.mozilla.org/en-US/docs/IndexedDB/IDBDatabase#transaction
+// note though that Chrome Canary fails on undefined READ_WRITE constants
+// on the native IDBTransaction object
+var IDBTransaction = (window.IDBTransaction && window.IDBTransaction.READ_WRITE) ?
+  window.IDBTransaction :
+  (window.webkitIDBTransaction && window.webkitIDBTransaction.READ_WRITE) ?
+    window.webkitIDBTransaction :
+    { READ_WRITE: 'readwrite' };
+
+var IDBKeyRange = window.IDBKeyRange ||
+  window.webkitIDBKeyRange;
+
+var idbError = function(callback) {
+  return function(event) {
+    call(callback, {
+      status: 500,
+      error: event.type,
+      reason: event.target
+    });
+  };
+};
+
+var IdbPouch = function(opts, callback) {
+
+  // IndexedDB requires a versioned database structure, this is going to make
+  // it hard to dynamically create object stores if we needed to for things
+  // like views
+  var POUCH_VERSION = 1;
+
+  // The object stores created for each database
+  // DOC_STORE stores the document meta data, its revision history and state
+  var DOC_STORE = 'document-store';
+  // BY_SEQ_STORE stores a particular version of a document, keyed by its
+  // sequence id
+  var BY_SEQ_STORE = 'by-sequence';
+  // Where we store attachments
+  var ATTACH_STORE = 'attach-store';
+  // Where we store meta data
+  var META_STORE = 'meta-store';
+  // Where we detect blob support
+  var DETECT_BLOB_SUPPORT_STORE = 'detect-blob-support';
+
+
+  var name = opts.name;
+  var req = indexedDB.open(name, POUCH_VERSION);
+
+  if (Pouch.openReqList) {
+    Pouch.openReqList[name] = req;
+  }
+
+  var meta = {
+    id: 'meta-store',
+    updateSeq: 0
+  };
+
+  var blobSupport = null;
+
+  var instanceId = null;
+  var api = {};
+  var idb = null;
+
+  if (Pouch.DEBUG) {
+    console.log(name + ': Open Database');
+  }
+
+  req.onupgradeneeded = function(e) {
+    var db = e.target.result;
+    var currentVersion = e.oldVersion;
+    while (currentVersion !== e.newVersion) {
+      if (currentVersion === 0) {
+        createSchema(db);
+      }
+      currentVersion++;
+    }
+  };
+
+  function createSchema(db) {
+    db.createObjectStore(DOC_STORE, {keyPath : 'id'})
+      .createIndex('seq', 'seq', {unique: true});
+    db.createObjectStore(BY_SEQ_STORE, {autoIncrement : true})
+      .createIndex('_doc_id_rev', '_doc_id_rev', {unique: true});
+    db.createObjectStore(ATTACH_STORE, {keyPath: 'digest'});
+    db.createObjectStore(META_STORE, {keyPath: 'id', autoIncrement: false});
+    db.createObjectStore(DETECT_BLOB_SUPPORT_STORE);
+  }
+
+  // From http://stackoverflow.com/questions/14967647/encode-decode-image-with-base64-breaks-image (2013-04-21)
+  function fixBinary(bin) {
+    var length = bin.length;
+    var buf = new ArrayBuffer(length);
+    var arr = new Uint8Array(buf);
+    for (var i = 0; i < length; i++) {
+      arr[i] = bin.charCodeAt(i);
+    }
+    return buf;
+  }
+
+  req.onsuccess = function(e) {
+
+    idb = e.target.result;
+
+    var txn = idb.transaction([META_STORE, DETECT_BLOB_SUPPORT_STORE],
+                              IDBTransaction.READ_WRITE);
+
+    idb.onversionchange = function() {
+      idb.close();
+    };
+
+    // polyfill the new onupgradeneeded api for chrome. can get rid of when
+    // saucelabs moves to chrome 23
+    if (idb.setVersion && Number(idb.version) !== POUCH_VERSION) {
+      var versionReq = idb.setVersion(POUCH_VERSION);
+      versionReq.onsuccess = function(evt) {
+        function setVersionComplete() {
+          req.onsuccess(e);
+        }
+        evt.target.result.oncomplete = setVersionComplete;
+        req.onupgradeneeded(e);
+      };
+      return;
+    }
+
+    var req = txn.objectStore(META_STORE).get('meta-store');
+
+    req.onsuccess = function(e) {
+      var reqDBId,
+          result;
+
+      if (e.target.result) {
+        meta = e.target.result;
+      }
+
+      if (name + '_id' in meta) {
+        instanceId = meta[name + '_id'];
+      } else {
+        instanceId = Pouch.uuid();
+
+        meta[name + '_id'] = instanceId;
+        reqDBId = txn.objectStore(META_STORE).put(meta);
+      }
+
+      // detect blob support
+      try {
+        txn.objectStore(DETECT_BLOB_SUPPORT_STORE).put(new Blob(), "key");
+        blobSupport = true;
+      } catch (err) {
+        blobSupport = false;
+      } finally {
+        call(callback, null, api);
+      }
+    };
+  };
+
+  req.onerror = idbError(callback);
+
+  api.type = function() {
+    return 'idb';
+  };
+
+  // Each database needs a unique id so that we can store the sequence
+  // checkpoint without having other databases confuse itself.
+  api.id = function idb_id() {
+    return instanceId;
+  };
+
+  api._bulkDocs = function idb_bulkDocs(req, opts, callback) {
+    var newEdits = opts.new_edits;
+    var userDocs = req.docs;
+    // Parse the docs, give them a sequence number for the result
+    var docInfos = userDocs.map(function(doc, i) {
+      var newDoc = parseDoc(doc, newEdits);
+      newDoc._bulk_seq = i;
+      return newDoc;
+    });
+
+    var docInfoErrors = docInfos.filter(function(docInfo) {
+      return docInfo.error;
+    });
+    if (docInfoErrors.length) {
+      return call(callback, docInfoErrors[0]);
+    }
+
+    var results = [];
+
+    function processDocs() {
+      if (!docInfos.length) {
+        return;
+      }
+      var currentDoc = docInfos.shift();
+      var req = txn.objectStore(DOC_STORE).get(currentDoc.metadata.id);
+      req.onsuccess = function process_docRead(event) {
+        var oldDoc = event.target.result;
+        if (!oldDoc) {
+          insertDoc(currentDoc);
+        } else {
+          updateDoc(oldDoc, currentDoc);
+        }
+      };
+    }
+
+    function complete(event) {
+      var aresults = [];
+      results.sort(sortByBulkSeq);
+      results.forEach(function(result) {
+        delete result._bulk_seq;
+        if (result.error) {
+          aresults.push(result);
+          return;
+        }
+        var metadata = result.metadata;
+        var rev = Pouch.merge.winningRev(metadata);
+
+        aresults.push({
+          ok: true,
+          id: metadata.id,
+          rev: rev
+        });
+
+        if (isLocalId(metadata.id)) {
+          return;
+        }
+
+        IdbPouch.Changes.notify(name);
+        IdbPouch.Changes.notifyLocalWindows(name);
+      });
+      call(callback, null, aresults);
+    }
+
+    function preprocessAttachment(att, finish) {
+      if (att.stub) {
+        return finish();
+      }
+      if (typeof att.data === 'string') {
+        var data;
+        try {
+          data = atob(att.data);
+        } catch(e) {
+          return call(callback, Pouch.error(Pouch.Errors.BAD_ARG, "Attachments need to be base64 encoded"));
+        }
+        att.digest = 'md5-' + Crypto.MD5(data);
+        if (blobSupport) {
+          var type = att.content_type;
+          data = fixBinary(data);
+          att.data = new Blob([data], {type: type});
+        }
+        return finish();
+      }
+      var reader = new FileReader();
+      reader.onloadend = function(e) {
+        att.digest = 'md5-' + Crypto.MD5(this.result);
+        if (!blobSupport) {
+          att.data = btoa(this.result);
+        }
+        finish();
+      };
+      reader.readAsBinaryString(att.data);
+    }
+
+    function preprocessAttachments(callback) {
+      if (!docInfos.length) {
+        return callback();
+      }
+
+      var docv = 0;
+      docInfos.forEach(function(docInfo) {
+        var attachments = docInfo.data && docInfo.data._attachments ?
+          Object.keys(docInfo.data._attachments) : [];
+
+        if (!attachments.length) {
+          return done();
+        }
+
+        var recv = 0;
+        function attachmentProcessed() {
+          recv++;
+          if (recv === attachments.length) {
+            done();
+          }
+        }
+
+        for (var key in docInfo.data._attachments) {
+          preprocessAttachment(docInfo.data._attachments[key], attachmentProcessed);
+        }
+      });
+
+      function done() {
+        docv++;
+        if (docInfos.length === docv) {
+          callback();
+        }
+      }
+    }
+
+    function writeDoc(docInfo, callback) {
+      var err = null;
+      var recv = 0;
+      docInfo.data._id = docInfo.metadata.id;
+      docInfo.data._rev = docInfo.metadata.rev;
+
+      meta.updateSeq++;
+      var req = txn.objectStore(META_STORE).put(meta);
+
+      if (isDeleted(docInfo.metadata, docInfo.metadata.rev)) {
+        docInfo.data._deleted = true;
+      }
+
+      var attachments = docInfo.data._attachments ?
+        Object.keys(docInfo.data._attachments) : [];
+
+      function collectResults(attachmentErr) {
+        if (!err) {
+          if (attachmentErr) {
+            err = attachmentErr;
+            call(callback, err);
+          } else if (recv === attachments.length) {
+            finish();
+          }
+        }
+      }
+
+      function attachmentSaved(err) {
+        recv++;
+        collectResults(err);
+      }
+
+      for (var key in docInfo.data._attachments) {
+        if (!docInfo.data._attachments[key].stub) {
+          var data = docInfo.data._attachments[key].data;
+          delete docInfo.data._attachments[key].data;
+          var digest = docInfo.data._attachments[key].digest;
+          saveAttachment(docInfo, digest, data, attachmentSaved);
+        } else {
+          recv++;
+          collectResults();
+        }
+      }
+
+      function finish() {
+        docInfo.data._doc_id_rev = docInfo.data._id + "::" + docInfo.data._rev;
+        var dataReq = txn.objectStore(BY_SEQ_STORE).put(docInfo.data);
+        dataReq.onsuccess = function(e) {
+          if (Pouch.DEBUG) {
+            console.log(name + ': Wrote Document ', docInfo.metadata.id);
+          }
+          docInfo.metadata.seq = e.target.result;
+          // Current _rev is calculated from _rev_tree on read
+          delete docInfo.metadata.rev;
+          var metaDataReq = txn.objectStore(DOC_STORE).put(docInfo.metadata);
+          metaDataReq.onsuccess = function() {
+            results.push(docInfo);
+            call(callback);
+          };
+        };
+      }
+
+      if (!attachments.length) {
+        finish();
+      }
+    }
+
+    function updateDoc(oldDoc, docInfo) {
+      var merged = Pouch.merge(oldDoc.rev_tree, docInfo.metadata.rev_tree[0], 1000);
+      var wasPreviouslyDeleted = isDeleted(oldDoc);
+      var inConflict = (wasPreviouslyDeleted && isDeleted(docInfo.metadata)) ||
+        (!wasPreviouslyDeleted && newEdits && merged.conflicts !== 'new_leaf');
+
+      if (inConflict) {
+        results.push(makeErr(Pouch.Errors.REV_CONFLICT, docInfo._bulk_seq));
+        return processDocs();
+      }
+
+      docInfo.metadata.rev_tree = merged.tree;
+      writeDoc(docInfo, processDocs);
+    }
+
+    function insertDoc(docInfo) {
+      // Cant insert new deleted documents
+      if ('was_delete' in opts && isDeleted(docInfo.metadata)) {
+        results.push(Pouch.Errors.MISSING_DOC);
+        return processDocs();
+      }
+      writeDoc(docInfo, processDocs);
+    }
+
+    // Insert sequence number into the error so we can sort later
+    function makeErr(err, seq) {
+      err._bulk_seq = seq;
+      return err;
+    }
+
+    function saveAttachment(docInfo, digest, data, callback) {
+      var objectStore = txn.objectStore(ATTACH_STORE);
+      var getReq = objectStore.get(digest).onsuccess = function(e) {
+        var originalRefs = e.target.result && e.target.result.refs || {};
+        var ref = [docInfo.metadata.id, docInfo.metadata.rev].join('@');
+        var newAtt = {
+          digest: digest,
+          body: data,
+          refs: originalRefs
+        };
+        newAtt.refs[ref] = true;
+        var putReq = objectStore.put(newAtt).onsuccess = function(e) {
+          call(callback);
+        };
+      };
+    }
+
+    var txn;
+    preprocessAttachments(function() {
+      txn = idb.transaction([DOC_STORE, BY_SEQ_STORE, ATTACH_STORE, META_STORE],
+                            IDBTransaction.READ_WRITE);
+      txn.onerror = idbError(callback);
+      txn.ontimeout = idbError(callback);
+      txn.oncomplete = complete;
+
+      processDocs();
+    });
+  };
+
+  function sortByBulkSeq(a, b) {
+    return a._bulk_seq - b._bulk_seq;
+  }
+
+  // First we look up the metadata in the ids database, then we fetch the
+  // current revision(s) from the by sequence store
+  api._get = function idb_get(id, opts, callback) {
+    var doc;
+    var metadata;
+    var err;
+    var txn;
+    if (opts.ctx) {
+      txn = opts.ctx;
+    } else {
+      txn = idb.transaction([DOC_STORE, BY_SEQ_STORE, ATTACH_STORE], 'readonly');
+    }
+
+    function finish(){
+      call(callback, err, {doc: doc, metadata: metadata, ctx: txn});
+    }
+
+    txn.objectStore(DOC_STORE).get(id).onsuccess = function(e) {
+      metadata = e.target.result;
+      // we can determine the result here if:
+      // 1. there is no such document
+      // 2. the document is deleted and we don't ask about specific rev
+      // When we ask with opts.rev we expect the answer to be either
+      // doc (possibly with _deleted=true) or missing error
+      if (!metadata) {
+        err = Pouch.Errors.MISSING_DOC;
+        return finish();
+      }
+      if (isDeleted(metadata) && !opts.rev) {
+        err = Pouch.error(Pouch.Errors.MISSING_DOC, "deleted");
+        return finish();
+      }
+
+      var rev = Pouch.merge.winningRev(metadata);
+      var key = metadata.id + '::' + (opts.rev ? opts.rev : rev);
+      var index = txn.objectStore(BY_SEQ_STORE).index('_doc_id_rev');
+
+      index.get(key).onsuccess = function(e) {
+        doc = e.target.result;
+        if(doc && doc._doc_id_rev) {
+          delete(doc._doc_id_rev);
+        }
+        if (!doc) {
+          err = Pouch.Errors.MISSING_DOC;
+          return finish();
+        }
+        finish();
+      };
+    };
+  };
+
+  api._getAttachment = function(attachment, opts, callback) {
+    var result;
+    var txn;
+    if (opts.ctx) {
+      txn = opts.ctx;
+    } else {
+      txn = idb.transaction([DOC_STORE, BY_SEQ_STORE, ATTACH_STORE], 'readonly');
+    }
+    var digest = attachment.digest;
+    var type = attachment.content_type;
+
+    txn.objectStore(ATTACH_STORE).get(digest).onsuccess = function(e) {
+      var data = e.target.result.body;
+      if (opts.encode) {
+        if (blobSupport) {
+          var reader = new FileReader();
+          reader.onloadend = function(e) {
+            result = btoa(this.result);
+            call(callback, null, result);
+          };
+          reader.readAsBinaryString(data);
+        } else {
+          result = data;
+          call(callback, null, result);
+        }
+      } else {
+        if (blobSupport) {
+          result = data;
+        } else {
+          data = fixBinary(atob(data));
+          result = new Blob([data], {type: type});
+        }
+        call(callback, null, result);
+      }
+    };
+  };
+
+  api._allDocs = function idb_allDocs(opts, callback) {
+    var start = 'startkey' in opts ? opts.startkey : false;
+    var end = 'endkey' in opts ? opts.endkey : false;
+
+    var descending = 'descending' in opts ? opts.descending : false;
+    descending = descending ? 'prev' : null;
+
+    var keyRange = start && end ? IDBKeyRange.bound(start, end)
+      : start ? IDBKeyRange.lowerBound(start)
+      : end ? IDBKeyRange.upperBound(end) : null;
+
+    var transaction = idb.transaction([DOC_STORE, BY_SEQ_STORE], 'readonly');
+    transaction.oncomplete = function() {
+      if ('keys' in opts) {
+        opts.keys.forEach(function(key) {
+          if (key in resultsMap) {
+            results.push(resultsMap[key]);
+          } else {
+            results.push({"key": key, "error": "not_found"});
+          }
+        });
+        if (opts.descending) {
+          results.reverse();
+        }
+      }
+      call(callback, null, {
+        total_rows: results.length,
+        rows: ('limit' in opts) ? results.slice(0, opts.limit) : results
+      });
+    };
+
+    var oStore = transaction.objectStore(DOC_STORE);
+    var oCursor = descending ? oStore.openCursor(keyRange, descending)
+      : oStore.openCursor(keyRange);
+    var results = [];
+    var resultsMap = {};
+    oCursor.onsuccess = function(e) {
+      if (!e.target.result) {
+        return;
+      }
+      var cursor = e.target.result;
+      var metadata = cursor.value;
+      // If opts.keys is set we want to filter here only those docs with
+      // key in opts.keys. With no performance tests it is difficult to
+      // guess if iteration with filter is faster than many single requests
+      function allDocsInner(metadata, data) {
+        if (isLocalId(metadata.id)) {
+          return cursor['continue']();
+        }
+        var doc = {
+          id: metadata.id,
+          key: metadata.id,
+          value: {
+            rev: Pouch.merge.winningRev(metadata)
+          }
+        };
+        if (opts.include_docs) {
+          doc.doc = data;
+          doc.doc._rev = Pouch.merge.winningRev(metadata);
+          if (doc.doc._doc_id_rev) {
+              delete(doc.doc._doc_id_rev);
+          }
+          if (opts.conflicts) {
+            doc.doc._conflicts = Pouch.merge.collectConflicts(metadata)
+              .map(function(x) { return x; });
+          }
+        }
+        if ('keys' in opts) {
+          if (opts.keys.indexOf(metadata.id) > -1) {
+            if (isDeleted(metadata)) {
+              doc.value.deleted = true;
+              doc.doc = null;
+            }
+            resultsMap[doc.id] = doc;
+          }
+        } else {
+          if(!isDeleted(metadata)) {
+            results.push(doc);
+          }
+        }
+        cursor['continue']();
+      }
+
+      if (!opts.include_docs) {
+        allDocsInner(metadata);
+      } else {
+        var index = transaction.objectStore(BY_SEQ_STORE).index('_doc_id_rev');
+        var mainRev = Pouch.merge.winningRev(metadata);
+        var key = metadata.id + "::" + mainRev;
+        index.get(key).onsuccess = function(event) {
+          allDocsInner(cursor.value, event.target.result);
+        };
+      }
+    };
+  };
+
+  // Looping through all the documents in the database is a terrible idea
+  // easiest to implement though, should probably keep a counter
+  api._info = function idb_info(callback) {
+    var count = 0;
+    var result;
+    var txn = idb.transaction([DOC_STORE], 'readonly');
+
+    txn.oncomplete = function() {
+      callback(null, result);
+    };
+
+    txn.objectStore(DOC_STORE).openCursor().onsuccess = function(e) {
+        var cursor = e.target.result;
+        if (!cursor) {
+          result = {
+            db_name: name,
+            doc_count: count,
+            update_seq: meta.updateSeq
+          };
+          return;
+        }
+        if (cursor.value.deleted !== true) {
+          count++;
+        }
+        cursor['continue']();
+      };
+  };
+
+  api._changes = function idb_changes(opts) {
+    if (Pouch.DEBUG) {
+      console.log(name + ': Start Changes Feed: continuous=' + opts.continuous);
+    }
+
+    if (opts.continuous) {
+      var id = name + ':' + Pouch.uuid();
+      opts.cancelled = false;
+      IdbPouch.Changes.addListener(name, id, api, opts);
+      IdbPouch.Changes.notify(name);
+      return {
+        cancel: function() {
+          if (Pouch.DEBUG) {
+            console.log(name + ': Cancel Changes Feed');
+          }
+          opts.cancelled = true;
+          IdbPouch.Changes.removeListener(name, id);
+        }
+      };
+    }
+
+    var descending = opts.descending ? 'prev' : null;
+    var last_seq = 0;
+
+    // Ignore the `since` parameter when `descending` is true
+    opts.since = opts.since && !descending ? opts.since : 0;
+
+    var results = [], resultIndices = {}, dedupResults = [];
+    var txn;
+
+    function fetchChanges() {
+      txn = idb.transaction([DOC_STORE, BY_SEQ_STORE]);
+      txn.oncomplete = onTxnComplete;
+
+      var req;
+
+      if (descending) {
+        req = txn.objectStore(BY_SEQ_STORE)
+            .openCursor(IDBKeyRange.lowerBound(opts.since, true), descending);
+      } else {
+        req = txn.objectStore(BY_SEQ_STORE)
+            .openCursor(IDBKeyRange.lowerBound(opts.since, true));
+      }
+
+      req.onsuccess = onsuccess;
+      req.onerror = onerror;
+    }
+
+    if (opts.filter && typeof opts.filter === 'string') {
+      var filterName = opts.filter.split('/');
+      api.get('_design/' + filterName[0], function(err, ddoc) {
+        /*jshint evil: true */
+        var filter = eval('(function() { return ' +
+                          ddoc.filters[filterName[1]] + ' })()');
+        opts.filter = filter;
+        fetchChanges();
+      });
+    } else {
+      fetchChanges();
+    }
+
+    function onsuccess(event) {
+      if (!event.target.result) {
+        // Filter out null results casued by deduping
+        for (var i = 0, l = results.length; i < l; i++ ) {
+          var result = results[i];
+          if (result) {
+            dedupResults.push(result);
+          }
+        }
+        return false;
+      }
+
+      var cursor = event.target.result;
+
+      // Try to pre-emptively dedup to save us a bunch of idb calls
+      var changeId = cursor.value._id;
+      var changeIdIndex = resultIndices[changeId];
+      if (changeIdIndex !== undefined) {
+        results[changeIdIndex].seq = cursor.key;
+        // update so it has the later sequence number
+        results.push(results[changeIdIndex]);
+        results[changeIdIndex] = null;
+        resultIndices[changeId] = results.length - 1;
+        return cursor['continue']();
+      }
+
+      var index = txn.objectStore(DOC_STORE);
+      index.get(cursor.value._id).onsuccess = function(event) {
+        var metadata = event.target.result;
+        if (isLocalId(metadata.id)) {
+          return cursor['continue']();
+        }
+
+        if(last_seq < metadata.seq){
+          last_seq = metadata.seq;
+        }
+
+        var mainRev = Pouch.merge.winningRev(metadata);
+        var key = metadata.id + "::" + mainRev;
+        var index = txn.objectStore(BY_SEQ_STORE).index('_doc_id_rev');
+        index.get(key).onsuccess = function(docevent) {
+          var doc = docevent.target.result;
+          delete doc['_doc_id_rev'];
+          var changeList = [{rev: mainRev}];
+          if (opts.style === 'all_docs') {
+            changeList = Pouch.merge.collectLeaves(metadata.rev_tree)
+              .map(function(x) { return {rev: x.rev}; });
+          }
+          var change = {
+            id: metadata.id,
+            seq: cursor.key,
+            changes: changeList,
+            doc: doc
+          };
+
+          if (isDeleted(metadata, mainRev)) {
+            change.deleted = true;
+          }
+          if (opts.conflicts) {
+            change.doc._conflicts = Pouch.merge.collectConflicts(metadata)
+              .map(function(x) { return x; });
+          }
+
+          // Dedupe the changes feed
+          var changeId = change.id, changeIdIndex = resultIndices[changeId];
+          if (changeIdIndex !== undefined) {
+            results[changeIdIndex] = null;
+          }
+          results.push(change);
+          resultIndices[changeId] = results.length - 1;
+          cursor['continue']();
+        };
+      };
+    }
+
+    function onTxnComplete() {
+      processChanges(opts, dedupResults, last_seq);
+    }
+
+    function onerror(error) {
+      // TODO: shouldn't we pass some params here?
+      call(opts.complete);
+    }
+  };
+
+  api._close = function(callback) {
+    if (idb === null) {
+      return call(callback, Pouch.Errors.NOT_OPEN);
+    }
+
+    // https://developer.mozilla.org/en-US/docs/IndexedDB/IDBDatabase#close
+    // "Returns immediately and closes the connection in a separate thread..."
+    idb.close();
+    call(callback, null);
+  };
+
+  api._getRevisionTree = function(docId, callback) {
+    var txn = idb.transaction([DOC_STORE], 'readonly');
+    var req = txn.objectStore(DOC_STORE).get(docId);
+    req.onsuccess = function (event) {
+      var doc = event.target.result;
+      if (!doc) {
+        call(callback, Pouch.Errors.MISSING_DOC);
+      } else {
+        call(callback, null, doc.rev_tree);
+      }
+    };
+  };
+
+  // This function removes revisions of document docId
+  // which are listed in revs and sets this document
+  // revision to to rev_tree
+  api._doCompaction = function(docId, rev_tree, revs, callback) {
+    var txn = idb.transaction([DOC_STORE, BY_SEQ_STORE], IDBTransaction.READ_WRITE);
+
+    var index = txn.objectStore(DOC_STORE);
+    index.get(docId).onsuccess = function(event) {
+      var metadata = event.target.result;
+      metadata.rev_tree = rev_tree;
+
+      var count = revs.length;
+      revs.forEach(function(rev) {
+        var index = txn.objectStore(BY_SEQ_STORE).index('_doc_id_rev');
+        var key = docId + "::" + rev;
+        index.getKey(key).onsuccess = function(e) {
+          var seq = e.target.result;
+          if (!seq) {
+            return;
+          }
+          var req = txn.objectStore(BY_SEQ_STORE)['delete'](seq);
+
+          count--;
+          if (!count) {
+            txn.objectStore(DOC_STORE).put(metadata);
+          }
+        };
+      });
+    };
+    txn.oncomplete = function() {
+      call(callback);
+    };
+  };
+
+  return api;
+};
+
+IdbPouch.valid = function idb_valid() {
+  return !!indexedDB;
+};
+
+IdbPouch.destroy = function idb_destroy(name, callback) {
+  if (Pouch.DEBUG) {
+    console.log(name + ': Delete Database');
+  }
+  IdbPouch.Changes.clearListeners(name);
+
+  //Close open request for "name" database to fix ie delay.
+  if (Pouch.openReqList[name] && Pouch.openReqList[name].result) {
+    Pouch.openReqList[name].result.close();
+  }
+  var req = indexedDB.deleteDatabase(name);
+
+  req.onsuccess = function() {
+    //Remove open request from the list.
+    if (Pouch.openReqList[name]) {
+      Pouch.openReqList[name] = null;
+    }
+    call(callback, null);
+  };
+
+  req.onerror = idbError(callback);
+};
+
+IdbPouch.Changes = new Changes();
+
+Pouch.adapter('idb', IdbPouch);
+
+/*globals call: false, extend: false, parseDoc: false, Crypto: false */
+/*globals isLocalId: false, isDeleted: false, Changes: false, filterChange: false, processChanges: false */
+/*global isCordova*/
+
+'use strict';
+
+function quote(str) {
+  return "'" + str + "'";
+}
+
+var POUCH_VERSION = 1;
+var POUCH_SIZE = 5 * 1024 * 1024;
+
+// The object stores created for each database
+// DOC_STORE stores the document meta data, its revision history and state
+var DOC_STORE = quote('document-store');
+// BY_SEQ_STORE stores a particular version of a document, keyed by its
+// sequence id
+var BY_SEQ_STORE = quote('by-sequence');
+// Where we store attachments
+var ATTACH_STORE = quote('attach-store');
+var META_STORE = quote('metadata-store');
+
+var unknownError = function(callback) {
+  return function(event) {
+    call(callback, {
+      status: 500,
+      error: event.type,
+      reason: event.target
+    });
+  };
+};
+
+var webSqlPouch = function(opts, callback) {
+
+  var api = {};
+  var update_seq = 0;
+  var instanceId = null;
+  var name = opts.name;
+
+  var db = openDatabase(name, POUCH_VERSION, name, POUCH_SIZE);
+  if (!db) {
+    return call(callback, Pouch.Errors.UNKNOWN_ERROR);
+  }
+
+  function dbCreated() {
+    callback(null, api);
+  }
+
+  function setup(){
+    db.transaction(function (tx) {
+      var meta = 'CREATE TABLE IF NOT EXISTS ' + META_STORE +
+        ' (update_seq, dbid)';
+      var attach = 'CREATE TABLE IF NOT EXISTS ' + ATTACH_STORE +
+        ' (digest, json, body BLOB)';
+      var doc = 'CREATE TABLE IF NOT EXISTS ' + DOC_STORE +
+        ' (id unique, seq, json, winningseq)';
+      var seq = 'CREATE TABLE IF NOT EXISTS ' + BY_SEQ_STORE +
+        ' (seq INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, doc_id_rev UNIQUE, json)';
+
+      tx.executeSql(attach);
+      tx.executeSql(doc);
+      tx.executeSql(seq);
+      tx.executeSql(meta);
+
+      var updateseq = 'SELECT update_seq FROM ' + META_STORE;
+      tx.executeSql(updateseq, [], function(tx, result) {
+        if (!result.rows.length) {
+          var initSeq = 'INSERT INTO ' + META_STORE + ' (update_seq) VALUES (?)';
+          var newId = Pouch.uuid();
+          tx.executeSql(initSeq, [0]);
+          return;
+        }
+        update_seq = result.rows.item(0).update_seq;
+      });
+      var dbid = 'SELECT dbid FROM ' + META_STORE + ' WHERE dbid IS NOT NULL';
+      tx.executeSql(dbid, [], function(tx, result) {
+        if (!result.rows.length) {
+          var initDb = 'UPDATE ' + META_STORE + ' SET dbid=?';
+          instanceId = Pouch.uuid();
+          tx.executeSql(initDb, [instanceId]);
+          return;
+        }
+        instanceId = result.rows.item(0).dbid;
+      });
+    }, unknownError(callback), dbCreated);
+  }
+  if (isCordova()){
+    //to wait until custom api is made in pouch.adapters before doing setup
+    window.addEventListener(name + "_pouch", setup, false);
+  } else {
+    setup();
+  }
+
+
+  api.type = function() {
+    return 'websql';
+  };
+
+  api.id = function() {
+    return instanceId;
+  };
+
+  api._info = function(callback) {
+    db.transaction(function(tx) {
+      var sql = 'SELECT COUNT(id) AS count FROM ' + DOC_STORE;
+      tx.executeSql(sql, [], function(tx, result) {
+        callback(null, {
+          db_name: name,
+          doc_count: result.rows.item(0).count,
+          update_seq: update_seq
+        });
+      });
+    });
+  };
+
+  api._bulkDocs = function idb_bulkDocs(req, opts, callback) {
+
+    var newEdits = opts.new_edits;
+    var userDocs = req.docs;
+
+    // Parse the docs, give them a sequence number for the result
+    var docInfos = userDocs.map(function(doc, i) {
+      var newDoc = parseDoc(doc, newEdits);
+      newDoc._bulk_seq = i;
+      return newDoc;
+    });
+
+    var docInfoErrors = docInfos.filter(function(docInfo) {
+      return docInfo.error;
+    });
+    if (docInfoErrors.length) {
+      return call(callback, docInfoErrors[0]);
+    }
+
+    var tx;
+    var results = [];
+    var fetchedDocs = {};
+
+    function sortByBulkSeq(a, b) {
+      return a._bulk_seq - b._bulk_seq;
+    }
+
+    function complete(event) {
+      var aresults = [];
+      results.sort(sortByBulkSeq);
+      results.forEach(function(result) {
+        delete result._bulk_seq;
+        if (result.error) {
+          aresults.push(result);
+          return;
+        }
+        var metadata = result.metadata;
+        var rev = Pouch.merge.winningRev(metadata);
+
+        aresults.push({
+          ok: true,
+          id: metadata.id,
+          rev: rev
+        });
+
+        if (isLocalId(metadata.id)) {
+          return;
+        }
+
+        update_seq++;
+        var sql = 'UPDATE ' + META_STORE + ' SET update_seq=?';
+        tx.executeSql(sql, [update_seq], function() {
+          webSqlPouch.Changes.notify(name);
+          webSqlPouch.Changes.notifyLocalWindows(name);
+        });
+      });
+      call(callback, null, aresults);
+    }
+
+    function preprocessAttachment(att, finish) {
+      if (att.stub) {
+        return finish();
+      }
+      if (typeof att.data === 'string') {
+        try {
+          att.data = atob(att.data);
+        } catch(e) {
+          return call(callback, Pouch.error(Pouch.Errors.BAD_ARG, "Attachments need to be base64 encoded"));
+        }
+        att.digest = 'md5-' + Crypto.MD5(att.data);
+        return finish();
+      }
+      var reader = new FileReader();
+      reader.onloadend = function(e) {
+        att.data = this.result;
+        att.digest = 'md5-' + Crypto.MD5(this.result);
+        finish();
+      };
+      reader.readAsBinaryString(att.data);
+    }
+
+    function preprocessAttachments(callback) {
+      if (!docInfos.length) {
+        return callback();
+      }
+
+      var docv = 0;
+      var recv = 0;
+
+      docInfos.forEach(function(docInfo) {
+        var attachments = docInfo.data && docInfo.data._attachments ?
+          Object.keys(docInfo.data._attachments) : [];
+
+        if (!attachments.length) {
+          return done();
+        }
+
+        function processedAttachment() {
+          recv++;
+          if (recv === attachments.length) {
+            done();
+          }
+        }
+
+        for (var key in docInfo.data._attachments) {
+          preprocessAttachment(docInfo.data._attachments[key], processedAttachment);
+        }
+      });
+
+      function done() {
+        docv++;
+        if (docInfos.length === docv) {
+          callback();
+        }
+      }
+    }
+
+    function writeDoc(docInfo, callback, isUpdate) {
+
+      function finish() {
+        var data = docInfo.data;
+        var sql = 'INSERT INTO ' + BY_SEQ_STORE + ' (doc_id_rev, json) VALUES (?, ?);';
+        tx.executeSql(sql, [data._id + "::" + data._rev,
+                            JSON.stringify(data)], dataWritten);
+      }
+
+      function collectResults(attachmentErr) {
+        if (!err) {
+          if (attachmentErr) {
+            err = attachmentErr;
+            call(callback, err);
+          } else if (recv === attachments.length) {
+            finish();
+          }
+        }
+      }
+
+      var err = null;
+      var recv = 0;
+
+      docInfo.data._id = docInfo.metadata.id;
+      docInfo.data._rev = docInfo.metadata.rev;
+
+      if (isDeleted(docInfo.metadata, docInfo.metadata.rev)) {
+        docInfo.data._deleted = true;
+      }
+
+      var attachments = docInfo.data._attachments ?
+        Object.keys(docInfo.data._attachments) : [];
+
+      function attachmentSaved(err) {
+        recv++;
+        collectResults(err);
+      }
+
+      for (var key in docInfo.data._attachments) {
+        if (!docInfo.data._attachments[key].stub) {
+          var data = docInfo.data._attachments[key].data;
+          delete docInfo.data._attachments[key].data;
+          var digest = docInfo.data._attachments[key].digest;
+          saveAttachment(docInfo, digest, data, attachmentSaved);
+        } else {
+          recv++;
+          collectResults();
+        }
+      }
+
+      if (!attachments.length) {
+        finish();
+      }
+
+      function dataWritten(tx, result) {
+        var seq = docInfo.metadata.seq = result.insertId;
+        delete docInfo.metadata.rev;
+
+        var mainRev = Pouch.merge.winningRev(docInfo.metadata);
+
+        var sql = isUpdate ?
+          'UPDATE ' + DOC_STORE + ' SET seq=?, json=?, winningseq=(SELECT seq FROM ' +
+          BY_SEQ_STORE + ' WHERE doc_id_rev=?) WHERE id=?' :
+          'INSERT INTO ' + DOC_STORE + ' (id, seq, winningseq, json) VALUES (?, ?, ?, ?);';
+        var metadataStr = JSON.stringify(docInfo.metadata);
+        var key = docInfo.metadata.id + "::" + mainRev;
+        var params = isUpdate ?
+          [seq, metadataStr, key, docInfo.metadata.id] :
+          [docInfo.metadata.id, seq, seq, metadataStr];
+        tx.executeSql(sql, params, function(tx, result) {
+          results.push(docInfo);
+          call(callback, null);
+        });
+      }
+    }
+
+    function updateDoc(oldDoc, docInfo) {
+      var merged = Pouch.merge(oldDoc.rev_tree, docInfo.metadata.rev_tree[0], 1000);
+      var inConflict = (isDeleted(oldDoc) && isDeleted(docInfo.metadata)) ||
+        (!isDeleted(oldDoc) && newEdits && merged.conflicts !== 'new_leaf');
+
+      if (inConflict) {
+        results.push(makeErr(Pouch.Errors.REV_CONFLICT, docInfo._bulk_seq));
+        return processDocs();
+      }
+
+      docInfo.metadata.rev_tree = merged.tree;
+      writeDoc(docInfo, processDocs, true);
+    }
+
+    function insertDoc(docInfo) {
+      // Cant insert new deleted documents
+      if ('was_delete' in opts && isDeleted(docInfo.metadata)) {
+        results.push(Pouch.Errors.MISSING_DOC);
+        return processDocs();
+      }
+      writeDoc(docInfo, processDocs, false);
+    }
+
+    function processDocs() {
+      if (!docInfos.length) {
+        return complete();
+      }
+      var currentDoc = docInfos.shift();
+      var id = currentDoc.metadata.id;
+      if (id in fetchedDocs) {
+        updateDoc(fetchedDocs[id], currentDoc);
+      } else {
+        // if we have newEdits=false then we can update the same
+        // document twice in a single bulk docs call
+        fetchedDocs[id] = currentDoc.metadata;
+        insertDoc(currentDoc);
+      }
+    }
+
+    // Insert sequence number into the error so we can sort later
+    function makeErr(err, seq) {
+      err._bulk_seq = seq;
+      return err;
+    }
+
+    function saveAttachment(docInfo, digest, data, callback) {
+      var ref = [docInfo.metadata.id, docInfo.metadata.rev].join('@');
+      var newAtt = {digest: digest};
+      var sql = 'SELECT digest, json FROM ' + ATTACH_STORE + ' WHERE digest=?';
+      tx.executeSql(sql, [digest], function(tx, result) {
+        if (!result.rows.length) {
+          newAtt.refs = {};
+          newAtt.refs[ref] = true;
+          sql = 'INSERT INTO ' + ATTACH_STORE + '(digest, json, body) VALUES (?, ?, ?)';
+          tx.executeSql(sql, [digest, JSON.stringify(newAtt), data], function() {
+            call(callback, null);
+          });
+        } else {
+          newAtt.refs = JSON.parse(result.rows.item(0).json).refs;
+          sql = 'UPDATE ' + ATTACH_STORE + ' SET json=?, body=? WHERE digest=?';
+          tx.executeSql(sql, [JSON.stringify(newAtt), data, digest], function() {
+            call(callback, null);
+          });
+        }
+      });
+    }
+
+    function metadataFetched(tx, results) {
+      for (var j=0; j<results.rows.length; j++) {
+        var row = results.rows.item(j);
+        fetchedDocs[row.id] = JSON.parse(row.json);
+      }
+      processDocs();
+    }
+
+    preprocessAttachments(function() {
+      db.transaction(function(txn) {
+        tx = txn;
+        var ids = '(' + docInfos.map(function(d) {
+          return quote(d.metadata.id);
+        }).join(',') + ')';
+        var sql = 'SELECT * FROM ' + DOC_STORE + ' WHERE id IN ' + ids;
+        tx.executeSql(sql, [], metadataFetched);
+      }, unknownError(callback));
+    });
+  };
+
+  api._get = function(id, opts, callback) {
+    var doc;
+    var metadata;
+    var err;
+    if (!opts.ctx) {
+      db.transaction(function(txn) {
+        opts.ctx = txn;
+        api._get(id, opts, callback);
+      });
+      return;
+    }
+    var tx = opts.ctx;
+
+    function finish() {
+      call(callback, err, {doc: doc, metadata: metadata, ctx: tx});
+    }
+
+    var sql = 'SELECT * FROM ' + DOC_STORE + ' WHERE id=?';
+    tx.executeSql(sql, [id], function(a, results) {
+      if (!results.rows.length) {
+        err = Pouch.Errors.MISSING_DOC;
+        return finish();
+      }
+      metadata = JSON.parse(results.rows.item(0).json);
+      if (isDeleted(metadata) && !opts.rev) {
+        err = Pouch.error(Pouch.Errors.MISSING_DOC, "deleted");
+        return finish();
+      }
+
+      var rev = Pouch.merge.winningRev(metadata);
+      var key = opts.rev ? opts.rev : rev;
+      key = metadata.id + '::' + key;
+      var sql = 'SELECT * FROM ' + BY_SEQ_STORE + ' WHERE doc_id_rev=?';
+      tx.executeSql(sql, [key], function(tx, results) {
+        if (!results.rows.length) {
+          err = Pouch.Errors.MISSING_DOC;
+          return finish();
+        }
+        doc = JSON.parse(results.rows.item(0).json);
+
+        finish();
+      });
+    });
+  };
+
+  function makeRevs(arr) {
+    return arr.map(function(x) { return {rev: x.rev}; });
+  }
+  function makeIds(arr) {
+    return arr.map(function(x) { return x.id; });
+  }
+
+  api._allDocs = function(opts, callback) {
+    var results = [];
+    var resultsMap = {};
+    var start = 'startkey' in opts ? opts.startkey : false;
+    var end = 'endkey' in opts ? opts.endkey : false;
+    var descending = 'descending' in opts ? opts.descending : false;
+    var sql = 'SELECT ' + DOC_STORE + '.id, ' + BY_SEQ_STORE + '.seq, ' +
+      BY_SEQ_STORE + '.json AS data, ' + DOC_STORE + '.json AS metadata FROM ' +
+      BY_SEQ_STORE + ' JOIN ' + DOC_STORE + ' ON ' + BY_SEQ_STORE + '.seq = ' +
+      DOC_STORE + '.winningseq';
+
+    if ('keys' in opts) {
+      sql += ' WHERE ' + DOC_STORE + '.id IN (' + opts.keys.map(function(key){
+        return quote(key);
+      }).join(',') + ')';
+    } else {
+      if (start) {
+        sql += ' WHERE ' + DOC_STORE + '.id >= "' + start + '"';
+      }
+      if (end) {
+        sql += (start ? ' AND ' : ' WHERE ') + DOC_STORE + '.id <= "' + end + '"';
+      }
+      sql += ' ORDER BY ' + DOC_STORE + '.id ' + (descending ? 'DESC' : 'ASC');
+    }
+
+    db.transaction(function(tx) {
+      tx.executeSql(sql, [], function(tx, result) {
+        for (var i = 0, l = result.rows.length; i < l; i++ ) {
+          var doc = result.rows.item(i);
+          var metadata = JSON.parse(doc.metadata);
+          var data = JSON.parse(doc.data);
+          if (!(isLocalId(metadata.id))) {
+            doc = {
+              id: metadata.id,
+              key: metadata.id,
+              value: {rev: Pouch.merge.winningRev(metadata)}
+            };
+            if (opts.include_docs) {
+              doc.doc = data;
+              doc.doc._rev = Pouch.merge.winningRev(metadata);
+              if (opts.conflicts) {
+                doc.doc._conflicts = makeIds(Pouch.merge.collectConflicts(metadata));
+              }
+            }
+            if ('keys' in opts) {
+              if (opts.keys.indexOf(metadata.id) > -1) {
+                if (isDeleted(metadata)) {
+                  doc.value.deleted = true;
+                  doc.doc = null;
+                }
+                resultsMap[doc.id] = doc;
+              }
+            } else {
+              if(!isDeleted(metadata)) {
+                results.push(doc);
+              }
+            }
+          }
+        }
+      });
+    }, unknownError(callback), function() {
+      if ('keys' in opts) {
+        opts.keys.forEach(function(key) {
+          if (key in resultsMap) {
+            results.push(resultsMap[key]);
+          } else {
+            results.push({"key": key, "error": "not_found"});
+          }
+        });
+        if (opts.descending) {
+          results.reverse();
+        }
+      }
+      call(callback, null, {
+        total_rows: results.length,
+        rows: ('limit' in opts) ? results.slice(0, opts.limit) : results
+      });
+    });
+  };
+
+  api._changes = function idb_changes(opts) {
+
+    if (Pouch.DEBUG) {
+      console.log(name + ': Start Changes Feed: continuous=' + opts.continuous);
+    }
+
+    if (opts.continuous) {
+      var id = name + ':' + Pouch.uuid();
+      opts.cancelled = false;
+      webSqlPouch.Changes.addListener(name, id, api, opts);
+      webSqlPouch.Changes.notify(name);
+      return {
+        cancel: function() {
+          if (Pouch.DEBUG) {
+            console.log(name + ': Cancel Changes Feed');
+          }
+          opts.cancelled = true;
+          webSqlPouch.Changes.removeListener(name, id);
+        }
+      };
+    }
+
+    var descending = opts.descending;
+
+    // Ignore the `since` parameter when `descending` is true
+    opts.since = opts.since && !descending ? opts.since : 0;
+
+    var results = [];
+    var txn;
+
+    function fetchChanges() {
+      var sql = 'SELECT ' + DOC_STORE + '.id, ' + BY_SEQ_STORE + '.seq, ' +
+        BY_SEQ_STORE + '.json AS data, ' + DOC_STORE + '.json AS metadata FROM ' +
+        BY_SEQ_STORE + ' JOIN ' + DOC_STORE + ' ON ' + BY_SEQ_STORE + '.seq = ' +
+        DOC_STORE + '.winningseq WHERE ' + DOC_STORE + '.seq > ' + opts.since +
+        ' ORDER BY ' + DOC_STORE + '.seq ' + (descending ? 'DESC' : 'ASC');
+
+      db.transaction(function(tx) {
+        tx.executeSql(sql, [], function(tx, result) {
+          var last_seq = 0;
+          for (var i = 0, l = result.rows.length; i < l; i++ ) {
+            var res = result.rows.item(i);
+            var metadata = JSON.parse(res.metadata);
+            if (!isLocalId(metadata.id)) {
+              if (last_seq < res.seq) {
+                last_seq = res.seq;
+              }
+              var doc = JSON.parse(res.data);
+              var mainRev = doc._rev;
+              var changeList = [{rev: mainRev}];
+              if (opts.style === 'all_docs') {
+                changeList = makeRevs(Pouch.merge.collectLeaves(metadata.rev_tree));
+              }
+              var change = {
+                id: metadata.id,
+                seq: res.seq,
+                changes: changeList,
+                doc: doc
+              };
+              if (isDeleted(metadata, mainRev)) {
+                change.deleted = true;
+              }
+              if (opts.conflicts) {
+                change.doc._conflicts = Pouch.merge.collectConflicts(metadata);
+              }
+              results.push(change);
+            }
+          }
+          processChanges(opts, results, last_seq);
+        });
+      });
+    }
+
+    if (opts.filter && typeof opts.filter === 'string') {
+      var filterName = opts.filter.split('/');
+      api.get('_design/' + filterName[0], function(err, ddoc) {
+        /*jshint evil: true */
+        var filter = eval('(function() { return ' +
+                          ddoc.filters[filterName[1]] + ' })()');
+        opts.filter = filter;
+        fetchChanges();
+      });
+    } else {
+      fetchChanges();
+    }
+  };
+
+  api._close = function(callback) {
+    //WebSQL databases do not need to be closed
+    call(callback, null);
+  };
+
+  api._getAttachment = function(attachment, opts, callback) {
+    var res;
+    var tx = opts.ctx;
+    var digest = attachment.digest;
+    var type = attachment.content_type;
+    var sql = 'SELECT body FROM ' + ATTACH_STORE + ' WHERE digest=?';
+    tx.executeSql(sql, [digest], function(tx, result) {
+      var data = result.rows.item(0).body;
+      if (opts.encode) {
+        res = btoa(data);
+      } else {
+        res = new Blob([data], {type: type});
+      }
+      call(callback, null, res);
+    });
+  };
+
+  api._getRevisionTree = function(docId, callback) {
+    db.transaction(function (tx) {
+      var sql = 'SELECT json AS metadata FROM ' + DOC_STORE + ' WHERE id = ?';
+      tx.executeSql(sql, [docId], function(tx, result) {
+        if (!result.rows.length) {
+          call(callback, Pouch.Errors.MISSING_DOC);
+        } else {
+          var data = JSON.parse(result.rows.item(0).metadata);
+          call(callback, null, data.rev_tree);
+        }
+      });
+    });
+  };
+
+  api._doCompaction = function(docId, rev_tree, revs, callback) {
+    db.transaction(function (tx) {
+      var sql = 'SELECT json AS metadata FROM ' + DOC_STORE + ' WHERE id = ?';
+      tx.executeSql(sql, [docId], function(tx, result) {
+        if (!result.rows.length) {
+          return call(callback);
+        }
+        var metadata = JSON.parse(result.rows.item(0).metadata);
+        metadata.rev_tree = rev_tree;
+
+        var sql = 'DELETE FROM ' + BY_SEQ_STORE + ' WHERE doc_id_rev IN (' +
+          revs.map(function(rev){return quote(docId + '::' + rev);}).join(',') + ')';
+
+        tx.executeSql(sql, [], function(tx, result) {
+          var sql = 'UPDATE ' + DOC_STORE + ' SET json = ? WHERE id = ?';
+
+          tx.executeSql(sql, [JSON.stringify(metadata), docId], function(tx, result) {
+            callback();
+          });
+        });
+      });
+    });
+  };
+
+  return api;
+};
+
+webSqlPouch.valid = function() {
+  return !!window.openDatabase;
+};
+
+webSqlPouch.destroy = function(name, callback) {
+  var db = openDatabase(name, POUCH_VERSION, name, POUCH_SIZE);
+  db.transaction(function (tx) {
+    tx.executeSql('DROP TABLE IF EXISTS ' + DOC_STORE, []);
+    tx.executeSql('DROP TABLE IF EXISTS ' + BY_SEQ_STORE, []);
+    tx.executeSql('DROP TABLE IF EXISTS ' + ATTACH_STORE, []);
+    tx.executeSql('DROP TABLE IF EXISTS ' + META_STORE, []);
+  }, unknownError(callback), function() {
+    call(callback, null);
+  });
+};
+
+webSqlPouch.Changes = new Changes();
+
+Pouch.adapter('websql', webSqlPouch);
+
+/*global Pouch: true */
+
+"use strict";
+
+// This is the first implementation of a basic plugin, we register the
+// plugin object with pouch and it is mixin'd to each database created
+// (regardless of adapter), adapters can override plugins by providing
+// their own implementation. functions on the plugin object that start
+// with _ are reserved function that are called by pouchdb for special
+// notifications.
+
+// If we wanted to store incremental views we can do it here by listening
+// to the changes feed (keeping track of our last update_seq between page loads)
+// and storing the result of the map function (possibly using the upcoming
+// extracted adapter functions)
+
+var MapReduce = function(db) {
+
+  function viewQuery(fun, options) {
+    if (!options.complete) {
+      return;
+    }
+
+    if (!fun.reduce) {
+      options.reduce = false;
+    }
+
+    function sum(values) {
+      return values.reduce(function(a, b) { return a + b; }, 0);
+    }
+
+    var builtInReduce = {
+      "_sum": function(keys, values){
+        return sum(values);
+      },
+
+      "_count": function(keys, values, rereduce){
+        if (rereduce){
+          return sum(values);
+        } else {
+          return values.length;
+        }
+      },
+
+      "_stats": function(keys, values, rereduce){
+        return {
+          'sum': sum(values),
+          'min': Math.min.apply(null, values),
+          'max': Math.max.apply(null, values),
+          'count': values.length,
+          'sumsqr': (function(){
+            var _sumsqr = 0;
+            for(var idx in values){
+              _sumsqr += values[idx] * values[idx];
+            }
+            return _sumsqr;
+          })()
+        };
+      }
+    };
+
+    var results = [];
+    var current = null;
+    var num_started= 0;
+    var completed= false;
+
+    var emit = function(key, val) {
+      var viewRow = {
+        id: current.doc._id,
+        key: key,
+        value: val
+      };
+
+      if (options.startkey && Pouch.collate(key, options.startkey) < 0) return;
+      if (options.endkey && Pouch.collate(key, options.endkey) > 0) return;
+      if (options.key && Pouch.collate(key, options.key) !== 0) return;
+
+      num_started++;
+      if (options.include_docs) {
+        //in this special case, join on _id (issue #106)
+        if (val && typeof val === 'object' && val._id){
+          db.get(val._id,
+              function(_, joined_doc){
+                if (joined_doc) {
+                  viewRow.doc = joined_doc;
+                }
+                results.push(viewRow);
+                checkComplete();
+              });
+          return;
+        } else {
+          viewRow.doc = current.doc;
+        }
+      }
+      results.push(viewRow);
+    };
+
+    // ugly way to make sure references to 'emit' in map/reduce bind to the
+    // above emit
+    eval('fun.map = ' + fun.map.toString() + ';');
+    if (fun.reduce) {
+      if (builtInReduce[fun.reduce]) {
+        fun.reduce = builtInReduce[fun.reduce];
+      }
+
+      eval('fun.reduce = ' + fun.reduce.toString() + ';');
+    }
+
+    //only proceed once all documents are mapped and joined
+    var checkComplete= function(){
+      if (completed && results.length == num_started){
+        results.sort(function(a, b) {
+          return Pouch.collate(a.key, b.key);
+        });
+        if (options.descending) {
+          results.reverse();
+        }
+        if (options.reduce === false) {
+          return options.complete(null, {
+            rows: ('limit' in options)
+              ? results.slice(0, options.limit)
+              : results,
+            total_rows: results.length
+          });
+        }
+
+        var groups = [];
+        results.forEach(function(e) {
+          var last = groups[groups.length-1] || null;
+          if (last && Pouch.collate(last.key[0][0], e.key) === 0) {
+            last.key.push([e.key, e.id]);
+            last.value.push(e.value);
+            return;
+          }
+          groups.push({key: [[e.key, e.id]], value: [e.value]});
+        });
+        groups.forEach(function(e) {
+          e.value = fun.reduce(e.key, e.value) || null;
+          e.key = e.key[0][0];
+        });
+        options.complete(null, {
+          rows: ('limit' in options)
+            ? groups.slice(0, options.limit)
+            : groups,
+          total_rows: groups.length
+        });
+      }
+    }
+
+    db.changes({
+      conflicts: true,
+      include_docs: true,
+      onChange: function(doc) {
+        if (!('deleted' in doc)) {
+          current = {doc: doc.doc};
+          fun.map.call(this, doc.doc);
+        }
+      },
+      complete: function() {
+        completed= true;
+        checkComplete();
+      }
+    });
+  }
+
+  function httpQuery(fun, opts, callback) {
+
+    // List of parameters to add to the PUT request
+    var params = [];
+    var body = undefined;
+    var method = 'GET';
+
+    // If opts.reduce exists and is defined, then add it to the list
+    // of parameters.
+    // If reduce=false then the results are that of only the map function
+    // not the final result of map and reduce.
+    if (typeof opts.reduce !== 'undefined') {
+      params.push('reduce=' + opts.reduce);
+    }
+    if (typeof opts.include_docs !== 'undefined') {
+      params.push('include_docs=' + opts.include_docs);
+    }
+    if (typeof opts.limit !== 'undefined') {
+      params.push('limit=' + opts.limit);
+    }
+    if (typeof opts.descending !== 'undefined') {
+      params.push('descending=' + opts.descending);
+    }
+    if (typeof opts.startkey !== 'undefined') {
+      params.push('startkey=' + encodeURIComponent(JSON.stringify(opts.startkey)));
+    }
+    if (typeof opts.endkey !== 'undefined') {
+      params.push('endkey=' + encodeURIComponent(JSON.stringify(opts.endkey)));
+    }
+    if (typeof opts.key !== 'undefined') {
+      params.push('key=' + encodeURIComponent(JSON.stringify(opts.key)));
+    }
+    if (typeof opts.group !== 'undefined') {
+      params.push('group=' + opts.group);
+    }
+    if (typeof opts.group_level !== 'undefined') {
+      params.push('group_level=' + opts.group_level);
+    }
+
+    // If keys are supplied, issue a POST request to circumvent GET query string limits
+    // see http://wiki.apache.org/couchdb/HTTP_view_API#Querying_Options
+    if (typeof opts.keys !== 'undefined') {
+      method = 'POST';
+      body = JSON.stringify({keys:opts.keys});
+    }
+
+    // Format the list of parameters into a valid URI query string
+    params = params.join('&');
+    params = params === '' ? '' : '?' + params;
+
+    // We are referencing a query defined in the design doc
+    if (typeof fun === 'string') {
+      var parts = fun.split('/');
+      db.request({
+        method: method,
+        url: '_design/' + parts[0] + '/_view/' + parts[1] + params,
+        body: body
+      }, callback);
+      return;
+    }
+
+    // We are using a temporary view, terrible for performance but good for testing
+    var queryObject = JSON.parse(JSON.stringify(fun, function(key, val) {
+      if (typeof val === 'function') {
+        return val + ''; // implicitly `toString` it
+      }
+      return val;
+    }));
+
+    db.request({
+      method:'POST',
+      url: '_temp_view' + params,
+      body: queryObject
+    }, callback);
+  }
+
+  function query(fun, opts, callback) {
+    if (typeof opts === 'function') {
+      callback = opts;
+      opts = {};
+    }
+
+    if (callback) {
+      opts.complete = callback;
+    }
+
+    if (db.type() === 'http') {
+      if (typeof fun === 'function'){
+        return httpQuery({map: fun}, opts, callback);
+      }
+      return httpQuery(fun, opts, callback);
+    }
+
+    if (typeof fun === 'object') {
+      return viewQuery(fun, opts);
+    }
+
+    if (typeof fun === 'function') {
+      return viewQuery({map: fun}, opts);
+    }
+
+    var parts = fun.split('/');
+    db.get('_design/' + parts[0], function(err, doc) {
+      if (err) {
+        if (callback) callback(err);
+        return;
+      }
+
+      if (!doc.views[parts[1]]) {
+        if (callback) callback({ error: 'not_found', reason: 'missing_named_view' });
+        return;
+      }
+
+      viewQuery({
+        map: doc.views[parts[1]].map,
+        reduce: doc.views[parts[1]].reduce
+      }, opts);
+    });
+  }
+
+  return {'query': query};
+};
+
+// Deletion is a noop since we dont store the results of the view
+MapReduce._delete = function() { };
+
+Pouch.plugin('mapreduce', MapReduce);
+
+ })(this);

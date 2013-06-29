@@ -7,8 +7,19 @@ define("moduleMgr", ["dataMgr"], function (dataMgr) {
             emit(doc.moduleKey, doc);
     }
 
+    function mapBinary(doc) {
+        if(doc.modKey)
+            emit(doc.modKey, doc);
+    }
+
     moduleMgr.getModules = function (inCallback) {
         db.query({map: mapModules}, {reduce: true}, function(inError, inResponse) {
+            inCallback((!inError) ? inResponse.rows : []);
+        });
+    };
+
+    moduleMgr.getBinary = function (inCallback) {
+        db.query({map: mapBinary}, {reduce: false}, function(inError, inResponse) {
             inCallback((!inError) ? inResponse.rows : []);
         });
     };
