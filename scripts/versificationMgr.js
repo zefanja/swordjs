@@ -1,4 +1,4 @@
-define("versificationMgr", ["json!../data/kjv.json"], function (kjv) {
+define("versificationMgr", ["libs/json/json!../data/kjv.json"], function (kjv) {
     var versificationMgr = {};
 
     versificationMgr.kjv = kjv;

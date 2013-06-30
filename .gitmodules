@@ -1,0 +1,18 @@
+[submodule "scripts/libs/zlib"]
+	path = scripts/libs/zlib
+	url = https://github.com/imaya/zlib.js.git
+[submodule "scripts/libs/require"]
+	path = scripts/libs/require
+	url = https://github.com/jrburke/requirejs.git
+[submodule "scripts/libs/json"]
+	path = scripts/libs/json
+	url = https://gist.github.com/1255010.git
+[submodule "scripts/libs/domReady"]
+	path = scripts/libs/domReady
+	url = https://github.com/requirejs/domReady.git
+[submodule "scripts/libs/text"]
+	path = scripts/libs/text
+	url = https://github.com/requirejs/text.git
+[submodule "scripts/libs/IDBWrapper"]
+	path = scripts/libs/IDBWrapper
+	url = https://github.com/jensarps/IDBWrapper.git
