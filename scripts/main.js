@@ -1,4 +1,4 @@
-require(["sword","domReady!"], function (sword, doc) {
+require(["sword","libs/domReady/domReady!"], function (sword, doc) {
     window.sword = sword;
 
     function handleModuleSelect(evt) {

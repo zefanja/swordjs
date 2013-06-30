@@ -2,10 +2,25 @@
 <html>
     <head>
         <title>swordJS Project</title>
+        <!--
+        PouchDB is from https://github.com/daleharvey/pouchdb.git
+        Build instruction are on
+        http://mattgwwalker.wordpress.com/2013/03/17/pouchdb/#comment-73
+        -->
         <script type="text/javascript" src="scripts/pouchdb.js"></script>
-        <script type="text/javascript" src="scripts/unzip.js"></script>
-        <script type="text/javascript" src="scripts/inflate_stream.min.js"></script>
-        <script data-main="scripts/main" src="scripts/require.js"></script>
+        <script type="text/javascript"
+            src="scripts/libs/zlib/bin/unzip.min.js"></script>
+        <script type="text/javascript"
+            src="scripts/libs/zlib/bin/inflate.min.js"></script>
+        <script data-main="scripts/main"
+            src="scripts/libs/require/require.js"></script>
+        <script>
+            require.config({
+                paths: {
+                    "text": "libs/text/text"
+                }
+            });
+        </script>
     </head>
     <body>
         <h1>swordJS Project</h1>
