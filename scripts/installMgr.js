@@ -1,9 +1,7 @@
 define("installMgr", ["dataMgr", "zText", "versificationMgr", "async"], function (dataMgr, zText, versificationMgr, async) {
     var installMgr = {},
         start = 0;
-        db = dataMgr.db,
-        buf = [1,2,3,4,5,6,7];
-        isEnd = false;
+        db = dataMgr.db;
 
     //Get a list of all available repos/sources from CrossWire's masterRepoList.conf
     installMgr.getRepositories = function () {
@@ -27,12 +25,11 @@ define("installMgr", ["dataMgr", "zText", "versificationMgr", "async"], function
                     var filenames = unzip.getFilenames();
                     filenames.forEach(function (name, index) {
                         if(name.search(".conf") !== -1) {
-                            saveConfig(new Blob([unzip.decompress(name)]), unzip);
-                        }// else if (name.search("nt.bzs") !== -1) {
-                            //console.log(unzip.decompress(name));
-                        //} else {
-                            //saveModule(new Blob([unzip.decompress(name)]), name);
-                        //}
+                            dataMgr.saveConfig(new Blob([unzip.decompress(name)]),
+                                function (inV11n, inDoc) {
+                                    buildIndex(unzip, inV11n, inDoc);
+                                });
+                        }
                     });
                 };
             })(f);
@@ -52,41 +49,8 @@ define("installMgr", ["dataMgr", "zText", "versificationMgr", "async"], function
         xhr.send(null);
     }
 
-    //Read a module's config file and save it as an Object
-    function saveConfig(inConfBlob, inUnzip) {
-        var confReader = new FileReader();
-        var configData = {};
-        configData["GlobalOptionFilter"] = [];
-        configData["Feature"] = [];
-        confReader.readAsText(inConfBlob);
-        confReader.onload = function(e) {
-            var lines = e.target.result.split(/[\r\n]+/g);
-            lines.forEach(function(line, index) {
-                splittedLine = line.split(/=(.+)/);
-                if (splittedLine[0] !== "")
-                    if (splittedLine[0].search(/\[.*\]/) !== -1)
-                        configData["moduleKey"] = splittedLine[0].replace("[", "").replace("]", "");
-                    else
-                        if (splittedLine[0] === "GlobalOptionFilter")
-                            configData[splittedLine[0]].push(splittedLine[1]);
-                        else if (splittedLine[0] === "Feature")
-                            configData[splittedLine[0]].push(splittedLine[1]);
-                        else
-                            configData[splittedLine[0]] = splittedLine[1];
-            });
-
-            //Save config data to the database and continue to build the index
-            db.post(configData, function (inError, inDoc) {
-                if(inError)
-                    console.log(inError);
-                else
-                    buildIndex(inUnzip, configData.Versification);
-            });
-        };
-    }
-
     //Build the index with all entry points for a book or chapter
-    function buildIndex(inUnzip, inV11n) {
+    function buildIndex(inUnzip, inV11n, inDoc) {
         console.log(inUnzip, inV11n);
         var files = {};
 
@@ -100,16 +64,18 @@ define("installMgr", ["dataMgr", "zText", "versificationMgr", "async"], function
                 files["otB"] = name;
             else if(name.search("ot.bzv") !== -1)
                 files["otCV"] = name;
-            //else
-                //saveModule(new Blob([unzip.decompress(name)]), name);
+            else
+                dataMgr.saveModule(new Blob([inUnzip.decompress(name)]), name, inDoc);
         });
 
-        getBookPositions(inUnzip.decompress(files.ntB), function (inBookPositions) {
-            console.log(inBookPositions);
-            dumpBytes(inUnzip.decompress(files.ntCV), inBookPositions, "nt", inV11n, function (inChapterVersePositions) {
-                console.log(inChapterVersePositions);
-            });
-        });
+        var bookPosOT = getBookPositions(inUnzip.decompress(files.otB));
+        var chapterVersePosOT = getChapterVersePositions(inUnzip.decompress(files.otCV), bookPosOT, "ot", inV11n);
+        var bookPosNT = getBookPositions(inUnzip.decompress(files.ntB));
+        var chapterVersePosNT = getChapterVersePositions(inUnzip.decompress(files.ntCV), bookPosNT, "nt", inV11n);
+
+        console.log(chapterVersePosNT.length, chapterVersePosOT.length);
+        //TODO
+        //dataMgr.saveBCVPos(chapterVersePosOT, chapterVersePosNT);
 
     }
 
@@ -122,85 +88,41 @@ define("installMgr", ["dataMgr", "zText", "versificationMgr", "async"], function
             end = false,
             bookPositions = [];
 
-        async.whilst(
-            function () {return !end;},
-            function (callbackB) {
-                async.series([
-                    function (callback) {
-                        getIntFromStream(inBuf, function (value, isEnd) {
-                            end = isEnd;
-                            startPos = value;
-                            if (!isEnd)
-                                callback(null);
-                            else
-                                callback(isEnd);
-
-                        });
-                    },
-                    function (callback) {
-                        getIntFromStream(inBuf, function (value, isEnd) {
-                            end = isEnd;
-                            length = value;
-                            if (!isEnd)
-                                callback(null);
-                            else
-                                callback(isEnd);
-                        });
-                    },
-                    function (callback) {
-                        getIntFromStream(inBuf, function (value, isEnd) {
-                            end = isEnd;
-                            unused = value;
-                            bookPositions.push({startPos: startPos, length: length, unused: unused});
-                            if (!isEnd)
-                                callback(null);
-                            else
-                                callback(isEnd);
-                        });
-                    }
-                ],
-                function (err) {
-                    callbackB();
-                });
-            },
-            function (err) {
-                inCallback(bookPositions);
+        while(!end) {
+            res = getIntFromStream(inBuf);
+            startPos = res[0];
+            end = res[1];
+            if (!end) {
+                res = getIntFromStream(inBuf);
+                length = res[0];
+                end = res[1];
+                if (!end) {
+                    res = getIntFromStream(inBuf);
+                    unused = res[0];
+                    end = res[1];
+                    if (!end)
+                        break;
+                    bookPositions.push({startPos: startPos, length: length, unused: unused});
+                }
             }
-        );
+        }
+        return bookPositions;
     }
 
     //dump some bytes in the chapter and verse index file
-    function dumpBytes (inBuf, inBookPositions, inTestament, inV11n, inCallback) {
-        var z=0,
-            start = 0;
-        async.whilst(
-            function () {return z<4;},
-            function (callbackW) {
-                async.series([
-                    function (callback) {
-                        getShortIntFromStream(inBuf, function () {callback(null);});
-                    },
-                    function (callback) {
-                        getInt48FromStream(inBuf, function () {callback(null);});
-                    },
-                    function (callback) {
-                        getShortIntFromStream(inBuf, function () {
-                            z++;
-                            callback(null);
-                        });
-                    }
-                ],
-                function (err, results) {callbackW();});
-            },
-            function (err) {
-                if (z==4)
-                    getChapterVersePositions(inBuf, inBookPositions, inTestament, inV11n, inCallback);
-            }
-        );
+    function dumpBytes(inBuf) {
+        var start = 0;
+
+        for (var i=0;i<4;i++) {
+            getShortIntFromStream(inBuf);
+            getInt48FromStream(inBuf);
+            getShortIntFromStream(inBuf);
+        }
     }
 
     //Get the position of each chapter and verse
-    function getChapterVersePositions (inBuf, inBookPositions, inTestament, inV11n, inCallback) {
+    function getChapterVersePositions(inBuf, inBookPositions, inTestament, inV11n) {
+        dumpBytes(inBuf);
         var booksZ = (inTestament === "ot") ? 0 : versificationMgr.getBooksInOT(inV11n);
         var booksEnd = (inTestament === "ot") ? versificationMgr.getBooksInOT(inV11n) : versificationMgr.getBooksInOT(inV11n)+versificationMgr.getBooksInNT(inV11n);
         var chapterZ = 0,
@@ -214,8 +136,6 @@ define("installMgr", ["dataMgr", "zText", "versificationMgr", "async"], function
             chapt = {},
             chapters = [];
 
-        console.log(booksZ, booksEnd, chapterZ);
-
         for (var b = booksZ; b<booksEnd; b++) {
             for (var c = 0; c<versificationMgr.getChapterMax(b, inV11n); c++) {
                 chapterStartPos = 0;
@@ -224,13 +144,13 @@ define("installMgr", ["dataMgr", "zText", "versificationMgr", "async"], function
                 chapt["verses"] = [];
                 length = 0;
                 for (var v = 0; v<versificationMgr.getVersesInChapter(b,c); v++) {
-                    booknum = getShortIntFromStream(inBuf);
+                    booknum = getShortIntFromStream(inBuf)[0];
 
-                    startPos = getInt48FromStream(inBuf)
+                    startPos = getInt48FromStream(inBuf)[0];
                     if (startPos !== 0)
                         lastNonZeroStartPos = startPos;
 
-                    length = getShortIntFromStream(inBuf);
+                    length = getShortIntFromStream(inBuf)[0];
                     if (verseZ === 0) {
                         chapterStartPos = startPos;
                         bookStartPos = 0;
@@ -262,7 +182,7 @@ define("installMgr", ["dataMgr", "zText", "versificationMgr", "async"], function
                 getShortIntFromStream(inBuf);
             } //end chpaters
         } //end books
-        console.log("Chapters", chapters);
+        return chapters;
     }
 
     function getIntFromStream(inBuf, inCallback) {
@@ -274,7 +194,7 @@ define("installMgr", ["dataMgr", "zText", "versificationMgr", "async"], function
         if (inCallback)
             inCallback(buf[3] * 0x100000 + buf[2] * 0x10000 + buf[1] * 0x100 + buf[0], isEnd);
         else
-            return buf[3] * 0x100000 + buf[2] * 0x10000 + buf[1] * 0x100 + buf[0];
+            return [buf[3] * 0x100000 + buf[2] * 0x10000 + buf[1] * 0x100 + buf[0], isEnd];
         /*intReader.onload = function (inEvent) {
             if (inEvent.total !== 4)
                 isEnd = true;
@@ -293,7 +213,7 @@ define("installMgr", ["dataMgr", "zText", "versificationMgr", "async"], function
         if (inCallback)
             inCallback(buf[1] * 0x100 + buf[0], isEnd);
         else
-            return buf[1] * 0x100 + buf[0];
+            return [buf[1] * 0x100 + buf[0], isEnd];
     }
 
     function getInt48FromStream(inBuf, inCallback) {
@@ -305,171 +225,8 @@ define("installMgr", ["dataMgr", "zText", "versificationMgr", "async"], function
         if (inCallback)
             inCallback(buf[1] * 0x100000000000 + buf[0] * 0x100000000 + buf[5] * 0x1000000 + buf[4] * 0x10000 + buf[3] * 0x100 + buf[2], isEnd);
         else
-            return buf[1] * 0x100000000000 + buf[0] * 0x100000000 + buf[5] * 0x1000000 + buf[4] * 0x10000 + buf[3] * 0x100 + buf[2];
+            return [buf[1] * 0x100000000000 + buf[0] * 0x100000000 + buf[5] * 0x1000000 + buf[4] * 0x10000 + buf[3] * 0x100 + buf[2], isEnd];
     }
-
-    //Save the binary module files like *.bzz
-    function saveModule(inBlob, inPath) {
-        var path = inPath.split("/"),
-            driver = path[path.length-3];
-
-        db.post({fileName: path[path.length-1], modKey: path[path.length-2], driver: driver}, function (inError, inDoc) {
-            if(!inError) {
-                console.log(inDoc);
-                db.putAttachment(inDoc.id + "/binary", driver, inBlob, driver, function(inError, inResponse) {
-                    console.log(inError, inResponse);
-                });
-            } else
-                console.log(inError);
-        });
-    }
-
-
 
     return installMgr;
 });
-
-/*
-async.whilst(
-            function () {
-                return booksZ<booksEnd;
-            },
-            function (callbackB) {
-                chapterZ = 0;
-                async.whilst(
-                    function () {
-                        console.log("Chapters in Book:", booksZ, chapterZ, versificationMgr.getChapterMax(booksZ, inV11n));
-                        return chapterZ<versificationMgr.getChapterMax(booksZ, inV11n);
-                    },
-                    function (callbackC) {
-                        chapterStartPos = 0;
-                        lastNonZeroStartPos = 0;
-                        chapt = {};
-                        chapt["verses"] = [];
-                        length = 0;
-
-                        async.whilst(
-                            function () {
-                                //console.log("verseZ", verseZ, versificationMgr.getVersesInChapter(booksZ, chapterZ));
-                                return verseZ < versificationMgr.getVersesInChapter(booksZ, chapterZ);
-                            },
-                            function (callbackV) {
-                                async.series([
-                                    function (callback) {
-                                        getShortIntFromStream(inBuf, function (value) {
-                                            booknum = value;
-                                            callback(null);
-                                        });
-
-                                    },
-                                    function (callback) {
-                                        getInt48FromStream(inBuf, function(value) {
-                                            //console.log("startPos", value, booknum, booksZ, chapterZ, verseZ);
-                                            startPos = value;
-                                            if (startPos !== 0)
-                                                lastNonZeroStartPos = startPos;
-                                            callback(null);
-                                        });
-                                    },
-                                    function (callback) {
-                                        getShortIntFromStream(inBuf, function (value) {
-                                            length = value;
-                                            if (verseZ === 0) {
-                                                chapterStartPos = startPos;
-                                                bookStartPos = 0;
-                                                if (booknum < inBookPositions.length) {
-                                                    //console.log("inBookPositions.startPos", inBookPositions[booknum].startPos, booknum, inBookPositions.length);
-                                                    bookStartPos = inBookPositions[booknum].startPos;
-                                                }
-
-                                                //if (this.BlockType === IndexingBlockType.Chapter)
-                                                    //chapterStartPos = 0;
-
-                                                chapt["startPos"] = chapterStartPos;
-                                                chapt["booknum"] = booksZ;
-                                                chapt["bookRelativeChapterNum"] = chapterZ;
-                                                chapt["bookStartPos"] = bookStartPos;
-                                            }
-                                            if (booknum === 0 && startPos === 0 && length === 0) {
-                                                if (chapt !== {}) {
-                                                    chapt["verses"].push({startPos: 0, length: 0, booknum: booksZ});
-                                                }
-                                            } else {
-                                                if (chapt !== {}) {
-                                                    chapt["verses"].push({startPos: startPos - chapterStartPos, length: length, booknum: booksZ});
-                                                }
-                                            }
-
-                                            callback(null);
-                                        });
-                                    }
-                                ],
-                                function (err, results) {
-                                    //console.log("async.series", err, results);
-                                    verseZ++;
-                                    callbackV();
-                                });
-
-                            },
-                            function (err) {
-                                //console.log("passed whilst verses");
-                                // update the chapter length now that we know it
-                                if (chapt != {}) {
-                                    chapt["Length"] = lastNonZeroStartPos - chapterStartPos + length;
-                                    chapters.push(chapt);
-                                }
-                                async.series([
-                                    function (callback) {
-                                        getShortIntFromStream(inBuf, function () {
-                                            callback(null);
-                                        });
-                                    },
-                                    function (callback) {
-                                        getInt48FromStream(inBuf, function () {
-                                            callback(null);
-                                        });
-                                    },
-                                    function (callback) {
-                                        getShortIntFromStream(inBuf, function () {
-                                            callback(null);
-                                        });
-                                    }
-                                ], function (err) {
-                                    verseZ = 0;
-                                    chapterZ++;
-                                    callbackC();
-                                });
-                            }
-                        );
-                    },
-                    function (err) {
-                        //console.log("passed whilst chapters", chapters);
-                        async.series([
-                            function (callback) {
-                                getShortIntFromStream(inBuf, function () {
-                                    callback(null);
-                                });
-                            },
-                            function (callback) {
-                                getInt48FromStream(inBuf, function () {
-                                    callback(null);
-                                });
-                            },
-                            function (callback) {
-                                getShortIntFromStream(inBuf, function () {
-                                    callback(null);
-                                });
-                            }
-                        ], function (err) {
-                            booksZ++;
-                            callbackB();
-                        });
-                    }
-                );
-            },
-            function (err) {
-                console.log("passed whilst books", chapters);
-                //getChapterBytes(path.join(dataPath,testament+".bzz"), vkey.vkey.testamentChapterNum);
-            }
-        );
-*/
