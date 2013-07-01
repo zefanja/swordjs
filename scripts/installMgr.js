@@ -1,4 +1,4 @@
-define("installMgr", ["dataMgr", "zText", "versificationMgr", "async"], function (dataMgr, zText, versificationMgr, async) {
+define("installMgr", ["dataMgr", "zText", "versificationMgr"], function (dataMgr, zText, versificationMgr) {
     var installMgr = {},
         start = 0;
         db = dataMgr.db;
