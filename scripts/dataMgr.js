@@ -1,7 +1,7 @@
 define("dataMgr", function () {
     var dataMgr = {};
 
-    Pouch.destroy('swordjs', function(err, info) {console.log(err, info);});
+    //Pouch.destroy('swordjs', function(err, info) {console.log(err, info);});
 
     //Init PouchDB Database
     var db = new Pouch("swordjs");
@@ -34,13 +34,13 @@ define("dataMgr", function () {
                 if(inError)
                     console.log(inError);
                 else
-                    inCallback(configData.Versification, {id: inDoc.id, rev: inDoc.rev});
+                    inCallback(configData.Versification, {id: inDoc.id, modKey: configData.moduleKey});
             });
         };
     }
 
     //Save the binary module files like *.bzz
-    function saveModule(inBlob, inPath, inDoc) {
+    function saveModule(inBlob, inPath) {
         var path = inPath.split("/"),
             driver = path[path.length-3];
 
@@ -55,9 +55,31 @@ define("dataMgr", function () {
         });
     }
 
+    function saveBCVPos(inOT, inNT, inDoc) {
+        db.post({
+            modKey: inDoc.modKey,
+            ot: inOT,
+            nt: inNT
+        }, function (inError, inPosRes) {
+            if(!inError) {
+                //console.log(inResponse);
+                db.get(inDoc.id, function (inError, inModule) {
+                    if(!inError) {
+                        inModule["bcvPosID"] = inPosRes.id;
+                        db.put(inModule, function(inError, inResponse) {
+                            console.log(inError, inResponse);
+                        });
+                    }
+                });
+            } else
+                console.log(inError);
+        });
+    }
+
     return {
         db: db,
         saveConfig: saveConfig,
-        saveModule: saveModule
+        saveModule: saveModule,
+        saveBCVPos: saveBCVPos
     };
 });

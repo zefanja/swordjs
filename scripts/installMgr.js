@@ -10,15 +10,24 @@ define("installMgr", ["dataMgr", "zText", "versificationMgr"], function (dataMgr
         });
     };
 
+    function download(url, reponseType, inCallback) {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', url, true);
+        xhr.responseType = "blob";
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState == 4) {
+                if (inCallback) inCallback(xhr.response);
+            }
+        };
+        xhr.send(null);
+    }
+
     //Install a module. inFile is an ArrayBuffer
     installMgr.installModule = function (inFile) {
         console.log(inFile);
         var blob = null;
         for (var i = 0, f; f = inFile[i]; i++) {
-            console.log(escape(f.name), f.type, f.size);
-
             var zipReader = new FileReader();
-
             zipReader.onload = (function(file) {
                 return function(evt) {
                     var unzip = new Zlib.Unzip(new Uint8Array(evt.target.result));
@@ -33,21 +42,10 @@ define("installMgr", ["dataMgr", "zText", "versificationMgr"], function (dataMgr
                     });
                 };
             })(f);
+
             zipReader.readAsArrayBuffer(f);
         }
     };
-
-    function download(url, reponseType, inCallback) {
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', url, true);
-        xhr.responseType = "blob";
-        xhr.onreadystatechange = function () {
-            if (xhr.readyState == 4) {
-                if (inCallback) inCallback(xhr.response);
-            }
-        };
-        xhr.send(null);
-    }
 
     //Build the index with all entry points for a book or chapter
     function buildIndex(inUnzip, inV11n, inDoc) {
@@ -64,8 +62,8 @@ define("installMgr", ["dataMgr", "zText", "versificationMgr"], function (dataMgr
                 files["otB"] = name;
             else if(name.search("ot.bzv") !== -1)
                 files["otCV"] = name;
-            else
-                dataMgr.saveModule(new Blob([inUnzip.decompress(name)]), name, inDoc);
+            else if (name.search(".conf") === -1)
+                dataMgr.saveModule(new Blob([inUnzip.decompress(name)]), name);
         });
 
         var bookPosOT = getBookPositions(inUnzip.decompress(files.otB));
@@ -73,9 +71,8 @@ define("installMgr", ["dataMgr", "zText", "versificationMgr"], function (dataMgr
         var bookPosNT = getBookPositions(inUnzip.decompress(files.ntB));
         var chapterVersePosNT = getChapterVersePositions(inUnzip.decompress(files.ntCV), bookPosNT, "nt", inV11n);
 
-        console.log(chapterVersePosNT.length, chapterVersePosOT.length);
-        //TODO
-        //dataMgr.saveBCVPos(chapterVersePosOT, chapterVersePosNT);
+        //console.log(chapterVersePosNT.length, chapterVersePosOT.length);
+        dataMgr.saveBCVPos(chapterVersePosOT, chapterVersePosNT, inDoc);
 
     }
 
