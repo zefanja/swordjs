@@ -15,7 +15,7 @@ You will find a ```sword.min.js``` file in the root dir.
 Usage
 -----
 
-```sword.js``` is an AMD module, so you load with a module loader like [require.js](http://requirejs.org/). See ```index.html``` for more details.
+```sword.js``` is an AMD module, so you can load with a module loader like [require.js](http://requirejs.org/). See ```index.html``` for more details.
 
 API
 ---
