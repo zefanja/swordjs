@@ -25,7 +25,7 @@ define("sword", ["installMgr", "moduleMgr", "dataMgr", "versificationMgr"],
         moduleMgr.getModules(function (inModules) {
             console.log(inModules);
             if(inModules.length !== 0) {
-                inModules[0].renderText("John 1");
+                inModules[0].renderText("John 3:16");
             }
         });
         //

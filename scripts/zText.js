@@ -30,13 +30,17 @@ define("zText", function () {
             chapterStartPos = bookStartPos + startPos,
             chapterEndPos = chapterStartPos + length,
             blob = inBlob.slice(bookStartPos, chapterEndPos);
-        console.log(bookStartPos, chapterStartPos, chapterEndPos, startPos, length);
+
+        if(!isNaN(inVKey.verse)) {
+            startPos = startPos + inPos[inVKey.chapter-1].verses[inVKey.verse-1].startPos;
+            length = inPos[inVKey.chapter-1].verses[inVKey.verse-1].length;
+        }
+
         zlibReader.readAsArrayBuffer(blob);
         zlibReader.onload = function (evt) {
             var view = new Uint8Array(evt.target.result);
             var infBlob = new Blob([inflator.decompress(view)]);
             //Read raw text entry
-            console.log(infBlob, infBlob.slice(startPos, length));
             textReader.readAsText(infBlob.slice(startPos, startPos+length));
             textReader.onload = function(e) {
                 console.log(e.target.result);
