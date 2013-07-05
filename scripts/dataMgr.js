@@ -1,10 +1,33 @@
-define("dataMgr", function () {
+/*### BEGIN LICENSE
+# Copyright (C) 2013 Stephan Tetzel <info@zefanjas.de>
+#
+# This program is free software: you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 3, as published
+# by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranties of
+# MERCHANTABILITY, SATISFACTORY QUALITY, or FITNESS FOR A PARTICULAR
+# PURPOSE.  See the GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program.  If not, see <http://www.gnu.org/licenses/>.
+### END LICENSE*/
+
+define("dataMgr", ["async"], function (async) {
     var dataMgr = {};
 
     //Pouch.destroy('swordjs', function(err, info) {console.log(err, info);});
 
     //Init PouchDB Database
     var db = new Pouch("swordjs");
+
+    //get a document
+    function getDocument(inId, inCallback) {
+        db.get(inId, function (inError, inResponse) {
+            inCallback(inError, inResponse);
+        });
+    }
 
     //Read a module's config file and save it as an Object
     function saveConfig(inConfBlob, inCallback) {
@@ -40,18 +63,53 @@ define("dataMgr", function () {
     }
 
     //Save the binary module files like *.bzz
-    function saveModule(inBlob, inPath) {
-        var path = inPath.split("/"),
-            driver = path[path.length-3];
+    function saveModule(inFiles, inDoc) {
+        var z = inFiles.length,
+            args = {},
+            path = null,
+            driver = null;
 
-        db.post({fileName: path[path.length-1], modKey: path[path.length-2], driver: driver}, function (inError, inDoc) {
+        args.docId = inDoc.id;
+
+        async.eachSeries(inFiles, function (file, ittCallback) {
+            path = file.name.split("/"),
+            driver = path[path.length-3],
+            db.post({fileName: path[path.length-1], modKey: inDoc.modKey, driver: driver}, function (inError, inBinDoc) {
+                if(!inError) {
+                    db.putAttachment(inBinDoc.id+ "/binary", driver, file.blob, driver, function(inError, inResponse) {
+                        if(!inError) {
+                            args[path[path.length-1].split(".")[0]] = inBinDoc.id;
+                        } else
+                            console.log(inError);
+                        ittCallback(null);
+                    });
+                } else
+                    console.log(inError);
+            });
+        }, function (err) {
+            if(!err)
+                updateBinaryIds(args);
+            else
+                console.log(err);
+        });
+    }
+
+    function updateBinaryIds(inIds, inCallback) {
+        db.get(inIds.docId, function (inError, inModule) {
             if(!inError) {
-                db.putAttachment(inDoc.id + "/binary", driver, inBlob, driver, function(inError, inResponse) {
-                    if(inError)
-                        console.log(inError);
+                inModule.nt = inIds.nt;
+                inModule.ot = inIds.ot;
+                db.put(inModule, function(inError, inResponse) {
+                    //console.log("update bin IDs", inError, inResponse);
                 });
-            } else
-                console.log(inError);
+            }
+        });
+    }
+
+    function getBlob(inId, inCallback) {
+        var attId = "ztext";
+        db.getAttachment(inId+"/binary", attId,  function (inError, inBlob) {
+            inCallback(inError, inBlob);
         });
     }
 
@@ -80,6 +138,8 @@ define("dataMgr", function () {
         db: db,
         saveConfig: saveConfig,
         saveModule: saveModule,
-        saveBCVPos: saveBCVPos
+        saveBCVPos: saveBCVPos,
+        getBlob: getBlob,
+        getDocument: getDocument
     };
 });

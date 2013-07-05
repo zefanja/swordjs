@@ -13,3 +13,9 @@
 [submodule "scripts/libs/json"]
 	path = scripts/libs/json
 	url = https://github.com/millermedeiros/requirejs-plugins.git
+[submodule "scripts/libs/async"]
+	path = scripts/libs/async
+	url = https://github.com/caolan/async.git
+[submodule "scripts/libs/bible-reference-parser"]
+	path = scripts/libs/bible-reference-parser
+	url = https://github.com/openbibleinfo/Bible-Passage-Reference-Parser.git

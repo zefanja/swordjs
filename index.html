@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
+        <meta charset="UTF-8">
         <title>swordJS Project</title>
         <!--
         PouchDB is from https://github.com/daleharvey/pouchdb.git
@@ -11,14 +12,24 @@
         <script type="text/javascript"
             src="scripts/libs/zlib/bin/unzip.min.js"></script>
         <script type="text/javascript"
-            src="scripts/libs/zlib/bin/inflate.min.js"></script>
+            src="scripts/libs/zlib/bin/inflate_stream.min.js"></script>
         <script data-main="scripts/main"
             src="scripts/libs/require/require.js"></script>
         <script>
             require.config({
                 paths: {
                     "text": "libs/text/text",
-                    "json": "libs/json/src/json"
+                    "json": "libs/json/src/json",
+                    "async" : "libs/async/lib/async",
+                    "bcv" : "libs/bible-reference-parser/js/en_bcv_parser.min"
+                },
+                shim: {
+                    "bcv": {
+                        exports: 'bcv_parser',
+                        init: function () {
+                            return new this.bcv_parser();
+                        }
+                    }
                 }
             });
         </script>

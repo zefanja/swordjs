@@ -1,3 +1,19 @@
+/*### BEGIN LICENSE
+# Copyright (C) 2013 Stephan Tetzel <info@zefanjas.de>
+#
+# This program is free software: you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 3, as published
+# by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranties of
+# MERCHANTABILITY, SATISFACTORY QUALITY, or FITNESS FOR A PARTICULAR
+# PURPOSE.  See the GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program.  If not, see <http://www.gnu.org/licenses/>.
+### END LICENSE*/
+
 define("installMgr", ["dataMgr", "zText", "versificationMgr"], function (dataMgr, zText, versificationMgr) {
     var installMgr = {},
         start = 0;
@@ -51,6 +67,7 @@ define("installMgr", ["dataMgr", "zText", "versificationMgr"], function (dataMgr
     function buildIndex(inUnzip, inV11n, inDoc) {
         console.log(inUnzip, inV11n);
         var files = {};
+        files["bin"] = [];
 
         var filenames = inUnzip.getFilenames();
         filenames.forEach(function (name, index) {
@@ -63,15 +80,16 @@ define("installMgr", ["dataMgr", "zText", "versificationMgr"], function (dataMgr
             else if(name.search("ot.bzv") !== -1)
                 files["otCV"] = name;
             else if (name.search(".conf") === -1)
-                dataMgr.saveModule(new Blob([inUnzip.decompress(name)]), name);
+                files.bin.push({blob: new Blob([inUnzip.decompress(name)]), name: name});
         });
+        dataMgr.saveModule(files.bin, inDoc);
 
         var bookPosOT = getBookPositions(inUnzip.decompress(files.otB));
         var chapterVersePosOT = getChapterVersePositions(inUnzip.decompress(files.otCV), bookPosOT, "ot", inV11n);
         var bookPosNT = getBookPositions(inUnzip.decompress(files.ntB));
         var chapterVersePosNT = getChapterVersePositions(inUnzip.decompress(files.ntCV), bookPosNT, "nt", inV11n);
 
-        //console.log(chapterVersePosNT.length, chapterVersePosOT.length);
+        //console.log(chapterVersePosNT, chapterVersePosOT);
         dataMgr.saveBCVPos(chapterVersePosOT, chapterVersePosNT, inDoc);
 
     }
@@ -84,6 +102,7 @@ define("installMgr", ["dataMgr", "zText", "versificationMgr"], function (dataMgr
             start = 0,
             end = false,
             bookPositions = [];
+        start = 0;
 
         while(!end) {
             res = getIntFromStream(inBuf);
@@ -97,7 +116,7 @@ define("installMgr", ["dataMgr", "zText", "versificationMgr"], function (dataMgr
                     res = getIntFromStream(inBuf);
                     unused = res[0];
                     end = res[1];
-                    if (!end)
+                    if (end)
                         break;
                     bookPositions.push({startPos: startPos, length: length, unused: unused});
                 }
@@ -108,7 +127,7 @@ define("installMgr", ["dataMgr", "zText", "versificationMgr"], function (dataMgr
 
     //dump some bytes in the chapter and verse index file
     function dumpBytes(inBuf) {
-        var start = 0;
+        start = 0;
 
         for (var i=0;i<4;i++) {
             getShortIntFromStream(inBuf);
@@ -116,6 +135,7 @@ define("installMgr", ["dataMgr", "zText", "versificationMgr"], function (dataMgr
             getShortIntFromStream(inBuf);
         }
     }
+    // ### This code is based on the zTextReader class from cross-connect (https://code.google.com/p/cross-connect), Copyright (C) 2011 Thomas Dilts ###
 
     //Get the position of each chapter and verse
     function getChapterVersePositions(inBuf, inBookPositions, inTestament, inV11n) {
@@ -129,12 +149,15 @@ define("installMgr", ["dataMgr", "zText", "versificationMgr"], function (dataMgr
             length = 0,
             bookStartPos = 0,
             booknum = 0,
-            tartPos = 0,
+            bookData = null,
+            startPos = 0,
             chapt = {},
-            chapters = [];
+            chapters = {};
 
         for (var b = booksZ; b<booksEnd; b++) {
-            for (var c = 0; c<versificationMgr.getChapterMax(b, inV11n); c++) {
+            bookData = versificationMgr.getBook(b, inV11n);
+            chapters[bookData.abbrev] = [];
+            for (var c = 0; c<bookData.maxChapter; c++) {
                 chapterStartPos = 0;
                 lastNonZeroStartPos = 0;
                 chapt = {};
@@ -142,13 +165,14 @@ define("installMgr", ["dataMgr", "zText", "versificationMgr"], function (dataMgr
                 length = 0;
                 for (var v = 0; v<versificationMgr.getVersesInChapter(b,c); v++) {
                     booknum = getShortIntFromStream(inBuf)[0];
-
                     startPos = getInt48FromStream(inBuf)[0];
+
                     if (startPos !== 0)
                         lastNonZeroStartPos = startPos;
 
                     length = getShortIntFromStream(inBuf)[0];
-                    if (verseZ === 0) {
+                    //console.log("startPos, length", startPos, length);
+                    if (v === 0) {
                         chapterStartPos = startPos;
                         bookStartPos = 0;
                         if (booknum < inBookPositions.length) {
@@ -157,22 +181,23 @@ define("installMgr", ["dataMgr", "zText", "versificationMgr"], function (dataMgr
                         }
                         chapt["startPos"] = chapterStartPos;
                         chapt["booknum"] = b;
-                        chapt["bookRelativeChapterNum"] = c;
+                        //chapt["bookRelativeChapterNum"] = c;
                         chapt["bookStartPos"] = bookStartPos;
                     }
                     if (booknum === 0 && startPos === 0 && length === 0) {
                         if (chapt !== {}) {
-                            chapt["verses"].push({startPos: 0, length: 0, booknum: b});
+                            chapt["verses"].push({startPos: 0, length: 0});
                         }
                     } else {
                         if (chapt !== {}) {
-                            chapt["verses"].push({startPos: startPos - chapterStartPos, length: length, booknum: b});
+                            chapt["verses"].push({startPos: startPos - chapterStartPos, length: length});
                         }
                     }
                 } //end verse
                 if (chapt != {}) {
-                    chapt["Length"] = lastNonZeroStartPos - chapterStartPos + length;
-                    chapters.push(chapt);
+                    //console.log("LENGTH:", lastNonZeroStartPos, chapterStartPos, length);
+                    chapt["length"] = lastNonZeroStartPos - chapterStartPos + length;
+                    chapters[bookData.abbrev].push(chapt);
                 }
                 getShortIntFromStream(inBuf);
                 getInt48FromStream(inBuf);
@@ -192,17 +217,10 @@ define("installMgr", ["dataMgr", "zText", "versificationMgr"], function (dataMgr
             inCallback(buf[3] * 0x100000 + buf[2] * 0x10000 + buf[1] * 0x100 + buf[0], isEnd);
         else
             return [buf[3] * 0x100000 + buf[2] * 0x10000 + buf[1] * 0x100 + buf[0], isEnd];
-        /*intReader.onload = function (inEvent) {
-            if (inEvent.total !== 4)
-                isEnd = true;
-            if (inCallback)
-                inCallback(buf[3] * 0x100000 + buf[2] * 0x10000 + buf[1] * 0x100 + buf[0], isEnd);
-        };*/
     }
 
     function getShortIntFromStream(inBuf, inCallback) {
         buf = inBuf.subarray(start, start+2),
-        //console.log("getShortIntFromStream", start, buf,buf[1] * 0x100 + buf[0]);
         isEnd = false;
         start = start+2;
         if (buf.length !== 2)
