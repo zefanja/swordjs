@@ -23,16 +23,21 @@ define("zText", function () {
 
 
     zText.getRawEntry = function (inBlob, inPos, inVKey) {
-        console.log(inPos, inVKey, inPos[inVKey.chapter-1], inPos[inVKey.chapter-1].startPos, inPos[inVKey.chapter-1].startPos + inPos[inVKey.chapter-1].length);
-        var startPos = inPos[inVKey.chapter-1].bookStartPos + inPos[inVKey.chapter-1].startPos;
-        var blob = inBlob.slice(inPos[inVKey.chapter-1].bookStartPos, startPos + inPos[inVKey.chapter-1].length);
+        console.log(inPos, inVKey);
+        var bookStartPos = inPos[inVKey.chapter-1].bookStartPos,
+            startPos = inPos[inVKey.chapter-1].startPos,
+            length = inPos[inVKey.chapter-1].length,
+            chapterStartPos = bookStartPos + startPos,
+            chapterEndPos = chapterStartPos + length,
+            blob = inBlob.slice(bookStartPos, chapterEndPos);
+        console.log(bookStartPos, chapterStartPos, chapterEndPos, startPos, length);
         zlibReader.readAsArrayBuffer(blob);
         zlibReader.onload = function (evt) {
-            console.log(evt.target.result);
             var view = new Uint8Array(evt.target.result);
             var infBlob = new Blob([inflator.decompress(view)]);
             //Read raw text entry
-            textReader.readAsText(infBlob.slice(inPos[inVKey.chapter-1].startPos, inPos[inVKey.chapter-1].startPos + inPos[inVKey.chapter-1].length));
+            console.log(infBlob, infBlob.slice(startPos, length));
+            textReader.readAsText(infBlob.slice(startPos, startPos+length));
             textReader.onload = function(e) {
                 console.log(e.target.result);
             };

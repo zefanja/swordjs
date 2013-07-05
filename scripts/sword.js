@@ -20,11 +20,13 @@ define("sword", ["installMgr", "moduleMgr", "dataMgr", "versificationMgr"],
         sword.installMgr = installMgr;
         sword.moduleMgr = moduleMgr;
         sword.versificationMgr = versificationMgr;
+        sword.dataMgr = dataMgr;
 
         moduleMgr.getModules(function (inModules) {
             console.log(inModules);
-            if(inModules.length !== 0)
-                inModules[1].renderText("Mt 2");
+            if(inModules.length !== 0) {
+                inModules[0].renderText("John 1");
+            }
         });
         //
         //dataMgr.db.allDocs(function(inErr, inRes) {console.log(inRes);});

@@ -17,8 +17,6 @@
 define("dataMgr", ["async"], function (async) {
     var dataMgr = {};
 
-    //Pouch.destroy('swordjs', function(err, info) {console.log(err, info);});
-
     //Init PouchDB Database
     var db = new Pouch("swordjs");
 
@@ -134,8 +132,17 @@ define("dataMgr", ["async"], function (async) {
         });
     }
 
+    function clearDatabase() {
+        Pouch.destroy('swordjs', function(inError, inInfo) {
+            console.log(inError, inInfo);
+            if(!inError)
+                db = new Pouch("swordjs");
+        });
+    }
+
     return {
         db: db,
+        clearDatabase: clearDatabase,
         saveConfig: saveConfig,
         saveModule: saveModule,
         saveBCVPos: saveBCVPos,

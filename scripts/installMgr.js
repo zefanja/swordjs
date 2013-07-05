@@ -90,6 +90,7 @@ define("installMgr", ["dataMgr", "zText", "versificationMgr"], function (dataMgr
         var chapterVersePosNT = getChapterVersePositions(inUnzip.decompress(files.ntCV), bookPosNT, "nt", inV11n);
 
         //console.log(chapterVersePosNT, chapterVersePosOT);
+        console.log(bookPosOT, bookPosNT);
         dataMgr.saveBCVPos(chapterVersePosOT, chapterVersePosNT, inDoc);
 
     }
@@ -99,7 +100,6 @@ define("installMgr", ["dataMgr", "zText", "versificationMgr"], function (dataMgr
         var startPos = 0,
             length = 0,
             unused = 0,
-            start = 0,
             end = false,
             bookPositions = [];
         start = 0;
@@ -140,7 +140,7 @@ define("installMgr", ["dataMgr", "zText", "versificationMgr"], function (dataMgr
     //Get the position of each chapter and verse
     function getChapterVersePositions(inBuf, inBookPositions, inTestament, inV11n) {
         dumpBytes(inBuf);
-        var booksZ = (inTestament === "ot") ? 0 : versificationMgr.getBooksInOT(inV11n);
+        var booksStart = (inTestament === "ot") ? 0 : versificationMgr.getBooksInOT(inV11n);
         var booksEnd = (inTestament === "ot") ? versificationMgr.getBooksInOT(inV11n) : versificationMgr.getBooksInOT(inV11n)+versificationMgr.getBooksInNT(inV11n);
         var chapterZ = 0,
             verseZ = 0,
@@ -154,7 +154,7 @@ define("installMgr", ["dataMgr", "zText", "versificationMgr"], function (dataMgr
             chapt = {},
             chapters = {};
 
-        for (var b = booksZ; b<booksEnd; b++) {
+        for (var b = booksStart; b<booksEnd; b++) {
             bookData = versificationMgr.getBook(b, inV11n);
             chapters[bookData.abbrev] = [];
             for (var c = 0; c<bookData.maxChapter; c++) {
@@ -199,10 +199,15 @@ define("installMgr", ["dataMgr", "zText", "versificationMgr"], function (dataMgr
                     chapt["length"] = lastNonZeroStartPos - chapterStartPos + length;
                     chapters[bookData.abbrev].push(chapt);
                 }
+                // dump a post for the chapter break
                 getShortIntFromStream(inBuf);
                 getInt48FromStream(inBuf);
                 getShortIntFromStream(inBuf);
             } //end chpaters
+            // dump a post for the book break
+            getShortIntFromStream(inBuf);
+            getInt48FromStream(inBuf);
+            getShortIntFromStream(inBuf);
         } //end books
         return chapters;
     }
