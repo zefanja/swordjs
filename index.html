@@ -8,20 +8,19 @@
         Build instruction are on
         http://mattgwwalker.wordpress.com/2013/03/17/pouchdb/#comment-73
         -->
-        <script type="text/javascript" src="scripts/pouchdb.js"></script>
-        <script type="text/javascript"
-            src="scripts/libs/zlib/bin/unzip.min.js"></script>
-        <script type="text/javascript"
-            src="scripts/libs/zlib/bin/inflate_stream.min.js"></script>
         <script data-main="scripts/main"
             src="scripts/libs/require/require.js"></script>
         <script>
             require.config({
                 paths: {
+                    //"sword": "../sword.min",
                     "text": "libs/text/text",
                     "json": "libs/json/src/json",
-                    "async" : "libs/async/lib/async",
-                    "bcv" : "libs/bible-reference-parser/js/en_bcv_parser.min"
+                    "async": "libs/async/lib/async",
+                    "bcv": "libs/bible-reference-parser/js/en_bcv_parser.min",
+                    "unzip": "libs/zlib/bin/unzip.min",
+                    "inflateStream": "libs/zlib/bin/inflate_stream.min"
+
                 },
                 shim: {
                     "bcv": {
@@ -29,6 +28,15 @@
                         init: function () {
                             return new this.bcv_parser();
                         }
+                    },
+                    "pouchdb": {
+                        exports: 'Pouch'
+                    },
+                    "unzip": {
+                        exports: 'Zlib'
+                    },
+                    "inflateStream": {
+                        exports: 'Zlib'
                     }
                 }
             });
@@ -38,5 +46,6 @@
         <h1>swordJS Project</h1>
         <div><b>Import your Module (*.zip): </b><input type="file" id="files" name="files[]"/></div>
         <button id="btnClear" type="button">Destroy/Clear Database</button>
+        <p id="out"></p>
     </body>
 </html>

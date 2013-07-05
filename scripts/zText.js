@@ -14,16 +14,15 @@
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE*/
 
-define("zText", function () {
-    console.log(Zlib);
+define("zText", ["inflateStream"], function (Zlib) {
     var zText = {},
         inflator = new Zlib.InflateStream(),
         zlibReader = new FileReader(),
         textReader = new FileReader();
 
 
-    zText.getRawEntry = function (inBlob, inPos, inVKey) {
-        console.log(inPos, inVKey);
+    zText.getRawEntry = function (inBlob, inPos, inVKey, inCallback) {
+        //console.log(inPos, inVKey);
         var bookStartPos = inPos[inVKey.chapter-1].bookStartPos,
             startPos = inPos[inVKey.chapter-1].startPos,
             length = inPos[inVKey.chapter-1].length,
@@ -43,7 +42,7 @@ define("zText", function () {
             //Read raw text entry
             textReader.readAsText(infBlob.slice(startPos, startPos+length));
             textReader.onload = function(e) {
-                console.log(e.target.result);
+                inCallback(e.target.result);
             };
         };
     };

@@ -14,7 +14,7 @@
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE*/
 
-define("installMgr", ["dataMgr", "zText", "versificationMgr"], function (dataMgr, zText, versificationMgr) {
+define("installMgr", ["unzip", "dataMgr", "zText", "versificationMgr"], function (Zlib, dataMgr, zText, versificationMgr) {
     var installMgr = {},
         start = 0;
         db = dataMgr.db;

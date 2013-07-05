@@ -50,14 +50,13 @@ define("swmodule", ["dataMgr", "verseKey", "zText"], function (dataMgr, verseKey
     Module.prototype = {
         constructor: Module,
 
-        renderText: function (inVKey) {
+        renderText: function (inVKey, inCallback) {
             var bcvPos = null,
                 blobId = null,
                 self = this;
             var vkey = verseKey.parse(inVKey);
-            console.log(vkey);
             dataMgr.getDocument(self.config.bcvPosID, function(inError, inBcv) {
-                console.log(inBcv);
+                //console.log(inBcv);
                 if (inBcv.nt.hasOwnProperty(vkey.book)) {
                     bcvPos = inBcv.nt[vkey.book];
                     blobId = self.config.nt;
@@ -67,9 +66,8 @@ define("swmodule", ["dataMgr", "verseKey", "zText"], function (dataMgr, verseKey
                 }
 
                 getBinaryBlob(blobId, function (inError, inBlob) {
-                    console.log(inError, inBlob);
                     if (!inError) {
-                        zText.getRawEntry(inBlob, bcvPos, vkey);
+                        zText.getRawEntry(inBlob, bcvPos, vkey, inCallback);
                     }
 
                 });

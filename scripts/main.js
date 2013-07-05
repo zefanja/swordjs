@@ -1,5 +1,15 @@
 require(["sword","libs/domReady/domReady!"], function (sword, doc) {
-    window.sword = sword;
+    //window.sword = sword;
+
+    sword.moduleMgr.getModules(function (inModules) {
+        console.log(inModules);
+        if(inModules.length !== 0) {
+            inModules[0].renderText("John 3:16", function (inText) {
+                console.log(inText);
+                document.getElementById("out").textContent = inText;
+            });
+        }
+    });
 
     function handleModuleSelect(evt) {
         sword.installMgr.installModule(evt.target.files);

@@ -14,13 +14,20 @@
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE*/
 
-define("sword", ["installMgr", "moduleMgr", "dataMgr", "versificationMgr"],
-    function (installMgr, moduleMgr, dataMgr, versificationMgr) {
-        var sword = {};
-        sword.installMgr = installMgr;
-        sword.moduleMgr = moduleMgr;
-        sword.versificationMgr = versificationMgr;
-        sword.dataMgr = dataMgr;
+define("verseKey", ["bcv"], function (bcv) {
+    function parseVkey(inVKey) {
+        var key = {};
+        key.osis = bcv.parse(inVKey).osis();
+        var split = key.osis.split(".");
 
-        return sword;
+        key.book = split[0];
+        key.chapter = parseInt(split[1], 10);
+        key.verse = parseInt(split[2], 10);
+
+        return key;
+    }
+
+    return {
+        parse: parseVkey
+    };
 });
