@@ -14,22 +14,60 @@
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE*/
 
-define("installMgr", ["unzip", "dataMgr", "zText", "versificationMgr"], function (Zlib, dataMgr, zText, versificationMgr) {
-    var installMgr = {},
-        start = 0;
+define("installMgr", ["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], function (Zlib, dataMgr, zText, versificationMgr, async, tools) {
+    var start = 0;
         db = dataMgr.db;
 
     //Get a list of all available repos/sources from CrossWire's masterRepoList.conf
-    installMgr.getRepositories = function () {
+    function getRepositories(inCallback) {
         download("http://crosswire.org/ftpmirror/pub/sword/masterRepoList.conf", "text", function (inResponse) {
-            console.log(inResponse);
+            var repos = [],
+                tmp = null;
+            inResponse.split(/[\r\n]+/g).forEach(function (repo) {
+                tmp = repo.split("|");
+                if(tmp.length > 1 && tmp[0].search("CrossWire") !== -1) {
+                    repos.push({
+                        name: tmp[0].split("=")[2],
+                        url: "http://crosswire.org/ftpmirror" + tmp[2].replace("raw", "packages") + "/rawzip/",
+                        confUrl: "http://crosswire.org/ftpmirror" + tmp[2] + "/mods.d"
+                    });
+                }
+            });
+            inCallback(repos);
         });
-    };
+    }
+
+    //dirty hack to get a list of modules that is available in a repository.
+    //FIXME: unpack mods.d.tar.gz in Javascript (untar is the problem) or ask CrossWire to compress it as zip/gzip
+    function getModules(inRepoUrl, inCallback) {
+        download(inRepoUrl, "document", function(inResponse) {
+            var tasks = [],
+                url = "",
+                a = inResponse.getElementsByTagName("a");
+            for(var i=0;i<a.length;i++) {
+                if (a[i].href.search(".conf") !== -1) {
+                    url = a[i].baseURI + "/" + a[i].textContent;
+                    tasks.push((function (url) {
+                        return function (cb) {
+                            download(url, "text", function (inConf) {
+                                var configData = tools.readConf(inConf);
+                                cb(null, configData);
+                            });
+                        };
+                    })(url));
+                }
+            }
+            async.parallel(tasks, function (inError, inModules) {
+                inCallback(inModules);
+            });
+        });
+    }
 
     function download(url, reponseType, inCallback) {
         var xhr = new XMLHttpRequest();
         xhr.open('GET', url, true);
-        xhr.responseType = "blob";
+        //xhr.setRequestHeader("Accept-Encoding", "gzip, deflate");
+        xhr.responseType = reponseType; //"blob";
         xhr.onreadystatechange = function () {
             if (xhr.readyState == 4) {
                 if (inCallback) inCallback(xhr.response);
@@ -39,7 +77,7 @@ define("installMgr", ["unzip", "dataMgr", "zText", "versificationMgr"], function
     }
 
     //Install a module. inFile is an ArrayBuffer
-    installMgr.installModule = function (inFile) {
+    function installModule (inFile) {
         console.log(inFile);
         var blob = null;
         for (var i = 0, f; f = inFile[i]; i++) {
@@ -61,7 +99,7 @@ define("installMgr", ["unzip", "dataMgr", "zText", "versificationMgr"], function
 
             zipReader.readAsArrayBuffer(f);
         }
-    };
+    }
 
     //Build the index with all entry points for a book or chapter
     function buildIndex(inUnzip, inV11n, inDoc) {
@@ -248,5 +286,9 @@ define("installMgr", ["unzip", "dataMgr", "zText", "versificationMgr"], function
             return [buf[1] * 0x100000000000 + buf[0] * 0x100000000 + buf[5] * 0x1000000 + buf[4] * 0x10000 + buf[3] * 0x100 + buf[2], isEnd];
     }
 
-    return installMgr;
+    return {
+        getRepositories: getRepositories,
+        getModules: getModules,
+        installModule: installModule
+    };
 });

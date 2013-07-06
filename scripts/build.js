@@ -8,6 +8,7 @@
         "async": "libs/async/lib/async",
         "bcv": "libs/bible-reference-parser/js/en_bcv_parser.min",
         "unzip": "libs/zlib/bin/unzip.min",
+        "gunzip": "libs/zlib/bin/gunzip.min",
         "inflateStream": "libs/zlib/bin/inflate_stream.min"
 
     },
@@ -22,6 +23,9 @@
             exports: 'Pouch'
         },
         "unzip": {
+            exports: 'Zlib'
+        },
+        "gunzip": {
             exports: 'Zlib'
         },
         "inflateStream": {

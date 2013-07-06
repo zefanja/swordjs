@@ -14,7 +14,7 @@
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE*/
 
-define("dataMgr", ["async", "pouchdb"], function (async, Pouch) {
+define("dataMgr", ["async", "pouchdb", "tools"], function (async, Pouch, tools) {
     var dataMgr = {};
 
     //Init PouchDB Database
@@ -30,25 +30,9 @@ define("dataMgr", ["async", "pouchdb"], function (async, Pouch) {
     //Read a module's config file and save it as an Object
     function saveConfig(inConfBlob, inCallback) {
         var confReader = new FileReader();
-        var configData = {};
-        configData["GlobalOptionFilter"] = [];
-        configData["Feature"] = [];
         confReader.readAsText(inConfBlob);
         confReader.onload = function(e) {
-            var lines = e.target.result.split(/[\r\n]+/g);
-            lines.forEach(function(line, index) {
-                splittedLine = line.split(/=(.+)/);
-                if (splittedLine[0] !== "")
-                    if (splittedLine[0].search(/\[.*\]/) !== -1)
-                        configData["moduleKey"] = splittedLine[0].replace("[", "").replace("]", "");
-                    else
-                        if (splittedLine[0] === "GlobalOptionFilter")
-                            configData[splittedLine[0]].push(splittedLine[1]);
-                        else if (splittedLine[0] === "Feature")
-                            configData[splittedLine[0]].push(splittedLine[1]);
-                        else
-                            configData[splittedLine[0]] = splittedLine[1];
-            });
+            var configData = tools.readConf(e.target.result);
 
             //Save config data to the database and continue to build the index
             db.post(configData, function (inError, inDoc) {

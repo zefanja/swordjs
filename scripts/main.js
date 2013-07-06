@@ -1,7 +1,7 @@
-require(["sword","libs/domReady/domReady!"], function (sword, doc) {
+require(["sword", "libs/domReady/domReady!"], function (sword, doc) {
     //window.sword = sword;
 
-    sword.moduleMgr.getModules(function (inModules) {
+    /*sword.moduleMgr.getModules(function (inModules) {
         console.log(inModules);
         if(inModules.length !== 0) {
             inModules[0].renderText("John 3:16", function (inText) {
@@ -9,6 +9,13 @@ require(["sword","libs/domReady/domReady!"], function (sword, doc) {
                 document.getElementById("out").textContent = inText;
             });
         }
+    });*/
+
+    sword.installMgr.getRepositories(function (inRepos) {
+        console.log(inRepos);
+        sword.installMgr.getModules(inRepos[0].confUrl, function(inModules) {
+            console.log(inModules);
+        });
     });
 
     function handleModuleSelect(evt) {
