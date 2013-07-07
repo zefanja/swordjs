@@ -77,8 +77,7 @@ define("installMgr", ["unzip", "dataMgr", "zText", "versificationMgr", "async", 
     }
 
     //Install a module. inFile is an ArrayBuffer
-    function installModule (inFile) {
-        console.log(inFile);
+    function installModule (inFile, inCallback) {
         var blob = null;
         for (var i = 0, f; f = inFile[i]; i++) {
             var zipReader = new FileReader();
@@ -89,8 +88,9 @@ define("installMgr", ["unzip", "dataMgr", "zText", "versificationMgr", "async", 
                     filenames.forEach(function (name, index) {
                         if(name.search(".conf") !== -1) {
                             dataMgr.saveConfig(new Blob([unzip.decompress(name)]),
-                                function (inV11n, inDoc) {
-                                    buildIndex(unzip, inV11n, inDoc);
+                                function (inError, inDoc) {
+                                    if(!inError) buildIndex(unzip, inDoc.v11n, inDoc, inCallback);
+                                    else inCallback(inError);
                                 });
                         }
                     });
@@ -102,8 +102,7 @@ define("installMgr", ["unzip", "dataMgr", "zText", "versificationMgr", "async", 
     }
 
     //Build the index with all entry points for a book or chapter
-    function buildIndex(inUnzip, inV11n, inDoc) {
-        console.log(inUnzip, inV11n);
+    function buildIndex(inUnzip, inV11n, inDoc, inCallback) {
         var files = {};
         files["bin"] = [];
 
@@ -120,17 +119,30 @@ define("installMgr", ["unzip", "dataMgr", "zText", "versificationMgr", "async", 
             else if (name.search(".conf") === -1)
                 files.bin.push({blob: new Blob([inUnzip.decompress(name)]), name: name});
         });
-        dataMgr.saveModule(files.bin, inDoc);
 
-        var bookPosOT = getBookPositions(inUnzip.decompress(files.otB));
-        var chapterVersePosOT = getChapterVersePositions(inUnzip.decompress(files.otCV), bookPosOT, "ot", inV11n);
-        var bookPosNT = getBookPositions(inUnzip.decompress(files.ntB));
-        var chapterVersePosNT = getChapterVersePositions(inUnzip.decompress(files.ntCV), bookPosNT, "nt", inV11n);
+        async.parallel([
+            function (cb) {
+                dataMgr.saveModule(files.bin, inDoc, function (inError, inResponse) {
+                    if(!inError) cb(null);
+                    else cb(inError);
+                });
+            },
+            function (cb) {
+                var bookPosOT = getBookPositions(inUnzip.decompress(files.otB));
+                var chapterVersePosOT = getChapterVersePositions(inUnzip.decompress(files.otCV), bookPosOT, "ot", inV11n);
+                var bookPosNT = getBookPositions(inUnzip.decompress(files.ntB));
+                var chapterVersePosNT = getChapterVersePositions(inUnzip.decompress(files.ntCV), bookPosNT, "nt", inV11n);
 
-        //console.log(chapterVersePosNT, chapterVersePosOT);
-        console.log(bookPosOT, bookPosNT);
-        dataMgr.saveBCVPos(chapterVersePosOT, chapterVersePosNT, inDoc);
-
+                dataMgr.saveBCVPos(chapterVersePosOT, chapterVersePosNT, inDoc, function (inError, inResponse) {
+                    if(!inError) cb(null);
+                    else cb(inError);
+                });
+            }
+            ], function (inError, inResult) {
+                if(!inError) inCallback(null, inDoc.id);
+                else cb(inError);
+            }
+        );
     }
 
     //Get the positions of each book

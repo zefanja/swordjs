@@ -1,6 +1,5 @@
 require(["sword", "libs/domReady/domReady!"], function (sword, doc) {
-    //window.sword = sword;
-
+    console.log(sword.isSupported());
     /*sword.moduleMgr.getModules(function (inModules) {
         console.log(inModules);
         if(inModules.length !== 0) {
@@ -11,16 +10,21 @@ require(["sword", "libs/domReady/domReady!"], function (sword, doc) {
         }
     });*/
 
-    sword.installMgr.getRepositories(function (inRepos) {
+    /*sword.installMgr.getRepositories(function (inRepos) {
         console.log(inRepos);
         sword.installMgr.getModules(inRepos[0].confUrl, function(inModules) {
             console.log(inModules);
         });
-    });
+    });*/
 
-    function handleModuleSelect(evt) {
-        sword.installMgr.installModule(evt.target.files);
-    }
+    /*function handleModuleSelect(evt) {
+        sword.installMgr.installModule(evt.target.files, function (inError, inId) {
+            if(!inError)
+                sword.moduleMgr.getModule(inId, function (inError, inModule) {
+                    console.log(inError, inModule);
+                });
+        });
+    }*/
 
     function clearDatabase (evt) {
         sword.dataMgr.clearDatabase();

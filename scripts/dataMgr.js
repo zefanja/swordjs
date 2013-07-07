@@ -37,15 +37,15 @@ define("dataMgr", ["async", "pouchdb", "tools"], function (async, Pouch, tools) 
             //Save config data to the database and continue to build the index
             db.post(configData, function (inError, inDoc) {
                 if(inError)
-                    console.log(inError);
+                    inCallback(inError);
                 else
-                    inCallback(configData.Versification, {id: inDoc.id, modKey: configData.moduleKey});
+                    inCallback(null, {id: inDoc.id, modKey: configData.moduleKey, v11n: configData.Versification});
             });
         };
     }
 
     //Save the binary module files like *.bzz
-    function saveModule(inFiles, inDoc) {
+    function saveModule(inFiles, inDoc, inCallback) {
         var z = inFiles.length,
             args = {},
             path = null,
@@ -62,17 +62,15 @@ define("dataMgr", ["async", "pouchdb", "tools"], function (async, Pouch, tools) 
                         if(!inError) {
                             args[path[path.length-1].split(".")[0]] = inBinDoc.id;
                         } else
-                            console.log(inError);
+                            ittCallback(inError);
                         ittCallback(null);
                     });
                 } else
-                    console.log(inError);
+                    ittCallback(inError);
             });
-        }, function (err) {
-            if(!err)
-                updateBinaryIds(args);
-            else
-                console.log(err);
+        }, function (inError) {
+            if(!inError) updateBinaryIds(args, inCallback);
+            else inCallback(inError);
         });
     }
 
@@ -82,9 +80,10 @@ define("dataMgr", ["async", "pouchdb", "tools"], function (async, Pouch, tools) 
                 inModule.nt = inIds.nt;
                 inModule.ot = inIds.ot;
                 db.put(inModule, function(inError, inResponse) {
-                    //console.log("update bin IDs", inError, inResponse);
+                    if(!inError) inCallback();
+                    else inCallback(inError);
                 });
-            }
+            } else inCallback(inError);
         });
     }
 
@@ -95,7 +94,7 @@ define("dataMgr", ["async", "pouchdb", "tools"], function (async, Pouch, tools) 
         });
     }
 
-    function saveBCVPos(inOT, inNT, inDoc) {
+    function saveBCVPos(inOT, inNT, inDoc, inCallback) {
         db.post({
             modKey: inDoc.modKey,
             ot: inOT,
@@ -107,12 +106,13 @@ define("dataMgr", ["async", "pouchdb", "tools"], function (async, Pouch, tools) 
                     if(!inError) {
                         inModule["bcvPosID"] = inPosRes.id;
                         db.put(inModule, function(inError, inResponse) {
-                            console.log(inError, inResponse);
+                            if(!inError) inCallback();
+                            else inCallback(inError);
                         });
-                    }
+                    } else inCallback(inError);
                 });
             } else
-                console.log(inError);
+                inCallback(inError);
         });
     }
 

@@ -23,11 +23,6 @@ define("moduleMgr", ["dataMgr", "swmodule"], function (dataMgr, Module) {
             emit(doc.moduleKey, doc);
     }
 
-    function mapBinary(doc) {
-        if(doc.modKey)
-            emit(doc.modKey, doc);
-    }
-
     moduleMgr.getModules = function (inCallback) {
         var modules = [];
         db.query({map: mapModules}, {reduce: true}, function(inError, inResponse) {
@@ -40,10 +35,8 @@ define("moduleMgr", ["dataMgr", "swmodule"], function (dataMgr, Module) {
         });
     };
 
-    moduleMgr.getBinary = function (inCallback) {
-        db.query({map: mapBinary}, {reduce: false}, function(inError, inResponse) {
-            inCallback((!inError) ? inResponse.rows : []);
-        });
+    moduleMgr.getModule = function(inId, inCallback) {
+        dataMgr.getDocument(inId, inCallback);
     };
 
     return moduleMgr;
