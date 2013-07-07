@@ -14,7 +14,7 @@
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE*/
 
-define("dataMgr", ["async", "pouchdb", "tools"], function (async, Pouch, tools) {
+define(["async", "pouchdb", "tools"], function (async, Pouch, tools) {
     var dataMgr = {};
 
     //Init PouchDB Database

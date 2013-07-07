@@ -14,7 +14,7 @@
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE*/
 
-define("zText", ["inflateStream"], function (Zlib) {
+define(["inflateStream"], function (Zlib) {
     var zText = {},
         inflator = new Zlib.InflateStream(),
         zlibReader = new FileReader(),

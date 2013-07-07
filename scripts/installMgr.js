@@ -14,13 +14,13 @@
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE*/
 
-define("installMgr", ["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], function (Zlib, dataMgr, zText, versificationMgr, async, tools) {
+define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], function (Zlib, dataMgr, zText, versificationMgr, async, tools) {
     var start = 0;
         db = dataMgr.db;
 
     //Get a list of all available repos/sources from CrossWire's masterRepoList.conf
     function getRepositories(inCallback) {
-        download("http://crosswire.org/ftpmirror/pub/sword/masterRepoList.conf", "text", function (inResponse) {
+        download("http://crosswire.org/ftpmirror/pub/sword/masterRepoList.conf", "text", function (inError, inResponse) {
             var repos = [],
                 tmp = null;
             inResponse.split(/[\r\n]+/g).forEach(function (repo) {
@@ -40,7 +40,7 @@ define("installMgr", ["unzip", "dataMgr", "zText", "versificationMgr", "async", 
     //dirty hack to get a list of modules that is available in a repository.
     //FIXME: unpack mods.d.tar.gz in Javascript (untar is the problem) or ask CrossWire to compress it as zip/gzip
     function getModules(inRepoUrl, inCallback) {
-        download(inRepoUrl, "document", function(inResponse) {
+        download(inRepoUrl, "document", function (inError, inResponse) {
             var tasks = [],
                 url = "",
                 a = inResponse.getElementsByTagName("a");
@@ -49,7 +49,7 @@ define("installMgr", ["unzip", "dataMgr", "zText", "versificationMgr", "async", 
                     url = a[i].baseURI + "/" + a[i].textContent;
                     tasks.push((function (url) {
                         return function (cb) {
-                            download(url, "text", function (inConf) {
+                            download(url, "text", function (inError, inConf) {
                                 var configData = tools.readConf(inConf);
                                 cb(null, configData);
                             });
@@ -70,35 +70,44 @@ define("installMgr", ["unzip", "dataMgr", "zText", "versificationMgr", "async", 
         xhr.responseType = reponseType; //"blob";
         xhr.onreadystatechange = function () {
             if (xhr.readyState == 4) {
-                if (inCallback) inCallback(xhr.response);
+                if (inCallback) inCallback(null, xhr.response);
             }
+        };
+        xhr.onerror = function (inError) {
+            inCallback(inError);
         };
         xhr.send(null);
     }
 
     //Install a module. inFile is an ArrayBuffer
     function installModule (inFile, inCallback) {
-        var blob = null;
-        for (var i = 0, f; f = inFile[i]; i++) {
-            var zipReader = new FileReader();
-            zipReader.onload = (function(file) {
-                return function(evt) {
-                    var unzip = new Zlib.Unzip(new Uint8Array(evt.target.result));
-                    var filenames = unzip.getFilenames();
-                    filenames.forEach(function (name, index) {
-                        if(name.search(".conf") !== -1) {
-                            dataMgr.saveConfig(new Blob([unzip.decompress(name)]),
-                                function (inError, inDoc) {
-                                    if(!inError) buildIndex(unzip, inDoc.v11n, inDoc, inCallback);
-                                    else inCallback(inError);
-                                });
-                        }
-                    });
-                };
-            })(f);
-
-            zipReader.readAsArrayBuffer(f);
+        if(typeof inFile === "string") {
+            download(inFile, "blob", function (inError, inBlob) {
+                if(!inError) _installModule(inBlob, inCallback);
+                else inCallback(inError);
+            })
+        } else {
+            _installModule(inFile, inCallback);
         }
+    }
+
+    function _installModule(inBlob, inCallback) {
+        var blob = null;
+        var zipReader = new FileReader();
+        zipReader.onload = function(evt) {
+            var unzip = new Zlib.Unzip(new Uint8Array(evt.target.result));
+            var filenames = unzip.getFilenames();
+            filenames.forEach(function (name, index) {
+                if(name.search(".conf") !== -1) {
+                    dataMgr.saveConfig(new Blob([unzip.decompress(name)]),
+                        function (inError, inDoc) {
+                            if(!inError) buildIndex(unzip, inDoc.v11n, inDoc, inCallback);
+                            else inCallback(inError);
+                        });
+                }
+            });
+        };
+        zipReader.readAsArrayBuffer(inBlob);
     }
 
     //Build the index with all entry points for a book or chapter

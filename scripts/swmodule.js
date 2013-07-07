@@ -14,7 +14,7 @@
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE*/
 
-define("swmodule", ["dataMgr", "verseKey", "zText"], function (dataMgr, verseKey, zText) {
+define(["dataMgr", "verseKey", "zText"], function (dataMgr, verseKey, zText) {
     var otBin = null,
         ntBin = null;
 

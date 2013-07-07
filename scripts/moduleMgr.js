@@ -14,7 +14,7 @@
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE*/
 
-define("moduleMgr", ["dataMgr", "swmodule"], function (dataMgr, Module) {
+define(["dataMgr", "swmodule"], function (dataMgr, Module) {
     var moduleMgr = {},
         db = dataMgr.db;
 

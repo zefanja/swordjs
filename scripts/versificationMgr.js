@@ -14,7 +14,7 @@
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE*/
 
-define("versificationMgr", ["libs/json/src/json!../data/kjv.json"], function (kjv) {
+define(["libs/json/src/json!../data/kjv.json"], function (kjv) {
     var versificationMgr = {};
 
     versificationMgr.kjv = kjv;

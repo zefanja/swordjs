@@ -14,7 +14,7 @@
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE*/
 
-define("verseKey", ["bcv"], function (bcv) {
+define(["bcv"], function (bcv) {
     function parseVkey(inVKey) {
         var key = {};
         key.osis = bcv.parse(inVKey).osis();

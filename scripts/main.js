@@ -18,7 +18,7 @@ require(["sword", "libs/domReady/domReady!"], function (sword, doc) {
     });*/
 
     function handleModuleSelect(evt) {
-        sword.installMgr.installModule(evt.target.files, function (inError, inId) {
+        sword.installMgr.installModule(evt.target.files[0], function (inError, inId) {
             if(!inError)
                 sword.moduleMgr.getModule(inId, function (inError, inModule) {
                     console.log(inError, inModule);
