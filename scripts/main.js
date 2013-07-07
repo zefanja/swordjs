@@ -17,14 +17,14 @@ require(["sword", "libs/domReady/domReady!"], function (sword, doc) {
         });
     });*/
 
-    /*function handleModuleSelect(evt) {
+    function handleModuleSelect(evt) {
         sword.installMgr.installModule(evt.target.files, function (inError, inId) {
             if(!inError)
                 sword.moduleMgr.getModule(inId, function (inError, inModule) {
                     console.log(inError, inModule);
                 });
         });
-    }*/
+    }
 
     function clearDatabase (evt) {
         sword.dataMgr.clearDatabase();

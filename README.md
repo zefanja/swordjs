@@ -20,7 +20,7 @@ Usage
 API
 ---
 
-```sword.js``` is currently in a pre-alpha version, so the API will likely change in the future. Take a look in the Javascript files in the ```scripts``` dir (e.g. ```moduleMgr.js```, ```versificationMgr.js```, ```installMgr.js```).
+```sword.js``` is currently in a pre-alpha version, so the API will likely change in the future. Take a look in the Javascript files in the ```scripts``` dir (e.g. ```moduleMgr.js```, ```swmodule.js```, ```installMgr.js```).
 
 Licence
 -------
