@@ -30,13 +30,16 @@ define(["dataMgr", "swmodule"], function (dataMgr, Module) {
                 inResponse.rows.forEach(function (mod) {
                     modules.push(new Module(mod.key, mod.id, mod.value));
                 });
-                inCallback(modules);
-            }
+                inCallback(null, modules);
+            } else inCallback(inError);
         });
     };
 
     moduleMgr.getModule = function(inId, inCallback) {
-        dataMgr.getDocument(inId, inCallback);
+        dataMgr.getDocument(inId, function (inError, inMod) {
+            if(!inError) inCallback(null, new Module(inMod.moduleKey, inId, inMod));
+            else inCallback(null);
+        });
     };
 
     return moduleMgr;

@@ -42,7 +42,7 @@ define(["inflateStream"], function (Zlib) {
             //Read raw text entry
             textReader.readAsText(infBlob.slice(startPos, startPos+length));
             textReader.onload = function(e) {
-                inCallback(e.target.result);
+                inCallback(null, e.target.result);
             };
         };
     };
