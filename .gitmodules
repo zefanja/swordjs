@@ -19,3 +19,6 @@
 [submodule "scripts/libs/bible-reference-parser"]
 	path = scripts/libs/bible-reference-parser
 	url = https://github.com/openbibleinfo/Bible-Passage-Reference-Parser.git
+[submodule "scripts/libs/sax"]
+	path = scripts/libs/sax
+	url = https://github.com/isaacs/sax-js.git

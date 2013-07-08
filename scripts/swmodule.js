@@ -14,7 +14,7 @@
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE*/
 
-define(["dataMgr", "verseKey", "zText"], function (dataMgr, verseKey, zText) {
+define(["dataMgr", "verseKey", "zText", "filterMgr"], function (dataMgr, verseKey, zText, filterMgr) {
     var otBin = null,
         ntBin = null;
 
@@ -49,12 +49,14 @@ define(["dataMgr", "verseKey", "zText"], function (dataMgr, verseKey, zText) {
     //Module Instance
     Module.prototype = {
         constructor: Module,
+        self: this,
 
         renderText: function (inVKey, inCallback) {
             var bcvPos = null,
                 blobId = null,
                 self = this;
             var vkey = verseKey.parse(inVKey);
+            console.log(vkey);
             dataMgr.getDocument(self.config.bcvPosID, function(inError, inBcv) {
                 //console.log(inBcv);
                 if (inBcv.nt.hasOwnProperty(vkey.book)) {
@@ -66,8 +68,13 @@ define(["dataMgr", "verseKey", "zText"], function (dataMgr, verseKey, zText) {
                 }
 
                 getBinaryBlob(blobId, function (inError, inBlob) {
+                    console.log(inError, inBlob);
                     if (!inError) {
-                        zText.getRawEntry(inBlob, bcvPos, vkey, inCallback);
+                        zText.getRawEntry(inBlob, bcvPos, vkey, function (inError, inRaw) {
+                            console.log(inError, inRaw);
+                            if (!inError)
+                                inCallback(null, filterMgr.processText(inRaw, self.config.SourceType));
+                        });
                     }
 
                 });

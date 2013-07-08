@@ -30,6 +30,21 @@ require(["sword", "libs/domReady/domReady!"], function (sword, doc) {
         sword.dataMgr.clearDatabase();
     }
 
+    function getText() {
+        //console.log(document.getElementById("passageInput").value);
+        sword.moduleMgr.getModules(function (inError, inModules) {
+        console.log(inModules);
+        if(inModules.length !== 0) {
+            inModules[0].renderText(document.getElementById("passageInput").value, function (inError, inText) {
+                console.log(inText);
+                document.getElementById("out").innerHTML = inText;
+            });
+        }
+    });
+
+    }
+
     document.getElementById("files").addEventListener('change', handleModuleSelect, false);
     document.getElementById("btnClear").addEventListener('click', clearDatabase, false);
+    document.getElementById("btnPassage").addEventListener('click', getText, false);
 });
