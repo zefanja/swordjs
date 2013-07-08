@@ -8,28 +8,28 @@
         "async": "libs/async/lib/async",
         "bcv": "libs/bible-reference-parser/js/en_bcv_parser.min",
         "unzip": "libs/zlib/bin/unzip.min",
-        "gunzip": "libs/zlib/bin/gunzip.min",
-        "inflateStream": "libs/zlib/bin/inflate_stream.min"
+        "inflateStream": "libs/zlib/bin/inflate_stream.min",
+        "sax": "libs/sax/lib/sax"
 
     },
     shim: {
         "bcv": {
-            exports: 'bcv_parser',
+            exports: "bcv_parser",
             init: function () {
                 return new this.bcv_parser();
             }
         },
         "pouchdb": {
-            exports: 'Pouch'
+            exports: "Pouch"
         },
         "unzip": {
-            exports: 'Zlib'
-        },
-        "gunzip": {
-            exports: 'Zlib'
+            exports: "Zlib"
         },
         "inflateStream": {
-            exports: 'Zlib'
+            exports: "Zlib"
+        },
+        "sax": {
+            exports: "sax"
         }
     }
 })
