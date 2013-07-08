@@ -27,11 +27,11 @@ define(["sax", "bcv"], function (sax, bcv) {
             outText = "";
         inRaw = "<xml>"+inRaw+"</xml>";
 
-        //console.log(inRaw);
+        console.log(inRaw);
 
         //Handle Parsing errors
         parser.onerror = function (e) {
-            console.log("ERROR parsing XML", e);
+            console.log("ERROR parsing XML", e, lastTag, currentNode);
         };
 
         //Text node
@@ -104,10 +104,11 @@ define(["sax", "bcv"], function (sax, bcv) {
 
         //End of parsing
         parser.onend = function () {
-            console.log("Finished parsing XML!");
+            //console.log("Finished parsing XML!");
         };
 
         parser.write(inRaw);
+        parser.close();
 
         return outText;
     };
