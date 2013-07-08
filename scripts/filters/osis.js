@@ -27,7 +27,7 @@ define(["sax", "bcv"], function (sax, bcv) {
             outText = "";
         inRaw = "<xml>"+inRaw+"</xml>";
 
-        console.log(inRaw);
+        //console.log(inRaw);
 
         //Handle Parsing errors
         parser.onerror = function (e) {

@@ -1,7 +1,12 @@
 ({
     baseUrl: ".",
-    name: "sword",
+    name: "almond",
+    include: ['sword'],
     out: "../sword.min.js",
+    wrap: {
+        startFile: 'start.frag',
+        endFile: 'end.frag'
+    },
     paths: {
         "text": "libs/text/text",
         "json": "libs/json/src/json",
