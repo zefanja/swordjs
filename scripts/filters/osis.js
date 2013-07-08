@@ -39,11 +39,11 @@ define(["sax", "bcv"], function (sax, bcv) {
             //console.log("TEXT:", t);
             if (inOptions.footnotes && currentNote) {
                 if (currentNote && currentNote.attributes.type === "crossReference") {
-                    console.log(t);
+                    //console.log(t);
                     if (lastTag !== "reference")
                         outText += processCrossReference(t, currentNote);
                     else {
-                        console.log(currentRef, t, lastTag);
+                        //console.log(currentRef, t, lastTag);
                         outText += "<a href=\"?type=crossReference&osisRef=" + currentRef.attributes.osisRef + "&n=" + currentNote.attributes.n + "\">" + t + "</a>";
                     }
                 }

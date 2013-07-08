@@ -34,7 +34,7 @@ define(["inflateStream"], function (Zlib) {
             length = inPos[inVKey.chapter-1].verses[inVKey.verse-1].length;
         }
 
-        console.log(bookStartPos, startPos, length, chapterStartPos, chapterEndPos, blob);
+        //console.log(bookStartPos, startPos, length, chapterStartPos, chapterEndPos, blob);
 
         zlibReader.readAsArrayBuffer(blob);
         zlibReader.onload = function (evt) {
@@ -43,7 +43,6 @@ define(["inflateStream"], function (Zlib) {
             //calling decompress() multiple times will result in different uncompressed buffers (length is different)
             var inflator = new Zlib.InflateStream();
             var infBlob = new Blob([inflator.decompress(view)]);
-            console.log(infBlob, view.length, inflator.decompress(view).length);
             //Read raw text entry
             textReader.readAsText(infBlob.slice(startPos, startPos+length));
             textReader.onload = function(e) {

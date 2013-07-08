@@ -56,7 +56,7 @@ define(["dataMgr", "verseKey", "zText", "filterMgr"], function (dataMgr, verseKe
                 blobId = null,
                 self = this;
             var vkey = verseKey.parse(inVKey);
-            console.log(vkey);
+            //console.log(vkey);
             dataMgr.getDocument(self.config.bcvPosID, function(inError, inBcv) {
                 //console.log(inBcv);
                 if (inBcv.nt.hasOwnProperty(vkey.book)) {
@@ -68,12 +68,11 @@ define(["dataMgr", "verseKey", "zText", "filterMgr"], function (dataMgr, verseKe
                 }
 
                 getBinaryBlob(blobId, function (inError, inBlob) {
-                    console.log(inError, inBlob);
                     if (!inError) {
                         zText.getRawEntry(inBlob, bcvPos, vkey, function (inError, inRaw) {
-                            console.log(inError, inRaw);
+                            //console.log(inError, inRaw);
                             if (!inError)
-                                inCallback(null, filterMgr.processText(inRaw, self.config.SourceType));
+                                inCallback(null, filterMgr.processText(inRaw, self.config.SourceType, {footnotes: true}));
                         });
                     }
 

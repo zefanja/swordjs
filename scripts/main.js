@@ -39,6 +39,8 @@ require(["sword", "libs/domReady/domReady!"], function (sword, doc) {
                 console.log(inText);
                 document.getElementById("out").innerHTML = inText;
             });
+        } else {
+            document.getElementById("out").innerHTML = "No modules installed";
         }
     });
 
