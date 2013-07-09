@@ -22,33 +22,38 @@ define(["inflateStream"], function (Zlib) {
 
     zText.getRawEntry = function (inBlob, inPos, inVKey, inCallback) {
         //console.log(inPos, inVKey);
-        var bookStartPos = inPos[inVKey.chapter-1].bookStartPos,
-            startPos = inPos[inVKey.chapter-1].startPos,
-            length = inPos[inVKey.chapter-1].length,
-            chapterStartPos = bookStartPos + startPos,
-            chapterEndPos = chapterStartPos + length,
-            blob = inBlob.slice(bookStartPos, chapterEndPos);
+        if (!inPos[inVKey.chapter-1]) {
+            inCallback({message: "Wrong passage. The requested chapter is not available in this module."});
+        } else {
+            var bookStartPos = inPos[inVKey.chapter-1].bookStartPos,
+                startPos = inPos[inVKey.chapter-1].startPos,
+                length = inPos[inVKey.chapter-1].length,
+                chapterStartPos = bookStartPos + startPos,
+                chapterEndPos = chapterStartPos + length,
+                blob = inBlob.slice(bookStartPos, chapterEndPos);
 
-        if(!isNaN(inVKey.verse)) {
-            startPos = startPos + inPos[inVKey.chapter-1].verses[inVKey.verse-1].startPos;
-            length = inPos[inVKey.chapter-1].verses[inVKey.verse-1].length;
+            if(!isNaN(inVKey.verse)) {
+                startPos = startPos + inPos[inVKey.chapter-1].verses[inVKey.verse-1].startPos;
+                length = inPos[inVKey.chapter-1].verses[inVKey.verse-1].length;
+            }
+
+            //console.log(bookStartPos, startPos, length, chapterStartPos, chapterEndPos, blob);
+
+            zlibReader.readAsArrayBuffer(blob);
+            zlibReader.onload = function (evt) {
+                var view = new Uint8Array(evt.target.result);
+                //We need to initialize a new InflateStream every request because there seems to be a bug in Zlib.InflateStream
+                //calling decompress() multiple times will result in different uncompressed buffers (length is different)
+                var inflator = new Zlib.InflateStream();
+                var infBlob = new Blob([inflator.decompress(view)]);
+                //Read raw text entry
+                textReader.readAsText(infBlob.slice(startPos, startPos+length));
+                textReader.onload = function(e) {
+                    inCallback(null, e.target.result);
+                };
+            };
         }
 
-        //console.log(bookStartPos, startPos, length, chapterStartPos, chapterEndPos, blob);
-
-        zlibReader.readAsArrayBuffer(blob);
-        zlibReader.onload = function (evt) {
-            var view = new Uint8Array(evt.target.result);
-            //We need to initialize a new InflateStream every request because there seems to be a bug in Zlib.InflateStream
-            //calling decompress() multiple times will result in different uncompressed buffers (length is different)
-            var inflator = new Zlib.InflateStream();
-            var infBlob = new Blob([inflator.decompress(view)]);
-            //Read raw text entry
-            textReader.readAsText(infBlob.slice(startPos, startPos+length));
-            textReader.onload = function(e) {
-                inCallback(null, e.target.result);
-            };
-        };
     };
 
     return zText;

@@ -17,6 +17,8 @@ define([], function () {
                         configData[splittedLine[0]].push(splittedLine[1]);
                     else if (splittedLine[0] === "Feature")
                         configData[splittedLine[0]].push(splittedLine[1]);
+                    else if (splittedLine[0] === "Versification")
+                        configData[splittedLine[0]] = splittedLine[1].toLowerCase();
                     else
                         configData[splittedLine[0]] = splittedLine[1];
         });

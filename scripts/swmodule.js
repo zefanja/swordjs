@@ -56,28 +56,33 @@ define(["dataMgr", "verseKey", "zText", "filterMgr"], function (dataMgr, verseKe
                 blobId = null,
                 self = this;
             var vkey = verseKey.parse(inVKey);
-            //console.log(vkey);
-            dataMgr.getDocument(self.config.bcvPosID, function(inError, inBcv) {
-                //console.log(inBcv);
-                if (inBcv.nt.hasOwnProperty(vkey.book)) {
-                    bcvPos = inBcv.nt[vkey.book];
-                    blobId = self.config.nt;
-                } else if (inBcv.ot.hasOwnProperty(vkey.book)) {
-                    bcvPos = inBcv.ot[vkey.book];
-                    blobId = self.config.ot;
-                }
-
-                getBinaryBlob(blobId, function (inError, inBlob) {
-                    if (!inError) {
-                        zText.getRawEntry(inBlob, bcvPos, vkey, function (inError, inRaw) {
-                            //console.log(inError, inRaw);
-                            if (!inError)
-                                inCallback(null, filterMgr.processText(inRaw, self.config.SourceType, {footnotes: true}));
-                        });
+            if(vkey.osis !== "") {
+                dataMgr.getDocument(self.config.bcvPosID, function(inError, inBcv) {
+                    //console.log(inBcv);
+                    if (inBcv.nt.hasOwnProperty(vkey.book)) {
+                        bcvPos = inBcv.nt[vkey.book];
+                        blobId = self.config.nt;
+                    } else if (inBcv.ot.hasOwnProperty(vkey.book)) {
+                        bcvPos = inBcv.ot[vkey.book];
+                        blobId = self.config.ot;
                     }
 
+                    getBinaryBlob(blobId, function (inError, inBlob) {
+                        if (!inError) {
+                            zText.getRawEntry(inBlob, bcvPos, vkey, function (inError, inRaw) {
+                                //console.log(inError, inRaw);
+                                if (!inError)
+                                    inCallback(null, filterMgr.processText(inRaw, self.config.SourceType, {footnotes: true}));
+                                else
+                                    inCallback(inError);
+                            });
+                        }
+
+                    });
                 });
-            });
+            } else {
+                inCallback({message: "Wrong passage. The requested chapter is not available in this module."});
+            }
         }
     };
 

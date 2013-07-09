@@ -18,13 +18,27 @@ define(["bcv"], function (bcv) {
     function parseVkey(inVKey) {
         var key = {};
         key.osis = bcv.parse(inVKey).osis();
-        var split = key.osis.split(".");
+        var split = key.osis.split("-")[0].split(".");
 
         key.book = split[0];
         key.chapter = parseInt(split[1], 10);
         key.verse = parseInt(split[2], 10);
 
         return key;
+    }
+
+    function parseVerseList(inVKey) {
+        var key = inVKey;
+        if (typeof inVKey === "string")
+            key = parseVkey(inVKey);
+
+        //Check if we have a passage range like John 3.10-John.3.16 or Gen.3-Gen.4
+        if (key.osis.split("-").length > 1) {
+
+        //check if we have a passage like Mt 3 or Ps 123
+        } else if (isNaN(key.verse)) {
+
+        }
     }
 
     return {

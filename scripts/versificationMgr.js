@@ -14,10 +14,12 @@
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE*/
 
-define(["libs/json/src/json!../data/kjv.json"], function (kjv) {
+define(["json!../data/kjv.json", "json!../data/german.json"], function (kjv, german) {
     var versificationMgr = {};
 
     versificationMgr.kjv = kjv;
+    german["nt"] = kjv.nt;
+    versificationMgr.german = german;
 
     function getBooksInOT (v11n) {
         if (v11n !== undefined && versificationMgr[v11n])

@@ -64,7 +64,7 @@ define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], func
     }
 
     function download(url, reponseType, inCallback) {
-        var xhr = new XMLHttpRequest();
+        var xhr = new XMLHttpRequest({mozSystem: true});
         xhr.open('GET', url, true);
         //xhr.setRequestHeader("Accept-Encoding", "gzip, deflate");
         xhr.responseType = reponseType; //"blob";
@@ -216,13 +216,14 @@ define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], func
         for (var b = booksStart; b<booksEnd; b++) {
             bookData = versificationMgr.getBook(b, inV11n);
             chapters[bookData.abbrev] = [];
+            //console.log(bookData);
             for (var c = 0; c<bookData.maxChapter; c++) {
                 chapterStartPos = 0;
                 lastNonZeroStartPos = 0;
                 chapt = {};
                 chapt["verses"] = [];
                 length = 0;
-                for (var v = 0; v<versificationMgr.getVersesInChapter(b,c); v++) {
+                for (var v = 0; v<versificationMgr.getVersesInChapter(b,c, inV11n); v++) {
                     booknum = getShortIntFromStream(inBuf)[0];
                     startPos = getInt48FromStream(inBuf)[0];
 
