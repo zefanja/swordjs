@@ -19,6 +19,7 @@ define(["json!../data/kjv.json", "json!../data/german.json"], function (kjv, ger
 
     versificationMgr.kjv = kjv;
     german["nt"] = kjv.nt;
+    german["osisToBookNum"] = kjv.osisToBookNum;
     versificationMgr.german = german;
 
     function getBooksInOT (v11n) {
@@ -62,11 +63,20 @@ define(["json!../data/kjv.json", "json!../data/german.json"], function (kjv, ger
             return versificationMgr.kjv[testament][inBook];
     }
 
+    function getBookNum(inOsis, v11n) {
+        console.log(inOsis, v11n, versificationMgr.kjv.osisToBookNum[inOsis]);
+        if (v11n !== undefined && versificationMgr[v11n])
+            return versificationMgr[v11n].osisToBookNum[inOsis];
+        else
+            return versificationMgr.kjv.osisToBookNum[inOsis];
+    }
+
     return {
         getBooksInOT: getBooksInOT,
         getBooksInNT: getBooksInNT,
         getChapterMax: getChapterMax,
         getVersesInChapter: getVersesInChapter,
-        getBook: getBook
+        getBook: getBook,
+        getBookNum: getBookNum
     };
 });

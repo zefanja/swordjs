@@ -36,8 +36,8 @@ require(["sword"], function (sword) {
         sword.moduleMgr.getModules(function (inError, inModules) {
         console.log(inModules);
         if(inModules.length !== 0) {
-            inModules[0].renderText(document.getElementById("passageInput").value, function (inError, inText) {
-                console.log(inError, inText);
+            inModules[0].renderText(document.getElementById("passageInput").value, /*{footnotes: true, oneVersePerLine: true},*/ function (inError, inText) {
+                //console.log(inError, inText);
                 document.getElementById("out").innerHTML = inText;
             });
         } else {

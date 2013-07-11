@@ -51,28 +51,31 @@ define(["dataMgr", "verseKey", "zText", "filterMgr"], function (dataMgr, verseKe
         constructor: Module,
         self: this,
 
-        renderText: function (inVKey, inCallback) {
+        renderText: function (inVKey, inOptions, inCallback) {
             var bcvPos = null,
                 blobId = null,
                 self = this;
-            var vkey = verseKey.parse(inVKey);
-            if(vkey.osis !== "") {
+            if (typeof inOptions === "function")
+                inCallback = inOptions;
+            var vList = verseKey.parseVerseList(inVKey, this.config.Versification);
+            //console.log(vList);
+            if(vList.length !== 0 && vList[0].osis !== "") {
                 dataMgr.getDocument(self.config.bcvPosID, function(inError, inBcv) {
                     //console.log(inBcv);
-                    if (inBcv.nt.hasOwnProperty(vkey.book)) {
-                        bcvPos = inBcv.nt[vkey.book];
+                    if (inBcv.nt.hasOwnProperty(vList[0].book)) {
+                        bcvPos = inBcv.nt[vList[0].book];
                         blobId = self.config.nt;
-                    } else if (inBcv.ot.hasOwnProperty(vkey.book)) {
-                        bcvPos = inBcv.ot[vkey.book];
+                    } else if (inBcv.ot.hasOwnProperty(vList[0].book)) {
+                        bcvPos = inBcv.ot[vList[0].book];
                         blobId = self.config.ot;
                     }
 
                     getBinaryBlob(blobId, function (inError, inBlob) {
                         if (!inError) {
-                            zText.getRawEntry(inBlob, bcvPos, vkey, function (inError, inRaw) {
+                            zText.getRawEntry(inBlob, bcvPos, vList, function (inError, inRaw) {
                                 //console.log(inError, inRaw);
                                 if (!inError)
-                                    inCallback(null, filterMgr.processText(inRaw, self.config.SourceType, {footnotes: true}));
+                                    inCallback(null, filterMgr.processText(inRaw, self.config.SourceType, inOptions));
                                 else
                                     inCallback(inError);
                             });

@@ -52,13 +52,14 @@ require.config({
     }
 });
 
-define(["installMgr", "moduleMgr", "dataMgr", "versificationMgr"],
-    function (installMgr, moduleMgr, dataMgr, versificationMgr) {
+define(["installMgr", "moduleMgr", "dataMgr", "versificationMgr", "verseKey"],
+    function (installMgr, moduleMgr, dataMgr, versificationMgr, verseKey) {
         var sword = {};
         sword.installMgr = installMgr;
         sword.moduleMgr = moduleMgr;
         sword.versificationMgr = versificationMgr;
         sword.dataMgr = dataMgr;
+        sword.verseKey = verseKey;
 
         //check if sword is supported in your environment
         sword.isSupported = function () {

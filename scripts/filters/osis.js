@@ -7,7 +7,8 @@ define(["sax", "bcv"], function (sax, bcv) {
         headings: false,
         footnotes: false,
         strongsNumbers: false,
-        wordsOfChristInRed: false
+        wordsOfChristInRed: false,
+        oneVersePerLine: false,
     };
 
     osis.processText = function (inRaw, inOptions) {
@@ -18,16 +19,20 @@ define(["sax", "bcv"], function (sax, bcv) {
             inOptions.footnotes = (inOptions.footnotes) ? inOptions.footnotes : swFilterOptions.footnotes;
             inOptions.strongsNumbers = (inOptions.strongsNumbers) ? inOptions.strongsNumbers : swFilterOptions.strongsNumbers;
             inOptions.wordsOfChristInRed = (inOptions.wordsOfChristInRed) ? inOptions.wordsOfChristInRed : swFilterOptions.wordsOfChristInRed;
+            inOptions.oneVersePerLine = (inOptions.oneVersePerLine) ? inOptions.oneVersePerLine : swFilterOptions.oneVersePerLine;
         }
         var lastTag = "",
             currentNode = null,
             currentNote = null,
             currentRef = null,
             noteText = "",
-            outText = "";
-        inRaw = "<xml>"+inRaw+"</xml>";
+            outText = "",
+            renderedText = "",
+            verseNumber = "",
+            isTitle = false;
 
-        //console.log(inRaw);
+
+        console.log(inRaw);
 
         //Handle Parsing errors
         parser.onerror = function (e) {
@@ -36,9 +41,9 @@ define(["sax", "bcv"], function (sax, bcv) {
 
         //Text node
         parser.ontext = function (t) {
-            //console.log("TEXT:", t);
-            if (inOptions.footnotes && currentNote) {
-                if (currentNote && currentNote.attributes.type === "crossReference") {
+            //console.log("TEXT:", t, currentNode.name);
+            if (currentNote) {
+                if (inOptions.footnotes && currentNote.attributes.type === "crossReference") {
                     //console.log(t);
                     if (lastTag !== "reference")
                         outText += processCrossReference(t, currentNote);
@@ -47,8 +52,23 @@ define(["sax", "bcv"], function (sax, bcv) {
                         outText += "<a href=\"?type=crossReference&osisRef=" + currentRef.attributes.osisRef + "&n=" + currentNote.attributes.n + "\">" + t + "</a>";
                     }
                 }
-            } else if (!currentNote)
+            } else if (currentNode) {
+                switch (currentNode.name) {
+                    case "title":
+                        if (currentNode.attributes.type === "section")
+                            outText = "<h3>" + t + "</h3>" + outText;
+                        else
+                            outText = "<h1>" + t + "</h1>" + outText;
+                    break;
+                    default:
+                        outText += t;
+                    break;
+                }
+            } else {
                 outText += t;
+            }
+
+
         };
 
         //Handle opening tags
@@ -57,11 +77,8 @@ define(["sax", "bcv"], function (sax, bcv) {
             currentNode = node;
             lastTag = node.name;
             switch (node.name) {
-                case "title":
-                    if (node.attributes.type === "section")
-                        outText += "<h3>";
-                    else
-                        outText += "<h1>";
+                case "xml":
+                    outText += "<span class='verse-number' osisRef='" + node.attributes.osisRef + "'> " + node.attributes.verseNum + " </span>";
                 break;
                 case "note":
                     //console.log(node, isNote, lastTag);
@@ -79,10 +96,7 @@ define(["sax", "bcv"], function (sax, bcv) {
             //console.log("CLOSE:", tagName);
             switch (tagName) {
                 case "title":
-                    if (currentNode.attributes.type === "section")
-                        outText += "</h3>";
-                    else
-                        outText += "</h1>";
+                    currentNode = null;
                 break;
                 case "note":
                     if (currentNote.attributes.type === "crossReference" && inOptions.footnotes)
@@ -107,10 +121,17 @@ define(["sax", "bcv"], function (sax, bcv) {
             //console.log("Finished parsing XML!");
         };
 
-        parser.write(inRaw);
-        parser.close();
+        var tmp = "";
+        for (var i=0; i<inRaw.length; i++) {
+            tmp = "<xml osisRef='" + inRaw[i].osis + "' verseNum = '" + inRaw[i].verse + "'>" + inRaw[i].text + "</xml>";
+            parser.write(tmp);
+            parser.close();
+            renderedText += (inOptions.oneVersePerLine) ? "<div class='verse'>" + outText + "</div>" : "<span class='verse'>" + outText + "</span>";
+            outText = "";
+        }
 
-        return outText;
+
+        return renderedText;
     };
 
     function processCrossReference(inText, inNode) {
