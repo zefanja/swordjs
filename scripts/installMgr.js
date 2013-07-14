@@ -33,33 +33,39 @@ define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], func
                     });
                 }
             });
-            inCallback(repos);
+            inCallback(inError, repos);
         });
     }
 
     //dirty hack to get a list of modules that is available in a repository.
     //FIXME: unpack mods.d.tar.gz in Javascript (untar is the problem) or ask CrossWire to compress it as zip/gzip
-    function getModules(inRepoUrl, inCallback) {
-        download(inRepoUrl, "document", function (inError, inResponse) {
-            var tasks = [],
-                url = "",
-                a = inResponse.getElementsByTagName("a");
-            for(var i=0;i<a.length;i++) {
-                if (a[i].href.search(".conf") !== -1) {
-                    url = a[i].baseURI + "/" + a[i].textContent;
-                    tasks.push((function (url) {
-                        return function (cb) {
-                            download(url, "text", function (inError, inConf) {
-                                var configData = tools.readConf(inConf);
-                                cb(null, configData);
-                            });
-                        };
-                    })(url));
+    function getModules(inRepo, inCallback) {
+        download(inRepo.confUrl, "document", function (inError, inResponse) {
+            if (!inError) {
+                var tasks = [],
+                    url = "",
+                    a = inResponse.getElementsByTagName("a");
+                for(var i=0;i<a.length;i++) {
+                    if (a[i].href.search(".conf") !== -1) {
+                        url = a[i].baseURI + "/" + a[i].textContent;
+                        tasks.push((function (url) {
+                            return function (cb) {
+                                download(url, "text", function (inError, inConf) {
+                                    var configData = tools.readConf(inConf);
+                                    configData["url"] = inRepo.url + configData.moduleKey + ".zip";
+                                    cb(inError, configData);
+                                });
+                            };
+                        })(url));
+                    }
                 }
+                async.parallel(tasks, function (inError, inModules) {
+                    inCallback(inError, inModules.sort(tools.dynamicSortMultiple("Lang", "moduleKey")));
+                });
+            } else {
+                inCallback(inError);
             }
-            async.parallel(tasks, function (inError, inModules) {
-                inCallback(inModules);
-            });
+
         });
     }
 

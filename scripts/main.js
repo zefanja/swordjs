@@ -11,12 +11,12 @@ require(["sword"], function (sword) {
         }
     });*/
 
-    /*sword.installMgr.getRepositories(function (inRepos) {
-        console.log(inRepos);
-        sword.installMgr.getModules(inRepos[0].confUrl, function(inModules) {
-            console.log(inModules);
+    sword.installMgr.getRepositories(function (inError, inRepos) {
+        console.log(inError, inRepos);
+        sword.installMgr.getModules(inRepos[1], function(inError, inModules) {
+            console.log(inError, inModules);
         });
-    });*/
+    });
 
     function handleModuleSelect(evt) {
         sword.installMgr.installModule(evt.target.files[0], function (inError, inId) {

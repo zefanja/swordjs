@@ -27,7 +27,7 @@ define(["bcv", "versificationMgr"], function (bcv, versificationMgr) {
         key.book = split[0];
         key.chapter = (isNaN(parseInt(split[1], 10))) ? 1 : parseInt(split[1], 10);
         key.verse = parseInt(split[2], 10);
-        console.log(key, key.osis, split);
+        //console.log(key, key.osis, split);
         return key;
     }
 
@@ -53,8 +53,21 @@ define(["bcv", "versificationMgr"], function (bcv, versificationMgr) {
         return verseList;
     }
 
+    function next(inVKey, inV11n) {
+        var key = parse(inVKey, inV11n),
+            maxChapter = versificationMgr.getChapterMax(versificationMgr.getBookNum(key.book, inV11n), inV11n);
+
+        key.chapter = (key.chapter<maxChapter) ? key.chapter+1 : 1;
+    }
+
+    function previous(inVKey, inV11n) {
+
+    }
+
     return {
         parse: parseVkey,
-        parseVerseList: parseVerseList
+        parseVerseList: parseVerseList,
+        next: next,
+        previous: previous
     };
 });

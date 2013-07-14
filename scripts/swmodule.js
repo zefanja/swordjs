@@ -14,7 +14,7 @@
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE*/
 
-define(["dataMgr", "verseKey", "zText", "filterMgr"], function (dataMgr, verseKey, zText, filterMgr) {
+define(["dataMgr", "verseKey", "zText", "filterMgr", "versificationMgr"], function (dataMgr, verseKey, zText, filterMgr, versificationMgr) {
     var otBin = null,
         ntBin = null;
 
@@ -35,10 +35,10 @@ define(["dataMgr", "verseKey", "zText", "filterMgr"], function (dataMgr, verseKe
 
     //get a module's config
     function getConfig(inId, inCallback) {
-        dataMgr.getDocument(inId, function (inError, inConfig) {
+        /*dataMgr.getDocument(inId, function (inError, inConfig) {
             if (!inError)
                 inCallback(inConfig);
-        });
+        });*/
     }
 
     //get the module binary files
@@ -86,6 +86,10 @@ define(["dataMgr", "verseKey", "zText", "filterMgr"], function (dataMgr, verseKe
             } else {
                 inCallback({message: "Wrong passage. The requested chapter is not available in this module."});
             }
+        },
+
+        getAllBooks: function () {
+            return versificationMgr.getAllBooks(this.config.Versification);
         }
     };
 

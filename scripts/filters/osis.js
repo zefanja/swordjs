@@ -32,7 +32,7 @@ define(["sax", "bcv"], function (sax, bcv) {
             isTitle = false;
 
 
-        console.log(inRaw);
+        //console.log(inRaw);
 
         //Handle Parsing errors
         parser.onerror = function (e) {
