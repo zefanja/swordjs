@@ -69,7 +69,7 @@ define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], func
         });
     }
 
-    function download(url, reponseType, inCallback) {
+    function download(url, reponseType, inCallback, inProgressCallback) {
         var xhr = new XMLHttpRequest({mozSystem: true});
         xhr.open('GET', url, true);
         //xhr.setRequestHeader("Accept-Encoding", "gzip, deflate");
@@ -79,6 +79,7 @@ define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], func
                 if (inCallback) inCallback(null, xhr.response);
             }
         };
+        xhr.onprogress = inProgressCallback;
         xhr.onerror = function (inError) {
             inCallback(inError);
         };
@@ -86,12 +87,12 @@ define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], func
     }
 
     //Install a module. inFile is an ArrayBuffer
-    function installModule (inFile, inCallback) {
+    function installModule (inFile, inCallback, inProgressCallback) {
         if(typeof inFile === "string") {
             download(inFile, "blob", function (inError, inBlob) {
                 if(!inError) _installModule(inBlob, inCallback);
                 else inCallback(inError);
-            })
+            }, inProgressCallback);
         } else {
             _installModule(inFile, inCallback);
         }

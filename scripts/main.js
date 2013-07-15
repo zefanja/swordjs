@@ -15,6 +15,12 @@ require(["sword"], function (sword) {
         console.log(inError, inRepos);
         sword.installMgr.getModules(inRepos[1], function(inError, inModules) {
             console.log(inError, inModules);
+            sword.installMgr.installModule(inModules[0].url, function (inError, inId) {
+                console.log(inError, inId);
+            },
+            function (evt) {
+                //console.log(evt);
+            })
         });
     });
 
