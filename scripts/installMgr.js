@@ -58,15 +58,19 @@ define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], func
                             return function (cb) {
                                 download(url, "text", function (inError, inConf) {
                                     var configData = tools.readConf(inConf);
-                                    configData["url"] = inRepo.url + configData.moduleKey + ".zip";
-                                    cb(inError, configData);
+                                    if (configData.ModDrv === "zText") {
+                                        configData["url"] = inRepo.url + configData.moduleKey + ".zip";
+                                        cb(inError, configData);
+                                    } else {
+                                        cb(inError);
+                                    }
                                 });
                             };
                         })(url));
                     }
                 }
                 async.parallel(tasks, function (inError, inModules) {
-                    inCallback(inError, inModules.sort(tools.dynamicSortMultiple("Lang", "moduleKey")));
+                    inCallback(inError, tools.cleanArray(inModules).sort(tools.dynamicSortMultiple("Lang", "moduleKey")));
                 });
             } else {
                 inCallback(inError);
@@ -143,7 +147,7 @@ define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], func
                 files.bin.push({blob: new Blob([inUnzip.decompress(name)]), name: name});
         });
 
-        async.parallel([
+        async.series([
             function (cb) {
                 dataMgr.saveModule(files.bin, inDoc, function (inError, inResponse) {
                     if(!inError) cb(null);
@@ -151,10 +155,20 @@ define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], func
                 });
             },
             function (cb) {
-                var bookPosOT = getBookPositions(inUnzip.decompress(files.otB));
-                var chapterVersePosOT = getChapterVersePositions(inUnzip.decompress(files.otCV), bookPosOT, "ot", inV11n);
-                var bookPosNT = getBookPositions(inUnzip.decompress(files.ntB));
-                var chapterVersePosNT = getChapterVersePositions(inUnzip.decompress(files.ntCV), bookPosNT, "nt", inV11n);
+                var bookPosOT = null,
+                    chapterVersePosOT = null,
+                    bookPosNT = null,
+                    chapterVersePosNT = null;
+
+                if (files.otB) {
+                    bookPosOT = getBookPositions(inUnzip.decompress(files.otB));
+                    chapterVersePosOT = getChapterVersePositions(inUnzip.decompress(files.otCV), bookPosOT, "ot", inV11n);
+                }
+                if (files.ntB) {
+                    bookPosNT = getBookPositions(inUnzip.decompress(files.ntB));
+                    chapterVersePosNT = getChapterVersePositions(inUnzip.decompress(files.ntCV), bookPosNT, "nt", inV11n);
+                }
+                //console.log(chapterVersePosOT, chapterVersePosNT);
 
                 dataMgr.saveBCVPos(chapterVersePosOT, chapterVersePosNT, inDoc, function (inError, inResponse) {
                     if(!inError) cb(null);

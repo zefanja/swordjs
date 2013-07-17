@@ -36,7 +36,8 @@ define(["sax", "bcv"], function (sax, bcv) {
 
         //Handle Parsing errors
         parser.onerror = function (e) {
-            console.log("ERROR parsing XML", e, lastTag, currentNode);
+            //console.log("ERROR parsing XML", e, lastTag, currentNode);
+            parser.resume();
         };
 
         //Text node
@@ -123,6 +124,7 @@ define(["sax", "bcv"], function (sax, bcv) {
 
         var tmp = "";
         for (var i=0; i<inRaw.length; i++) {
+            //console.log(inRaw[i].text);
             tmp = "<xml osisRef='" + inRaw[i].osis + "' verseNum = '" + inRaw[i].verse + "'>" + inRaw[i].text + "</xml>";
             parser.write(tmp);
             parser.close();

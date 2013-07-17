@@ -61,27 +61,31 @@ define(["dataMgr", "verseKey", "zText", "filterMgr", "versificationMgr"], functi
             //console.log(vList);
             if(vList.length !== 0 && vList[0].osis !== "") {
                 dataMgr.getDocument(self.config.bcvPosID, function(inError, inBcv) {
-                    //console.log(inBcv);
-                    if (inBcv.nt.hasOwnProperty(vList[0].book)) {
-                        bcvPos = inBcv.nt[vList[0].book];
-                        blobId = self.config.nt;
-                    } else if (inBcv.ot.hasOwnProperty(vList[0].book)) {
-                        bcvPos = inBcv.ot[vList[0].book];
-                        blobId = self.config.ot;
-                    }
-
-                    getBinaryBlob(blobId, function (inError, inBlob) {
-                        if (!inError) {
-                            zText.getRawEntry(inBlob, bcvPos, vList, self.config.Encoding, function (inError, inRaw) {
-                                //console.log(inError, inRaw);
-                                if (!inError)
-                                    inCallback(null, filterMgr.processText(inRaw, self.config.SourceType, inOptions));
-                                else
-                                    inCallback(inError);
-                            });
+                    if(!inError) {
+                        if (inBcv.nt.hasOwnProperty(vList[0].book)) {
+                            bcvPos = inBcv.nt[vList[0].book];
+                            blobId = self.config.nt;
+                        } else if (inBcv.ot.hasOwnProperty(vList[0].book)) {
+                            bcvPos = inBcv.ot[vList[0].book];
+                            blobId = self.config.ot;
                         }
 
-                    });
+                        getBinaryBlob(blobId, function (inError, inBlob) {
+                            if (!inError) {
+                                zText.getRawEntry(inBlob, bcvPos, vList, self.config.Encoding, function (inError, inRaw) {
+                                    //console.log(inError, inRaw);
+                                    if (!inError)
+                                        inCallback(null, filterMgr.processText(inRaw, self.config.SourceType, inOptions));
+                                    else
+                                        inCallback(inError);
+                                });
+                            }
+
+                        });
+                    } else {
+                        inCallback(inError);
+                    }
+
                 });
             } else {
                 inCallback({message: "Wrong passage. The requested chapter is not available in this module."});

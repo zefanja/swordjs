@@ -46,6 +46,7 @@ define(["async", "pouchdb", "tools"], function (async, Pouch, tools) {
 
     //Save the binary module files like *.bzz
     function saveModule(inFiles, inDoc, inCallback) {
+        //console.log("saveModule", inFiles, inDoc);
         var z = inFiles.length,
             args = {},
             path = null,
@@ -75,11 +76,13 @@ define(["async", "pouchdb", "tools"], function (async, Pouch, tools) {
     }
 
     function updateBinaryIds(inIds, inCallback) {
+        //console.log("updateBinaryIds", inIds, inCallback);
         db.get(inIds.docId, function (inError, inModule) {
             if(!inError) {
                 inModule.nt = inIds.nt;
                 inModule.ot = inIds.ot;
                 db.put(inModule, function(inError, inResponse) {
+                    //console.log("updateBinaryIds", inError, inResponse);
                     if(!inError) inCallback();
                     else inCallback(inError);
                 });
@@ -118,7 +121,7 @@ define(["async", "pouchdb", "tools"], function (async, Pouch, tools) {
 
     function clearDatabase() {
         Pouch.destroy('swordjs', function(inError, inInfo) {
-            console.log(inError, inInfo);
+            //console.log(inError, inInfo);
             if(!inError)
                 db = new Pouch("swordjs");
         });
