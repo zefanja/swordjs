@@ -20,7 +20,7 @@ define(["inflateStream", "async"], function (Zlib, async) {
         textReader = new FileReader();
 
 
-    zText.getRawEntry = function (inBlob, inPos, inVList, inCallback) {
+    zText.getRawEntry = function (inBlob, inPos, inVList, inEcoding, inCallback) {
         //console.log(inPos, inVList);
         if (!inPos[inVList[0].chapter-1]) {
             inCallback({message: "Wrong passage. The requested chapter is not available in this module."});
@@ -56,7 +56,10 @@ define(["inflateStream", "async"], function (Zlib, async) {
                     function (cb) {
                         verseStart = startPos + inPos[inVList[z].chapter-1].verses[inVList[z].verse-1].startPos;
                         verseEnd = verseStart + inPos[inVList[z].chapter-1].verses[inVList[z].verse-1].length;
-                        textReader.readAsText(infBlob.slice(verseStart, verseEnd));
+                        if (!inEcoding)
+                            textReader.readAsText(infBlob.slice(verseStart, verseEnd), "CP1252");
+                        else
+                            textReader.readAsText(infBlob.slice(verseStart, verseEnd), inEcoding);
                         textReader.onload = function(e) {
                             rawText.push({text: e.target.result, osis: inVList[z].osis, verse: inVList[z].verse});
                             z++;

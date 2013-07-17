@@ -72,7 +72,7 @@ define(["dataMgr", "verseKey", "zText", "filterMgr", "versificationMgr"], functi
 
                     getBinaryBlob(blobId, function (inError, inBlob) {
                         if (!inError) {
-                            zText.getRawEntry(inBlob, bcvPos, vList, function (inError, inRaw) {
+                            zText.getRawEntry(inBlob, bcvPos, vList, self.config.Encoding, function (inError, inRaw) {
                                 //console.log(inError, inRaw);
                                 if (!inError)
                                     inCallback(null, filterMgr.processText(inRaw, self.config.SourceType, inOptions));

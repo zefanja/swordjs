@@ -21,19 +21,25 @@ define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], func
     //Get a list of all available repos/sources from CrossWire's masterRepoList.conf
     function getRepositories(inCallback) {
         download("http://crosswire.org/ftpmirror/pub/sword/masterRepoList.conf", "text", function (inError, inResponse) {
-            var repos = [],
-                tmp = null;
-            inResponse.split(/[\r\n]+/g).forEach(function (repo) {
-                tmp = repo.split("|");
-                if(tmp.length > 1 && tmp[0].search("CrossWire") !== -1) {
-                    repos.push({
-                        name: tmp[0].split("=")[2],
-                        url: "http://crosswire.org/ftpmirror" + tmp[2].replace("raw", "packages") + "/rawzip/",
-                        confUrl: "http://crosswire.org/ftpmirror" + tmp[2] + "/mods.d"
-                    });
-                }
-            });
-            inCallback(inError, repos);
+            if (inResponse === "" && !inError) {
+                inCallback("Couldn't download master repo list!");
+            } else if (!inError) {
+                var repos = [];
+                    split = null;
+                inResponse.split(/[\r\n]+/g).forEach(function (repo) {
+                    split = repo.split("|");
+                    if(split.length > 1 && split[0].search("CrossWire") !== -1) {
+                        repos.push({
+                            name: split[0].split("=")[2],
+                            url: "http://crosswire.org/ftpmirror" + split[2].replace("raw", "packages") + "/rawzip/",
+                            confUrl: "http://crosswire.org/ftpmirror" + split[2] + "/mods.d"
+                        });
+                    }
+                });
+                inCallback(inError, repos);
+            } else {
+                inCallback(inError);
+            }
         });
     }
 
@@ -70,11 +76,12 @@ define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], func
     }
 
     function download(url, reponseType, inCallback, inProgressCallback) {
-        var xhr = new XMLHttpRequest({mozSystem: true});
+        var xhr = new XMLHttpRequest({mozSystem: true, mozAnon: true});
         xhr.open('GET', url, true);
         //xhr.setRequestHeader("Accept-Encoding", "gzip, deflate");
         xhr.responseType = reponseType; //"blob";
-        xhr.onreadystatechange = function () {
+        xhr.onreadystatechange = function (evt) {
+            //console.log(xhr.readyState, evt, xhr.status);
             if (xhr.readyState == 4) {
                 if (inCallback) inCallback(null, xhr.response);
             }
@@ -156,7 +163,7 @@ define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], func
             }
             ], function (inError, inResult) {
                 if(!inError) inCallback(null, inDoc.id);
-                else cb(inError);
+                else inCallback(inError);
             }
         );
     }

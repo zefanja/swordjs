@@ -11,4 +11,5 @@
         root.sword = factory();
     }
 }(this, function () {
+    //console.log = function() {};
     //almond, and your modules will be inlined here
