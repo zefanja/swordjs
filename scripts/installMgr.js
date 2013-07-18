@@ -87,7 +87,10 @@ define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], func
         xhr.onreadystatechange = function (evt) {
             //console.log(xhr.readyState, evt, xhr.status);
             if (xhr.readyState == 4) {
-                if (inCallback) inCallback(null, xhr.response);
+                if(xhr.status === 200)
+                    inCallback(null, xhr.response);
+                else
+                    inCallback({message: "Couldn't download module.", error: xhr.status});
             }
         };
         xhr.onprogress = inProgressCallback;

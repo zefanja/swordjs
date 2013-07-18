@@ -62,13 +62,16 @@ define(["dataMgr", "verseKey", "zText", "filterMgr", "versificationMgr"], functi
             if(vList.length !== 0 && vList[0].osis !== "") {
                 dataMgr.getDocument(self.config.bcvPosID, function(inError, inBcv) {
                     if(!inError) {
-                        if (inBcv.nt.hasOwnProperty(vList[0].book)) {
+                        if (inBcv.nt && inBcv.nt.hasOwnProperty(vList[0].book)) {
                             bcvPos = inBcv.nt[vList[0].book];
                             blobId = self.config.nt;
-                        } else if (inBcv.ot.hasOwnProperty(vList[0].book)) {
+                        } else if (inBcv.ot && inBcv.ot.hasOwnProperty(vList[0].book)) {
                             bcvPos = inBcv.ot[vList[0].book];
                             blobId = self.config.ot;
                         }
+
+                        if(bcvPos === null)
+                            inCallback({message: "Wrong passage. The requested chapter is not available in this module."});
 
                         getBinaryBlob(blobId, function (inError, inBlob) {
                             if (!inError) {
