@@ -25,12 +25,36 @@ define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], func
                 inCallback("Couldn't download master repo list!");
             } else if (!inError) {
                 var repos = [];
-                    split = null;
+                    split = null,
+                    type = "",
+                    repoName = "";
                 inResponse.split(/[\r\n]+/g).forEach(function (repo) {
                     split = repo.split("|");
                     if(split.length > 1 && split[0].search("CrossWire") !== -1) {
+                        repoName = split[0].split("=")[2];
+                        switch (repoName) {
+                            case "CrossWire":
+                                type = "main";
+                            break;
+                            case "CrossWire Beta":
+                                type = "beta";
+                            break;
+                            case "CrossWire av11n":
+                                type = "av";
+                            break;
+                            case "CrossWire Attic":
+                                type = "attic";
+                            break;
+                            case "CrossWire Wycliffe":
+                                type = "wycliffe";
+                            break;
+                            case "CrossWire av11n Attic":
+                                type = "avattic";
+                            break;
+                        }
                         repos.push({
-                            name: split[0].split("=")[2],
+                            name: repoName,
+                            type: type,
                             url: "http://crosswire.org/ftpmirror" + split[2].replace("raw", "packages") + "/rawzip/",
                             confUrl: "http://crosswire.org/ftpmirror" + split[2] + "/mods.d"
                         });
@@ -59,7 +83,8 @@ define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], func
                                 download(url, "text", function (inError, inConf) {
                                     var configData = tools.readConf(inConf);
                                     if (configData.ModDrv === "zText") {
-                                        configData["url"] = inRepo.url + configData.moduleKey + ".zip";
+                                        //configData["url"] = inRepo.url + configData.moduleKey + ".zip";
+                                        configData["url"] = "http://www.crosswire.org/sword/servlet/SwordMod.Verify?modName=" + configData.moduleKey + "&" + inRepo.type + "=true&pkgType=raw";
                                         cb(inError, configData);
                                     } else {
                                         cb(inError);
@@ -101,14 +126,20 @@ define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], func
     }
 
     //Install a module. inFile is an ArrayBuffer
-    function installModule (inFile, inCallback, inProgressCallback) {
-        if(typeof inFile === "string") {
-            download(inFile, "blob", function (inError, inBlob) {
-                if(!inError) _installModule(inBlob, inCallback);
-                else inCallback(inError);
-            }, inProgressCallback);
+    function installModule (inUrl, inCallback, inProgressCallback) {
+        if(typeof inUrl === "string") {
+            download(inUrl, "document", function (inError, inResponse) {
+                if(!inError) {
+                    var newUrl = inResponse.getElementsByTagName("a")[0].href;
+                    download(newUrl, "blob", function (inError, inBlob) {
+                        if(!inError) _installModule(inBlob, inCallback);
+                        else inCallback(inError);
+                    },
+                    inProgressCallback);
+                } else inCallback(inError);
+            });
         } else {
-            _installModule(inFile, inCallback);
+            _installModule(inUrl, inCallback);
         }
     }
 
