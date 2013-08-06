@@ -3,7 +3,6 @@
     name: "almond",
     include: ['sword'],
     out: "../sword.min.js",
-    //optimize: "none",
     wrap: {
         startFile: 'start.frag',
         endFile: 'end.frag'
