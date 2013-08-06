@@ -13,11 +13,11 @@ require(["sword"], function (sword) {
 
     sword.installMgr.getRepositories(function (inError, inRepos) {
         console.log(inError, inRepos);
-        sword.installMgr.getModules(inRepos[2], function(inError, inModules) {
+        sword.installMgr.getModules(inRepos[3], function(inError, inModules) {
             console.log(inError, inModules);
-            sword.installMgr.installModule(inModules[11].url, function (inError, inId) {
+            /*sword.installMgr.installModule(inModules[11].url, function (inError, inId) {
                 console.log("installModule", inError, inId);
-            });
+            });*/
         });
     });
 
