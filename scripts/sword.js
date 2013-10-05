@@ -22,9 +22,9 @@ require.config({
         "async": "libs/async/lib/async",
         "bcv": "libs/bible-reference-parser/js/en_bcv_parser.min",
         "unzip": "libs/zlib/bin/unzip.min",
-        //"gunzip": "libs/zlib/bin/gunzip.min",
         "inflateStream": "libs/zlib/bin/inflate_stream.min",
-        "sax": "libs/sax/lib/sax"
+        "sax": "libs/sax/lib/sax",
+        "idb": "libs/IDBWrapper/idbstore.min"
 
     },
     shim: {
@@ -40,9 +40,6 @@ require.config({
         "unzip": {
             exports: "Zlib"
         },
-        /*"gunzip": {
-            exports: 'Zlib'
-        },*/
         "inflateStream": {
             exports: "Zlib"
         },

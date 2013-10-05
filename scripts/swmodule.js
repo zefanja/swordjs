@@ -60,7 +60,7 @@ define(["dataMgr", "verseKey", "zText", "filterMgr", "versificationMgr"], functi
             var vList = verseKey.parseVerseList(inVKey, this.config.Versification);
             //console.log(vList);
             if(vList.length !== 0 && vList[0].osis !== "") {
-                dataMgr.getDocument(self.config.bcvPosID, function(inError, inBcv) {
+                dataMgr.get(self.config.bcvPosID, function(inError, inBcv) {
                     if(!inError) {
                         if (inBcv.nt && inBcv.nt.hasOwnProperty(vList[0].book)) {
                             bcvPos = inBcv.nt[vList[0].book];

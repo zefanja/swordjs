@@ -22,3 +22,6 @@
 [submodule "scripts/libs/sax"]
 	path = scripts/libs/sax
 	url = https://github.com/isaacs/sax-js.git
+[submodule "scripts/libs/IDBWrapper"]
+	path = scripts/libs/IDBWrapper
+	url = https://github.com/jensarps/IDBWrapper.git

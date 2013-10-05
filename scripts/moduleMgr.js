@@ -15,28 +15,23 @@
 ### END LICENSE*/
 
 define(["dataMgr", "swmodule"], function (dataMgr, Module) {
-    var moduleMgr = {},
-        db = dataMgr.db;
-
-    function mapModules(doc) {
-        if(doc.moduleKey)
-            emit(doc.moduleKey, doc);
-    }
+    var moduleMgr = {};
 
     moduleMgr.getModules = function (inCallback) {
         var modules = [];
-        db.query({map: mapModules}, {reduce: true}, function(inError, inResponse) {
+        dataMgr.getModules(function (inError, inModules) {
             if(!inError) {
-                inResponse.rows.forEach(function (mod) {
-                    modules.push(new Module(mod.key, mod.id, mod.value));
+                inModules.forEach(function (mod) {
+                    modules.push(new Module(mod.moduleKey, mod.id, mod));
                 });
                 inCallback(null, modules);
-            } else inCallback(inError);
+            } else
+                inCallback(inError);
         });
     };
 
     moduleMgr.getModule = function(inId, inCallback) {
-        dataMgr.getDocument(inId, function (inError, inMod) {
+        dataMgr.get(inId, function (inError, inMod) {
             if(!inError) inCallback(null, new Module(inMod.moduleKey, inId, inMod));
             else inCallback(null);
         });

@@ -14,7 +14,8 @@
         "bcv": "libs/bible-reference-parser/js/en_bcv_parser.min",
         "unzip": "libs/zlib/bin/unzip.min",
         "inflateStream": "libs/zlib/bin/inflate_stream.min",
-        "sax": "libs/sax/lib/sax"
+        "sax": "libs/sax/lib/sax",
+        "idb": "libs/IDBWrapper/idbstore.min"
 
     },
     shim: {

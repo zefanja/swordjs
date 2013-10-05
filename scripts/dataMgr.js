@@ -14,17 +14,30 @@
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE*/
 
-define(["async", "pouchdb", "tools"], function (async, Pouch, tools) {
+define(["async", "pouchdb", "tools", "idb"], function (async, Pouch, tools, IDB) {
     var dataMgr = {};
 
     //Init PouchDB Database
-    var db = new Pouch("swordjs");
+    //var db = new Pouch("swordjs");
+    console.log(IDB);
+    var db = new IDB({
+        storeName: "swordjs",
+        dbVersion: 4,
+        indexes: [
+            {name: "modules", keyPath: "moduleKey", unique: true}
+        ],
+        onStoreReady: function(){
+            console.log("store is ready");
+        },
+    });
 
-    //get a document
-    function getDocument(inId, inCallback) {
-        db.get(inId, function (inError, inResponse) {
-            inCallback(inError, inResponse);
-        });
+    //get some data by id
+    function get(inId, inCallback) {
+        db.get(inId, function (inResponse) {
+            inCallback(null, inResponse);
+        },
+        function (inError) {inCallback(inError);}
+        );
     }
 
     //Read a module's config file and save it as an Object
@@ -35,18 +48,17 @@ define(["async", "pouchdb", "tools"], function (async, Pouch, tools) {
             var configData = tools.readConf(e.target.result);
 
             //Save config data to the database and continue to build the index
-            db.post(configData, function (inError, inDoc) {
-                if(inError)
-                    inCallback(inError);
-                else
-                    inCallback(null, {id: inDoc.id, modKey: configData.moduleKey, v11n: configData.Versification});
-            });
+            db.put(configData, function (inId) {
+                inCallback(null, {id: inId, modKey: configData.moduleKey, v11n: configData.Versification});
+            },
+            function (inError) {inCallback(inError);}
+            );
         };
     }
 
     //Save the binary module files like *.bzz
     function saveModule(inFiles, inDoc, inCallback) {
-        //console.log("saveModule", inFiles, inDoc);
+        console.log("saveModule", inFiles, inDoc);
         var z = inFiles.length,
             args = {},
             path = null,
@@ -55,20 +67,17 @@ define(["async", "pouchdb", "tools"], function (async, Pouch, tools) {
         args.docId = inDoc.id;
 
         async.eachSeries(inFiles, function (file, ittCallback) {
-            path = file.name.split("/"),
-            driver = path[path.length-3],
-            db.post({fileName: path[path.length-1], modKey: inDoc.modKey, driver: driver}, function (inError, inBinDoc) {
-                if(!inError) {
-                    db.putAttachment(inBinDoc.id+ "/binary", driver, file.blob, driver, function(inError, inResponse) {
-                        if(!inError) {
-                            args[path[path.length-1].split(".")[0]] = inBinDoc.id;
-                        } else
-                            ittCallback(inError);
-                        ittCallback(null);
-                    });
-                } else
+            var path = file.name.split("/"),
+                driver = path[path.length-3];
+            db.put({fileName: path[path.length-1], modKey: inDoc.modKey, driver: driver, blob: file.blob},
+                function (inId) {
+                    args[path[path.length-1].split(".")[0]] = inId;
+                    ittCallback(null);
+                },
+                function (inError) {
                     ittCallback(inError);
-            });
+                }
+            );
         }, function (inError) {
             if(!inError) updateBinaryIds(args, inCallback);
             else inCallback(inError);
@@ -76,55 +85,68 @@ define(["async", "pouchdb", "tools"], function (async, Pouch, tools) {
     }
 
     function updateBinaryIds(inIds, inCallback) {
-        //console.log("updateBinaryIds", inIds, inCallback);
-        db.get(inIds.docId, function (inError, inModule) {
-            if(!inError) {
-                inModule.nt = inIds.nt;
-                inModule.ot = inIds.ot;
-                db.put(inModule, function(inError, inResponse) {
-                    //console.log("updateBinaryIds", inError, inResponse);
-                    if(!inError) inCallback();
-                    else inCallback(inError);
-                });
-            } else inCallback(inError);
-        });
+        console.log("updateBinaryIds", inIds, inCallback);
+        db.get(inIds.docId, function (inModule) {
+            inModule.nt = inIds.nt;
+            inModule.ot = inIds.ot;
+            db.put(inModule, function(inResponse) {
+                console.log("updateBinaryIds", inResponse);
+                inCallback(null);
+            },
+            function (inError) {inCallback(inError);}
+            );
+        },
+        function (inError) {inCallback(inError);}
+        );
     }
 
     function getBlob(inId, inCallback) {
-        var attId = "ztext";
-        db.getAttachment(inId+"/binary", attId,  function (inError, inBlob) {
-            inCallback(inError, inBlob);
-        });
+        db.get(inId,
+            function (inBlob) {inCallback(null, inBlob.blob);},
+            function (inError) {inCallback(inError);}
+        );
     }
 
     function saveBCVPos(inOT, inNT, inDoc, inCallback) {
-        db.post({
+        console.log("save BCVPos");
+        db.put({
             modKey: inDoc.modKey,
             ot: inOT,
             nt: inNT
-        }, function (inError, inPosRes) {
-            if(!inError) {
-                //console.log(inResponse);
-                db.get(inDoc.id, function (inError, inModule) {
-                    if(!inError) {
-                        inModule["bcvPosID"] = inPosRes.id;
-                        db.put(inModule, function(inError, inResponse) {
-                            if(!inError) inCallback();
-                            else inCallback(inError);
-                        });
-                    } else inCallback(inError);
-                });
-            } else
-                inCallback(inError);
+        }, function (inPosResId) {
+            db.get(inDoc.id, function (inModule) {
+                inModule["bcvPosID"] = inPosResId;
+                db.put(inModule, function(inId) {
+                    inCallback(null);
+                },
+                function (inError) {inCallback(inError);}
+                );
+            },
+            function (inError) {inCallback(inError);}
+            );
+        },
+        function (inError) {inCallback(inError);}
+        );
+    }
+
+    function getModules(inCallback) {
+        db.query(function (inResults) {
+            inCallback(null, inResults);
+        },
+        {
+            onError: function (inError) {inCallback(inError);},
+            index: "modules"
         });
     }
 
     function clearDatabase() {
-        Pouch.destroy('swordjs', function(inError, inInfo) {
-            //console.log(inError, inInfo);
-            if(!inError)
-                db = new Pouch("swordjs");
-        });
+        db.clear(function () { console.log("cleared database"); },
+            function (inError) { console.log(inError);}
+        );
+    }
+
+    function errorHandler(inError, inCallback) {
+        console.log(inError, inCallback);
     }
 
     return {
@@ -134,6 +156,7 @@ define(["async", "pouchdb", "tools"], function (async, Pouch, tools) {
         saveModule: saveModule,
         saveBCVPos: saveBCVPos,
         getBlob: getBlob,
-        getDocument: getDocument
+        get: get,
+        getModules: getModules
     };
 });

@@ -11,15 +11,15 @@ require(["sword"], function (sword) {
         }
     });*/
 
-    sword.installMgr.getRepositories(function (inError, inRepos) {
-        console.log(inError, inRepos);
+    /*sword.installMgr.getRepositories(function (inError, inRepos) {
+        console.log("REPOS", inError, inRepos);
         sword.installMgr.getModules(inRepos[3], function(inError, inModules) {
             console.log(inError, inModules);
-            /*sword.installMgr.installModule(inModules[11].url, function (inError, inId) {
+            sword.installMgr.installModule(inModules[11].url, function (inError, inId) {
                 console.log("installModule", inError, inId);
-            });*/
+            });
         });
-    });
+    });*/
 
     function handleModuleSelect(evt) {
         sword.installMgr.installModule(evt.target.files[0], function (inError, inId) {
@@ -37,7 +37,6 @@ require(["sword"], function (sword) {
     function getText() {
         //console.log(document.getElementById("passageInput").value);
         sword.moduleMgr.getModules(function (inError, inModules) {
-        console.log(inModules);
         if(inModules.length !== 0) {
             inModules[0].renderText(document.getElementById("passageInput").value, /*{footnotes: true, oneVersePerLine: true},*/ function (inError, inText) {
                 //console.log(inError, inText);
