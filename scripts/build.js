@@ -25,9 +25,6 @@
                 return new this.bcv_parser();
             }
         },
-        "pouchdb": {
-            exports: "Pouch"
-        },
         "unzip": {
             exports: "Zlib"
         },

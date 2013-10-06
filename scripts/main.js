@@ -1,15 +1,9 @@
 require(["sword"], function (sword) {
     window.sword = sword;
     console.log(sword.isSupported());
-    /*sword.moduleMgr.getModules(function (inModules) {
+    sword.moduleMgr.getModules(function (inError, inModules) {
         console.log(inModules);
-        if(inModules.length !== 0) {
-            inModules[0].renderText("John 3:16", function (inText) {
-                console.log(inText);
-                document.getElementById("out").textContent = inText;
-            });
-        }
-    });*/
+    });
 
     /*sword.installMgr.getRepositories(function (inError, inRepos) {
         console.log("REPOS", inError, inRepos);

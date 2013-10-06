@@ -16,7 +16,6 @@
 
 define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], function (Zlib, dataMgr, zText, versificationMgr, async, tools) {
     var start = 0;
-        db = dataMgr.db;
 
     //Get a list of all available repos/sources from CrossWire's masterRepoList.conf
     function getRepositories(inCallback) {
@@ -24,7 +23,7 @@ define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], func
             if (inResponse === "" && !inError) {
                 inCallback("Couldn't download master repo list!");
             } else if (!inError) {
-                var repos = [];
+                var repos = [],
                     split = null,
                     type = "",
                     repoName = "";
@@ -335,7 +334,7 @@ define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], func
     }
 
     function getIntFromStream(inBuf, inCallback) {
-        buf = inBuf.subarray(start, start+4),
+        buf = inBuf.subarray(start, start+4);
         isEnd = false;
         start = start+4;
         if (buf.length !== 4)
@@ -347,7 +346,7 @@ define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], func
     }
 
     function getShortIntFromStream(inBuf, inCallback) {
-        buf = inBuf.subarray(start, start+2),
+        buf = inBuf.subarray(start, start+2);
         isEnd = false;
         start = start+2;
         if (buf.length !== 2)
@@ -359,7 +358,7 @@ define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], func
     }
 
     function getInt48FromStream(inBuf, inCallback) {
-        buf = inBuf.subarray(start, start+6),
+        buf = inBuf.subarray(start, start+6);
         isEnd = false;
         start = start+6;
         if (buf.length !== 6)
