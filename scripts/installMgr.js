@@ -125,7 +125,7 @@ define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], func
         xhr.send(null);
     }
 
-    //Install a module. inFile is an ArrayBuffer
+    //Install a module. inUrl can be an url or a file blob (zipped module file)
     function installModule (inUrl, inCallback, inProgressCallback) {
         if(typeof inUrl === "string") {
             download(inUrl, "document", function (inError, inResponse) {
