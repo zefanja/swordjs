@@ -27,6 +27,7 @@ define(["bcv", "versificationMgr"], function (bcv, versificationMgr) {
         key.book = split[0];
         key.chapter = (isNaN(parseInt(split[1], 10))) ? 1 : parseInt(split[1], 10);
         key.verse = parseInt(split[2], 10);
+        key.bookNum = versificationMgr.getBookNum(key.book, inV11n);
         //console.log(key, key.osis, split);
         return key;
     }
@@ -54,14 +55,35 @@ define(["bcv", "versificationMgr"], function (bcv, versificationMgr) {
     }
 
     function next(inVKey, inV11n) {
-        var key = parse(inVKey, inV11n),
-            maxChapter = versificationMgr.getChapterMax(versificationMgr.getBookNum(key.book, inV11n), inV11n);
+        var key = parseVkey(inVKey, inV11n),
+            maxChapter = versificationMgr.getChapterMax(key.bookNum, inV11n);
 
-        key.chapter = (key.chapter<maxChapter) ? key.chapter+1 : 1;
+        if (key.chapter < maxChapter) {
+            key.chapter++;
+        } else {
+            key.bookNum = (key.bookNum < 65) ? ++key.bookNum : 65;
+            key.chapter = (key.bookNum < 65) ? 1 : maxChapter;
+            key.book = versificationMgr.getBook(key.bookNum, inV11n).abbrev;
+        }
+        key.osis = key.book+"."+key.chapter;
+
+        return key;
     }
 
     function previous(inVKey, inV11n) {
+        var key = parseVkey(inVKey, inV11n),
+            maxChapter = versificationMgr.getChapterMax(key.bookNum-1, inV11n);
 
+        if (key.chapter > 1) {
+            --key.chapter;
+        } else {
+            key.bookNum = (key.bookNum > 0) ? --key.bookNum : 0;
+            key.chapter = (key.bookNum === 0) ? 1 : maxChapter;
+            key.book = versificationMgr.getBook(key.bookNum, inV11n).abbrev;
+        }
+        key.osis = key.book+"."+key.chapter;
+
+        return key;
     }
 
     return {

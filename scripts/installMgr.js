@@ -59,6 +59,7 @@ define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], func
                         });
                     }
                 });
+                console.log("REPOS", repos);
                 inCallback(inError, repos);
             } else {
                 inCallback(inError);

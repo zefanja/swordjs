@@ -20,7 +20,7 @@ define(["idb"], function (IDB) {
 
     return function (inCallback) {
         if (isInitialized) {
-            inCallback(db);
+            inCallback(null, db);
         } else {
             db = new IDB({
                 storeName: "swordjs",
@@ -30,7 +30,11 @@ define(["idb"], function (IDB) {
                 ],
                 onStoreReady: function() {
                     isInitialized = true;
-                    inCallback(db);
+                    inCallback(null, db);
+                },
+                onError: function(inError) {
+                    isInitialized = false;
+                    inCallback(inError);
                 },
             });
         }

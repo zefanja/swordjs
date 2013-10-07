@@ -36,14 +36,15 @@ define(["json!../data/kjv.json", "json!../data/german.json"], function (kjv, ger
             return versificationMgr.kjv.nt.length;
     }
 
-    function getChapterMax (inBook, v11n) {
+    function getChapterMax (inBookNum, v11n) {
+        inBookNum = (inBookNum < 0) ? 0 : inBookNum;
         var booksOT = getBooksInOT(v11n);
-        var testament = (inBook < booksOT) ? "ot" : "nt";
-        inBook = (inBook < booksOT) ? inBook : inBook - booksOT;
+        var testament = (inBookNum < booksOT) ? "ot" : "nt";
+        inBookNum = (inBookNum < booksOT) ? inBookNum : inBookNum - booksOT;
         if (v11n !== undefined && versificationMgr[v11n])
-            return versificationMgr[v11n][testament][inBook].maxChapter;
+            return versificationMgr[v11n][testament][inBookNum].maxChapter;
         else
-            return versificationMgr.kjv[testament][inBook].maxChapter;
+            return versificationMgr.kjv[testament][inBookNum].maxChapter;
     }
 
     function getVersesInChapter (inBook, inChapter, v11n) {
@@ -53,14 +54,15 @@ define(["json!../data/kjv.json", "json!../data/german.json"], function (kjv, ger
             return versificationMgr.kjv.versesInChapter[inBook][inChapter];
     }
 
-    function getBook(inBook, v11n) {
+    function getBook(inBookNum, v11n) {
+        inBookNum = (inBookNum < 0) ? 0 : inBookNum;
         var booksOT = getBooksInOT(v11n);
-        var testament = (inBook < booksOT) ? "ot" : "nt";
-        inBook = (inBook < booksOT) ? inBook : inBook - booksOT;
+        var testament = (inBookNum < booksOT) ? "ot" : "nt";
+        inBookNum = (inBookNum < booksOT) ? inBookNum : inBookNum - booksOT;
         if (v11n !== undefined && versificationMgr[v11n])
-            return versificationMgr[v11n][testament][inBook];
+            return versificationMgr[v11n][testament][inBookNum];
         else
-            return versificationMgr.kjv[testament][inBook];
+            return versificationMgr.kjv[testament][inBookNum];
     }
 
     function getBookNum(inOsis, v11n) {
