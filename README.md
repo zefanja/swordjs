@@ -55,7 +55,7 @@ This property contains the all the module information that is normally found in 
 #### renderText(inPassage, inOptions, inCallback) ####
 ```inPassage``` is a passage in a bible like ```Gen 1``` or ```Romans 3```. ```inOptions``` is an Object and optional. It can contain the following porperties (default values):
 
-```
+```javascript
 {
     oneVersePerLine: false,
     footnotes: false,
@@ -72,7 +72,7 @@ Returns a list of all books in a module.
 #### verseKey.parse(inPassage, inV11n) ####
 Takes a passage (e.g. Matt 1:1) as argument an returns an object like this:
 
-```
+```javascript
 {
     osis: "Matt.1.1",
     book: "Matt",
@@ -80,6 +80,7 @@ Takes a passage (e.g. Matt 1:1) as argument an returns an object like this:
     chapter: 1
     verse: 1 //this can also be NaN if you pass a passage the has no verse in it like "Matt 1".
 }
+```
 
 #### verseKey.next(inPassage, inV11n) ####
 Returns the next chapter that follows ```inPassage```. If you pass "Matt 1" you will get an verseKey object for "Matt 2".
