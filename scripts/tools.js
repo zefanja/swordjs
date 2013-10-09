@@ -2,7 +2,8 @@ define([], function () {
     //Read a modules conf file a return it as Object
     function readConf(inConfString) {
         var lines = inConfString.split(/[\r\n]+/g),
-            configData = {};
+            configData = {},
+            splittedLine = null;
 
         configData["GlobalOptionFilter"] = [];
         configData["Feature"] = [];

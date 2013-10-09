@@ -15,7 +15,9 @@
 ### END LICENSE*/
 
 define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], function (Zlib, dataMgr, zText, versificationMgr, async, tools) {
-    var start = 0;
+    var start = 0,
+        buf = null,
+        isEnd = false;
 
     //Get a list of all available repos/sources from CrossWire's masterRepoList.conf
     function getRepositories(inCallback) {
@@ -221,6 +223,7 @@ define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], func
         var startPos = 0,
             length = 0,
             unused = 0,
+            res = null,
             end = false,
             bookPositions = [];
         start = 0;
