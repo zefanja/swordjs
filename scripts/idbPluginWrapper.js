@@ -18,7 +18,7 @@ define(["idb"], function (IDB) {
     var isInitialized = false,
         db = null;
 
-    return function (inCallback) {
+    function getDB (inCallback) {
         if (isInitialized) {
             inCallback(null, db);
         } else {
@@ -38,5 +38,14 @@ define(["idb"], function (IDB) {
                 },
             });
         }
+    }
+
+    function getIDBWrapper () {
+        return IDB;
+    }
+
+    return {
+        getDB: getDB,
+        getIDBWrapper: getIDBWrapper
     };
 });

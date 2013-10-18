@@ -19,7 +19,7 @@ define(["async", "tools", "idbPluginWrapper"], function (async, tools, IDB) {
 
     //get some data by id
     function get(inId, inCallback) {
-        IDB(function (inError, db) {
+        IDB.getDB(function (inError, db) {
             if(!inError)
                 db.get(inId,
                     function (inResponse) {
@@ -39,7 +39,7 @@ define(["async", "tools", "idbPluginWrapper"], function (async, tools, IDB) {
             var configData = tools.readConf(e.target.result);
 
             //Save config data to the database and continue to build the index
-            IDB(function (inError, db) {
+            IDB.getDB(function (inError, db) {
                 if(!inError)
                     db.put(configData,
                         function (inId) {
@@ -54,7 +54,7 @@ define(["async", "tools", "idbPluginWrapper"], function (async, tools, IDB) {
 
     //Save the binary module files like *.bzz
     function saveModule(inFiles, inDoc, inCallback) {
-        console.log("saveModule", inFiles, inDoc);
+        //console.log("saveModule", inFiles, inDoc);
         var z = inFiles.length,
             args = {},
             path = null,
@@ -65,7 +65,7 @@ define(["async", "tools", "idbPluginWrapper"], function (async, tools, IDB) {
         async.eachSeries(inFiles, function (file, ittCallback) {
             var path = file.name.split("/"),
                 driver = path[path.length-3];
-            IDB(function (inError, db) {
+            IDB.getDB(function (inError, db) {
                 if(!inError)
                     db.put({fileName: path[path.length-1], modKey: inDoc.modKey, driver: driver, blob: file.blob},
                         function (inId) {
@@ -84,7 +84,7 @@ define(["async", "tools", "idbPluginWrapper"], function (async, tools, IDB) {
 
     function updateBinaryIds(inIds, inCallback) {
         //console.log("updateBinaryIds", inIds, inCallback);
-        IDB(function (inError, db) {
+        IDB.getDB(function (inError, db) {
             if(!inError)
                 db.get(inIds.docId,
                     function (inModule) {
@@ -103,7 +103,7 @@ define(["async", "tools", "idbPluginWrapper"], function (async, tools, IDB) {
     }
 
     function getBlob(inId, inCallback) {
-        IDB(function (inError, db) {
+        IDB.getDB(function (inError, db) {
             if(!inError)
                 db.get(inId,
                     function (inBlob) {inCallback(null, inBlob.blob);},
@@ -114,7 +114,7 @@ define(["async", "tools", "idbPluginWrapper"], function (async, tools, IDB) {
     }
 
     function saveBCVPos(inOT, inNT, inDoc, inCallback) {
-        IDB(function (inError, db) {
+        IDB.getDB(function (inError, db) {
             if(!inError)
                 db.put({modKey: inDoc.modKey, ot: inOT, nt: inNT},
                     function (inPosResId) {
@@ -138,7 +138,7 @@ define(["async", "tools", "idbPluginWrapper"], function (async, tools, IDB) {
     }
 
     function getModules(inCallback) {
-        IDB(function (inError, db) {
+        IDB.getDB(function (inError, db) {
             if(!inError)
                 db.query(function (inResults) {
                     inCallback(null, inResults);
@@ -152,7 +152,7 @@ define(["async", "tools", "idbPluginWrapper"], function (async, tools, IDB) {
     }
 
     function clearDatabase() {
-        IDB(function (inError, db) {
+        IDB.getDB(function (inError, db) {
             if(!inError)
                 db.clear(
                     function () { console.log("cleared database"); },
@@ -160,6 +160,10 @@ define(["async", "tools", "idbPluginWrapper"], function (async, tools, IDB) {
                 );
             else inCallback(inError);
         });
+    }
+
+    function getIDBWrapper () {
+        return IDB.getIDBWrapper();
     }
 
     function errorHandler(inError, inCallback) {
@@ -173,6 +177,7 @@ define(["async", "tools", "idbPluginWrapper"], function (async, tools, IDB) {
         saveBCVPos: saveBCVPos,
         getBlob: getBlob,
         get: get,
-        getModules: getModules
+        getModules: getModules,
+        getIDBWrapper: getIDBWrapper
     };
 });

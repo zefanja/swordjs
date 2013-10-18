@@ -345,8 +345,7 @@ define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], func
             isEnd = true;
         if (inCallback)
             inCallback(buf[3] * 0x100000 + buf[2] * 0x10000 + buf[1] * 0x100 + buf[0], isEnd);
-        else
-            return [buf[3] * 0x100000 + buf[2] * 0x10000 + buf[1] * 0x100 + buf[0], isEnd];
+        return [buf[3] * 0x100000 + buf[2] * 0x10000 + buf[1] * 0x100 + buf[0], isEnd];
     }
 
     function getShortIntFromStream(inBuf, inCallback) {
@@ -357,8 +356,7 @@ define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], func
             isEnd = true;
         if (inCallback)
             inCallback(buf[1] * 0x100 + buf[0], isEnd);
-        else
-            return [buf[1] * 0x100 + buf[0], isEnd];
+        return [buf[1] * 0x100 + buf[0], isEnd];
     }
 
     function getInt48FromStream(inBuf, inCallback) {
@@ -369,8 +367,7 @@ define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], func
             isEnd = true;
         if (inCallback)
             inCallback(buf[1] * 0x100000000000 + buf[0] * 0x100000000 + buf[5] * 0x1000000 + buf[4] * 0x10000 + buf[3] * 0x100 + buf[2], isEnd);
-        else
-            return [buf[1] * 0x100000000000 + buf[0] * 0x100000000 + buf[5] * 0x1000000 + buf[4] * 0x10000 + buf[3] * 0x100 + buf[2], isEnd];
+        return [buf[1] * 0x100000000000 + buf[0] * 0x100000000 + buf[5] * 0x1000000 + buf[4] * 0x10000 + buf[3] * 0x100 + buf[2], isEnd];
     }
 
     return {

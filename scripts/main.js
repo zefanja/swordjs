@@ -16,8 +16,11 @@ require(["sword"], function (sword) {
         sword.installMgr.installModule(evt.target.files[0], function (inError, inId) {
             if(!inError)
                 sword.moduleMgr.getModule(inId, function (inError, inModule) {
-                    console.log(inError, inModule);
+                    console.log(inModule);
+                    document.getElementById("out").innerHTML = "Installed Module: " + inModule.modKey;
                 });
+            else
+                console.log("ERROR Installing Module", inError);
         });
     }
 
