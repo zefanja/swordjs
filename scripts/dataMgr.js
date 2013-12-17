@@ -151,11 +151,24 @@ define(["async", "tools", "idbPluginWrapper"], function (async, tools, IDB) {
         });
     }
 
+    function remove(inId, inCallback) {
+        IDB.getDB(function (inError, db) {
+            if(!inError)
+                db.remove(inId,
+                    inCallback(null),
+                    function (inError) { inCallback(inError);}
+                );
+            else inCallback(inError);
+        });
+    }
+
     function clearDatabase() {
         IDB.getDB(function (inError, db) {
             if(!inError)
                 db.clear(
-                    function () { console.log("cleared database"); },
+                    function () {
+                        //console.log("cleared database");
+                    },
                     function (inError) { console.log(inError);}
                 );
             else inCallback(inError);
@@ -177,6 +190,7 @@ define(["async", "tools", "idbPluginWrapper"], function (async, tools, IDB) {
         saveBCVPos: saveBCVPos,
         getBlob: getBlob,
         get: get,
+        remove: remove,
         getModules: getModules,
         getIDBWrapper: getIDBWrapper
     };

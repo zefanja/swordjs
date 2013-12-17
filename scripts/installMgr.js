@@ -61,7 +61,7 @@ define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], func
                         });
                     }
                 });
-                console.log("REPOS", repos);
+                //console.log("REPOS", repos);
                 inCallback(inError, repos);
             } else {
                 inCallback(inError);
@@ -213,7 +213,14 @@ define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], func
             }
             ], function (inError, inResult) {
                 if(!inError) inCallback(null, inDoc.id);
-                else inCallback(inError);
+                else {
+                    //If we got an error while saving the blob files, delete the config entry in the database
+                    dataMgr.remove(inDoc.id, function (inError) {
+                        //console.log(inError);
+                    });
+                    inCallback(inError);
+                }
+
             }
         );
     }
