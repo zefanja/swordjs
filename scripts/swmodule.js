@@ -78,7 +78,7 @@ define(["dataMgr", "verseKey", "zText", "filterMgr", "versificationMgr"], functi
                                 zText.getRawEntry(inBlob, bcvPos, vList, self.config.Encoding, function (inError, inRaw) {
                                     //console.log(inError, inRaw);
                                     if (!inError)
-                                        inCallback(null, filterMgr.processText(inRaw, self.config.SourceType, inOptions));
+                                        inCallback(null, filterMgr.processText(inRaw, self.config.SourceType, self.config.Direction, inOptions));
                                     else
                                         inCallback(inError);
                                 });

@@ -11,7 +11,7 @@ define(["sax", "bcv"], function (sax, bcv) {
         oneVersePerLine: false,
     };
 
-    osis.processText = function (inRaw, inOptions) {
+    osis.processText = function (inRaw, inDirection, inOptions) {
         if (!inOptions || inOptions === {}) {
             inOptions = swFilterOptions;
         } else {
@@ -25,6 +25,7 @@ define(["sax", "bcv"], function (sax, bcv) {
             currentNode = null,
             currentNote = null,
             currentRef = null,
+            verseData = null,
             noteText = "",
             outText = "",
             renderedText = "",
@@ -79,7 +80,11 @@ define(["sax", "bcv"], function (sax, bcv) {
             lastTag = node.name;
             switch (node.name) {
                 case "xml":
-                    outText += "<span class='verse-number' osisRef='" + node.attributes.osisRef + "'> " + node.attributes.verseNum + " </span>";
+                    verseData = {osisRef: node.attributes.osisRef, verseNum: node.attributes.verseNum};
+                    if (inDirection === "RtoL")
+                        outText += "<span dir='rtl' class='verse-number' osisRef='" + verseData.osisRef + "'> " + verseData.verseNum + " </span><span dir='rtl'>";
+                    else
+                        outText += "<span class='verse-number' osisRef='" + verseData.osisRef + "'> " + verseData.verseNum + " </span>";
                 break;
                 case "note":
                     //console.log(node, isNote, lastTag);
@@ -108,6 +113,10 @@ define(["sax", "bcv"], function (sax, bcv) {
                 case "reference":
                     currentRef = null;
                 break;
+                case "xml":
+                    if(inDirection === "RtoL")
+                        outText += "</span>";
+                break;
             }
             lastTag = "";
         };
@@ -132,7 +141,8 @@ define(["sax", "bcv"], function (sax, bcv) {
             outText = "";
         }
 
-
+        if(inDirection === "RtoL")
+            renderedText = "<div style='text-align: right;'>" + renderedText + "</div>";
         return renderedText;
     };
 

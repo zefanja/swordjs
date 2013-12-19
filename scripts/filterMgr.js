@@ -1,9 +1,9 @@
 define(["filters/osis", "filters/plain"], function (osis, plain) {
-    function processText(inRaw, inSource, inOptions) {
+    function processText(inRaw, inSource, inDirection, inOptions) {
         if(inSource.toLowerCase() === "osis")
-            return osis.processText(inRaw, inOptions);
+            return osis.processText(inRaw, inDirection, inOptions);
         else
-            return plain.processText(inRaw, inOptions);
+            return plain.processText(inRaw, inDirection, inOptions);
     }
 
     return {
