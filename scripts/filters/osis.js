@@ -82,9 +82,11 @@ define(["sax", "bcv"], function (sax, bcv) {
                 case "xml":
                     verseData = {osisRef: node.attributes.osisRef, verseNum: node.attributes.verseNum};
                     if (inDirection === "RtoL")
-                        outText += "<span dir='rtl' class='verse-number' osisRef='" + verseData.osisRef + "'> " + verseData.verseNum + " </span><span dir='rtl'>";
+                        //outText += "<span dir='rtl' class='verse-number'> " + verseData.verseNum + " </span><span dir='rtl'>";
+                        outText += "<span dir='rtl'><a href=\"?type=verseNum&osisRef=" + verseData.osisRef + "\" class='verse-number'> " + verseData.verseNum + " </a><span dir='rtl'>";
                     else
-                        outText += "<span class='verse-number' osisRef='" + verseData.osisRef + "'> " + verseData.verseNum + " </span>";
+                        //outText += "<span class='verse-number'> " + verseData.verseNum + " </span>";
+                        outText += "<a href=\"?type=verseNum&osisRef=" + verseData.osisRef + "\" class='verse-number'> " + verseData.verseNum + " </a>";
                 break;
                 case "note":
                     //console.log(node, isNote, lastTag);
@@ -137,7 +139,7 @@ define(["sax", "bcv"], function (sax, bcv) {
             tmp = "<xml osisRef='" + inRaw[i].osis + "' verseNum = '" + inRaw[i].verse + "'>" + inRaw[i].text + "</xml>";
             parser.write(tmp);
             parser.close();
-            renderedText += (inOptions.oneVersePerLine) ? "<div class='verse'>" + outText + "</div>" : "<span class='verse'>" + outText + "</span>";
+            renderedText += (inOptions.oneVersePerLine) ? "<div class='verse' id = 'verse" + inRaw[i].verse + "'>" + outText + "</div>" : "<span class='verse' id = 'verse" + inRaw[i].verse + "'>" + outText + "</span>";
             outText = "";
         }
 

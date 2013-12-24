@@ -14,9 +14,9 @@ define([], function () {
         }
 
         for (var i=0; i<inRaw.length; i++) {
-            outText = (inDirection !== "RtoL") ? "<span class='verse-number' osisRef='" + inRaw[i].osis + "'> " + inRaw[i].verse + " </span>" : "<span dir='rtl' class='verse-number' osisRef='" + inRaw[i].osis + "'> " + inRaw[i].verse + " </span>";
+            outText = (inDirection !== "RtoL") ? "<a href=\"?type=verseNum&osisRef=" + inRaw[i].verse + "\" class='verse-number'> " + verseData.verseNum + " </a>" : "<span dir='rtl'><a href=\"?type=verseNum&osisRef=" + inRaw[i].verse + "\" class='verse-number'> " + verseData.verseNum + " </a></span>";
             outText += (inDirection !== "RtoL") ? inRaw[i].text : "<span dir='rtl'>" + inRaw[i].text + "</span>";
-            renderedText += (inOptions.oneVersePerLine) ? "<div class='verse'>" + outText + "</div>" : "<span class='verse'>" + outText + "</span>";
+            renderedText += (inOptions.oneVersePerLine) ? "<div class='verse' id = 'verse" + inRaw[i].verse + "'>" + outText + "</div>" : "<span class='verse' id = 'verse" + inRaw[i].verse + "'>" + outText + "</span>";
             outText = "";
         }
 
