@@ -97,6 +97,11 @@ define(["dataMgr", "verseKey", "zText", "filterMgr", "versificationMgr"], functi
 
         getAllBooks: function () {
             return versificationMgr.getAllBooks(this.config.Versification);
+        },
+
+        //inOsis can be Matt.3
+        getVersesInChapter: function (inOsis) {
+            return versificationMgr.getVersesInChapter(versificationMgr.getBookNum(inOsis.split(".")[0], this.config.Versification), inOsis.split(".")[1], this.config.Versification);
         }
     };
 

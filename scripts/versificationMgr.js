@@ -47,11 +47,11 @@ define(["json!../data/kjv.json", "json!../data/german.json"], function (kjv, ger
             return versificationMgr.kjv[testament][inBookNum].maxChapter;
     }
 
-    function getVersesInChapter (inBook, inChapter, v11n) {
+    function getVersesInChapter (inBookNum, inChapter, v11n) {
         if (v11n !== undefined && versificationMgr[v11n])
-            return versificationMgr[v11n].versesInChapter[inBook][inChapter];
+            return versificationMgr[v11n].versesInChapter[inBookNum][parseInt(inChapter, 10)-1];
         else
-            return versificationMgr.kjv.versesInChapter[inBook][inChapter];
+            return versificationMgr.kjv.versesInChapter[inBookNum][parseInt(inChapter, 10)-1];
     }
 
     function getBook(inBookNum, v11n) {

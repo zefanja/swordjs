@@ -280,6 +280,7 @@ define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], func
             length = 0,
             bookStartPos = 0,
             booknum = 0,
+            verseMax = 0,
             bookData = null,
             startPos = 0,
             chapt = {},
@@ -295,7 +296,8 @@ define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], func
                 chapt = {};
                 chapt["verses"] = [];
                 length = 0;
-                for (var v = 0; v<versificationMgr.getVersesInChapter(b,c, inV11n); v++) {
+                verseMax = versificationMgr.getVersesInChapter(b,c+1, inV11n);
+                for (var v = 0; v<verseMax; v++) {
                     booknum = getShortIntFromStream(inBuf)[0];
                     startPos = getInt48FromStream(inBuf)[0];
 

@@ -44,7 +44,8 @@ define(["bcv", "versificationMgr"], function (bcv, versificationMgr) {
         //check if we have a passage like Mt 3 or Ps 123
         } else if (isNaN(key.verse)) {
             var bookNum = versificationMgr.getBookNum(key.book);
-            for (var i=0;i<versificationMgr.getVersesInChapter(bookNum, key.chapter-1, inV11n); i++) {
+            var verseMax = versificationMgr.getVersesInChapter(bookNum, key.chapter, inV11n);
+            for (var i=0;i<verseMax; i++) {
                 verseList.push({osis: key.book+"."+key.chapter+"."+(i+1), book: key.book, bookNum: bookNum, chapter: key.chapter, verse: i+1});
             }
         } else {
