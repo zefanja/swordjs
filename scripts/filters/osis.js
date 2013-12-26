@@ -139,7 +139,7 @@ define(["sax", "bcv"], function (sax, bcv) {
             tmp = "<xml osisRef='" + inRaw[i].osis + "' verseNum = '" + inRaw[i].verse + "'>" + inRaw[i].text + "</xml>";
             parser.write(tmp);
             parser.close();
-            renderedText += (inOptions.oneVersePerLine) ? "<div class='verse' id = 'verse" + inRaw[i].verse + "'>" + outText + "</div>" : "<span class='verse' id = 'verse" + inRaw[i].verse + "'>" + outText + "</span>";
+            renderedText += (inOptions.oneVersePerLine) ? "<div class='verse' id = '" + inRaw[i].osis + "'>" + outText + "</div>" : "<span class='verse' id = '" + inRaw[i].osis + "'>" + outText + "</span>";
             outText = "";
         }
 
