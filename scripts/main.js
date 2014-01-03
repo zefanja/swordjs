@@ -28,6 +28,14 @@ require(["sword"], function (sword) {
         sword.dataMgr.clearDatabase();
     }
 
+    function removeModule(evt) {
+        sword.installMgr.removeModule("GerSch", function (inError) {
+            console.log(inError);
+            if(!inError)
+                console.log("Removed Module");
+        });
+    }
+
     function getText() {
         //console.log(document.getElementById("passageInput").value);
         sword.moduleMgr.getModules(function (inError, inModules) {
@@ -54,6 +62,7 @@ require(["sword"], function (sword) {
 
     document.getElementById("files").addEventListener('change', handleModuleSelect, false);
     document.getElementById("btnClear").addEventListener('click', clearDatabase, false);
+    document.getElementById("btnRemove").addEventListener('click', removeModule, false);
     document.getElementById("btnPassage").addEventListener('click', getText, false);
     document.getElementById("btnNext").addEventListener('click', next, false);
     document.getElementById("btnPrev").addEventListener('click', prev, false);

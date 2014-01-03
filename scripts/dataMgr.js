@@ -162,6 +162,34 @@ define(["async", "tools", "idbPluginWrapper"], function (async, tools, IDB) {
         });
     }
 
+    function removeModule(inModuleKey, inCallback) {
+        IDB.getDB(function (inError, db) {
+            if(!inError) {
+                getModules(function (inError, inModules) {
+                    if(!inError) {
+                        var found = false;
+                        inModules.forEach(function(mod) {
+                            if(mod.moduleKey === inModuleKey) {
+                                found = true;
+                                db.removeBatch([mod.bcvPosID, mod.nt, mod.ot, mod.id],
+                                    function() {
+                                        if(inCallback) inCallback(null);
+                                    },
+                                    function(inError) {
+                                        if (inCallback) inCallback(inError);
+                                    }
+                                );
+                            }
+                        });
+                        if(!found)
+                            inCallback({message: "Couldn't find the module."});
+                    } else if(inCallback) inCallback(inError);
+
+                });
+            } else if(inCallback) inCallback(inError);
+        });
+    }
+
     function clearDatabase() {
         IDB.getDB(function (inError, db) {
             if(!inError)
@@ -191,6 +219,7 @@ define(["async", "tools", "idbPluginWrapper"], function (async, tools, IDB) {
         getBlob: getBlob,
         get: get,
         remove: remove,
+        removeModule: removeModule,
         getModules: getModules,
         getIDBWrapper: getIDBWrapper
     };

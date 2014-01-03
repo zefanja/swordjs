@@ -164,6 +164,14 @@ define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], func
         zipReader.readAsArrayBuffer(inBlob);
     }
 
+    //Remove a module
+    function removeModule(inModuleKey, inCallback) {
+        if(typeof inModuleKey === "string")
+            dataMgr.removeModule(inModuleKey, inCallback);
+        else
+            inCallback({message: "inModuleKey must be a string!"});
+    }
+
     //Build the index with all entry points for a book or chapter
     function buildIndex(inUnzip, inV11n, inDoc, inCallback) {
         var files = {};
@@ -389,6 +397,7 @@ define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], func
     return {
         getRepositories: getRepositories,
         getModules: getModules,
-        installModule: installModule
+        installModule: installModule,
+        removeModule: removeModule
     };
 });
