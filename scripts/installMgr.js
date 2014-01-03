@@ -278,6 +278,7 @@ define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], func
             chapterStartPos = 0,
             lastNonZeroStartPos = 0,
             length = 0,
+            chapterLength = 0,
             bookStartPos = 0,
             booknum = 0,
             verseMax = 0,
@@ -330,8 +331,14 @@ define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], func
                 } //end verse
                 if (chapt != {}) {
                     //console.log("LENGTH:", lastNonZeroStartPos, chapterStartPos, length);
-                    chapt["length"] = lastNonZeroStartPos - chapterStartPos + length;
-                    chapters[bookData.abbrev].push(chapt);
+                    chapterLength = lastNonZeroStartPos - chapterStartPos + length;
+                    if (!isNaN(chapterLength) && chapterLength !== 0) {
+                        chapt["length"] = chapterLength;
+                        chapters[bookData.abbrev].push(chapt);
+                    } else {
+                        delete chapters[bookData.abbrev];
+                    }
+
                 }
                 // dump a post for the chapter break
                 getShortIntFromStream(inBuf);
