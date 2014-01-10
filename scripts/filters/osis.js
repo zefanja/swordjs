@@ -30,7 +30,7 @@ define(["sax", "bcv"], function (sax, bcv) {
             outText = "",
             renderedText = "",
             verseNumber = "",
-            footnotesData = [],
+            footnotesData = {},
             isTitle = false;
 
 
@@ -44,7 +44,7 @@ define(["sax", "bcv"], function (sax, bcv) {
 
         //Text node
         parser.ontext = function (t) {
-            //console.log("TEXT:", t, currentNode.name);
+            //console.log("TEXT:", t, currentNode);
             if (currentNote && inOptions.footnotes) {
                 if (currentNote.attributes.type === "crossReference") {
                     if (lastTag !== "reference")
@@ -55,9 +55,15 @@ define(["sax", "bcv"], function (sax, bcv) {
                 } else {
                     if(lastTag === "note") {
                         outText += "<a href=\"?type=footnote&osisRef=" + currentNote.attributes.osisRef + "&n=" + currentNote.attributes.n + "\"><sup>" + "*n" + currentNote.attributes.n + "</sup></a>";
-                        footnotesData.push({note: t, osisRef: currentNote.attributes.osisRef, n: currentNote.attributes.n});
+                        if (!footnotesData.hasOwnProperty(currentNote.attributes.osisRef))
+                            footnotesData[currentNote.attributes.osisRef] = [{note: t, n: currentNote.attributes.n}];
+                        else
+                            footnotesData[currentNote.attributes.osisRef].push({note: t, n: currentNote.attributes.n});
                     } else {
-                        footnotesData[footnotesData.length-1]["note"] += t;
+                        if (!footnotesData.hasOwnProperty(currentNote.attributes.osisRef))
+                            footnotesData[currentNote.attributes.osisRef] = {note: t, n: currentNote.attributes.n};
+                        else
+                            footnotesData[currentNote.attributes.osisRef][parseInt(currentNote.attributes.n, 10)-1]["note"] += t;
                     }
 
                 }
@@ -121,6 +127,7 @@ define(["sax", "bcv"], function (sax, bcv) {
                         outText += "] ";
                     noteText = "";
                     currentNote = null;
+                    currentNode = null;
                 break;
                 case "reference":
                     currentRef = null;

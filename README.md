@@ -70,8 +70,12 @@ The callback will return an object as second argument:
 Example:
 ```javascript
 {
-    text: "...", //the rendered text (HTML)
-    footnotes: [{note: "/*Note text*/", osisRef: "Gen.1.3", n: 1}, {...}] //this will be [], if footnotes are turned off.
+    text: "...", //the rendered text (HTML),
+    footnotes: {
+            [{note: "/*Note text*/", n: "1"}, {...}],
+            [{note: "/*Note text*/", n: "2"}, {...}],
+            ...
+        }
 }
 ```
 

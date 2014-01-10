@@ -1,6 +1,6 @@
 require(["sword"], function (sword) {
     window.sword = sword;
-    console.log(sword.isSupported());
+    //console.log(sword.isSupported());
 
     /*sword.installMgr.getRepositories(function (inError, inRepos) {
         console.log("REPOS", inError, inRepos);
