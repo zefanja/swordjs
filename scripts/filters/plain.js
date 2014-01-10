@@ -22,7 +22,7 @@ define([], function () {
 
         if(inDirection === "RtoL")
             renderedText = "<div style='text-align: right;'>" + renderedText + "</div>";
-        return renderedText;
+        return {text: renderedText};
     };
 
 

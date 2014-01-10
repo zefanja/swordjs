@@ -40,9 +40,9 @@ require(["sword"], function (sword) {
         //console.log(document.getElementById("passageInput").value);
         sword.moduleMgr.getModules(function (inError, inModules) {
             if(inModules.length !== 0) {
-                inModules[0].renderText(document.getElementById("passageInput").value, /*{footnotes: true, oneVersePerLine: true},*/ function (inError, inText) {
-                    //console.log(inError, inText);
-                    document.getElementById("out").innerHTML = inText;
+                inModules[0].renderText(document.getElementById("passageInput").value, {footnotes: true, oneVersePerLine: true}, function (inError, inResult) {
+                    //console.log(inError, inResult);
+                    document.getElementById("out").innerHTML = inResult.text;
                 });
             } else {
                 document.getElementById("out").innerHTML = "No modules installed";

@@ -30,6 +30,7 @@ define(["sax", "bcv"], function (sax, bcv) {
             outText = "",
             renderedText = "",
             verseNumber = "",
+            footnotesData = [],
             isTitle = false;
 
 
@@ -44,15 +45,21 @@ define(["sax", "bcv"], function (sax, bcv) {
         //Text node
         parser.ontext = function (t) {
             //console.log("TEXT:", t, currentNode.name);
-            if (currentNote) {
-                if (inOptions.footnotes && currentNote.attributes.type === "crossReference") {
-                    //console.log(t);
+            if (currentNote && inOptions.footnotes) {
+                if (currentNote.attributes.type === "crossReference") {
                     if (lastTag !== "reference")
                         outText += processCrossReference(t, currentNote);
                     else {
-                        //console.log(currentRef, t, lastTag);
                         outText += "<a href=\"?type=crossReference&osisRef=" + currentRef.attributes.osisRef + "&n=" + currentNote.attributes.n + "\">" + t + "</a>";
                     }
+                } else {
+                    if(lastTag === "note") {
+                        outText += "<a href=\"?type=footnote&osisRef=" + currentNote.attributes.osisRef + "&n=" + currentNote.attributes.n + "\"><sup>" + "*n" + currentNote.attributes.n + "</sup></a>";
+                        footnotesData.push({note: t, osisRef: currentNote.attributes.osisRef, n: currentNote.attributes.n});
+                    } else {
+                        footnotesData[footnotesData.length-1]["note"] += t;
+                    }
+
                 }
             } else if (currentNode) {
                 switch (currentNode.name) {
@@ -61,6 +68,9 @@ define(["sax", "bcv"], function (sax, bcv) {
                             outText = "<h3>" + t + "</h3>" + outText;
                         else
                             outText = "<h1>" + t + "</h1>" + outText;
+                    break;
+                    case "note":
+
                     break;
                     default:
                         outText += t;
@@ -145,7 +155,7 @@ define(["sax", "bcv"], function (sax, bcv) {
 
         if(inDirection === "RtoL")
             renderedText = "<div style='text-align: right;'>" + renderedText + "</div>";
-        return renderedText;
+        return {text: renderedText, footnotes: footnotesData};
     };
 
     function processCrossReference(inText, inNode) {

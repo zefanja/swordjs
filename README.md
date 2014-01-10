@@ -41,6 +41,9 @@ Get a list of all modules in a repository. ```inRepo``` is an object containing 
 #### installMgr.installModule(inUrl, inCallback, inProgressCallback) ####
 This will install a module from ```inUrl```. You can also pass a file blob from a zipped module file for offline installation as first argument. The callback will return ```null``` or an ```error``` as the first argument. The second callback is optional. It will report the progress of the module download.
 
+#### installMgr.removeModule(iModuleKey, inCallback) ####
+This will remove the module with the ```inModuleKey```. The callback will return ```null``` or an ```error``` as the first argument.
+
 ### moduleMgr ###
 
 ####moduleMgr.getModules(inCallback) ####
@@ -62,7 +65,15 @@ This property contains the all the module information that is normally found in 
 }
 ```
 
-The callback will return the text as HTML as second argument.
+The callback will return an object as second argument:
+
+Example:
+```javascript
+{
+    text: "...", //the rendered text (HTML)
+    footnotes: [{note: "/*Note text*/", osisRef: "Gen.1.3", n: 1}, {...}] //this will be [], if footnotes are turned off.
+}
+```
 
 #### getAllBooks() ####
 Returns a list of all books in a module.
