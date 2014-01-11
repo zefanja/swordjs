@@ -72,10 +72,10 @@ Example:
 {
     text: "...", //the rendered text (HTML),
     footnotes: {
-            [{note: "/*Note text*/", n: "1"}, {...}],
-            [{note: "/*Note text*/", n: "2"}, {...}],
-            ...
-        }
+        "Gen.1.1": [{note: "/*Note text*/", n: "1"}, {...}],
+        "Gen.1.4": [{note: "/*Note text*/", n: "2"}, {...}],
+        ...
+    }
 }
 ```
 
