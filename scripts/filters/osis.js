@@ -11,6 +11,18 @@ define(["sax", "bcv"], function (sax, bcv) {
         oneVersePerLine: false,
     };
 
+    var lastTag = "",
+        currentNode = null,
+        currentNote = null,
+        currentRef = null,
+        verseData = null,
+        noteText = "",
+        outText = "",
+        renderedText = "",
+        verseNumber = "",
+        footnotesData = {},
+        isTitle = false;
+
     osis.processText = function (inRaw, inDirection, inOptions) {
         if (!inOptions || inOptions === {}) {
             inOptions = swFilterOptions;
@@ -21,62 +33,38 @@ define(["sax", "bcv"], function (sax, bcv) {
             inOptions.wordsOfChristInRed = (inOptions.wordsOfChristInRed) ? inOptions.wordsOfChristInRed : swFilterOptions.wordsOfChristInRed;
             inOptions.oneVersePerLine = (inOptions.oneVersePerLine) ? inOptions.oneVersePerLine : swFilterOptions.oneVersePerLine;
         }
-        var lastTag = "",
-            currentNode = null,
-            currentNote = null,
-            currentRef = null,
-            verseData = null,
-            noteText = "",
-            outText = "",
-            renderedText = "",
-            verseNumber = "",
-            footnotesData = {},
-            isTitle = false;
 
-
-        //console.log(inRaw);
+        lastTag = "";
+        currentNode = null;
+        currentNote = null;
+        currentRef = null;
+        verseData = null;
+        noteText = "";
+        outText = "";
+        renderedText = "";
+        verseNumber = "";
+        footnotesData = {};
+        isTitle = false;
 
         //Handle Parsing errors
         parser.onerror = function (e) {
-            //console.log("ERROR parsing XML", e, lastTag, currentNode);
             parser.resume();
         };
 
         //Text node
         parser.ontext = function (t) {
             //console.log("TEXT:", t, currentNode);
-            if (currentNote && inOptions.footnotes) {
-                if (currentNote.attributes.type === "crossReference") {
-                    if (lastTag !== "reference")
-                        outText += processCrossReference(t, currentNote);
-                    else {
-                        outText += "<a href=\"?type=crossReference&osisRef=" + currentRef.attributes.osisRef + "&n=" + currentNote.attributes.n + "\">" + t + "</a>";
-                    }
-                } else {
-                    if(lastTag === "note") {
-                        outText += "<a href=\"?type=footnote&osisRef=" + currentNote.attributes.osisRef + "&n=" + currentNote.attributes.n + "\"><sup>" + "*n" + currentNote.attributes.n + "</sup></a>";
-                        if (!footnotesData.hasOwnProperty(currentNote.attributes.osisRef))
-                            footnotesData[currentNote.attributes.osisRef] = [{note: t, n: currentNote.attributes.n}];
-                        else
-                            footnotesData[currentNote.attributes.osisRef].push({note: t, n: currentNote.attributes.n});
-                    } else {
-                        if (!footnotesData.hasOwnProperty(currentNote.attributes.osisRef))
-                            footnotesData[currentNote.attributes.osisRef] = {note: t, n: currentNote.attributes.n};
-                        else
-                            footnotesData[currentNote.attributes.osisRef][parseInt(currentNote.attributes.n, 10)-1]["note"] += t;
-                    }
-
-                }
+            if (currentNote) {
+                outText += processFootnotes(t, inOptions);
             } else if (currentNode) {
                 switch (currentNode.name) {
                     case "title":
-                        if (currentNode.attributes.type === "section")
-                            outText = "<h3>" + t + "</h3>" + outText;
-                        else
-                            outText = "<h1>" + t + "</h1>" + outText;
-                    break;
-                    case "note":
-
+                        if(inOptions.headings) {
+                            if (currentNode.attributes.type === "section")
+                                outText = "<h3>" + t + "</h3>" + outText;
+                            else
+                                outText = "<h1>" + t + "</h1>" + outText;
+                        }
                     break;
                     default:
                         outText += t;
@@ -105,9 +93,10 @@ define(["sax", "bcv"], function (sax, bcv) {
                         outText += "<a href=\"?type=verseNum&osisRef=" + verseData.osisRef + "\" class='verse-number'> " + verseData.verseNum + " </a>";
                 break;
                 case "note":
-                    //console.log(node, isNote, lastTag);
                     if (node.attributes.type === "crossReference" && inOptions.footnotes)
-                        outText += "[";
+                        outText += "<span class='sword-cross-reference'>[";
+                    else if (inOptions.footnotes)
+                        outText += "<a class='sword-footnote' href=\"?type=footnote&osisRef=" + node.attributes.osisRef + "&n=" + node.attributes.n + "\"><sup>" + "*n" + node.attributes.n + "</sup></a>";
                     currentNote = node;
                 break;
                 case "reference":
@@ -124,10 +113,10 @@ define(["sax", "bcv"], function (sax, bcv) {
                 break;
                 case "note":
                     if (currentNote.attributes.type === "crossReference" && inOptions.footnotes)
-                        outText += "] ";
+                        outText += "]</span> ";
                     noteText = "";
                     currentNote = null;
-                    currentNode = null;
+                    //currentNode = null;
                 break;
                 case "reference":
                     currentRef = null;
@@ -165,13 +154,45 @@ define(["sax", "bcv"], function (sax, bcv) {
         return {text: renderedText, footnotes: footnotesData};
     };
 
-    function processCrossReference(inText, inNode) {
-        var outText = "";
-        if (bcv.parse(inText).osis() !== "")
-            outText = "<a href=\"?type=crossReference&osisRef=" + bcv.parse(inText).osis() + "&n=" + inNode.attributes.n + "\">" + inText + "</a>";
-        else
-            outText = inText;
-        return outText;
+    function processFootnotes(t, inOptions) {
+        var out = "";
+        if(inOptions.footnotes) {
+            if (currentNote.attributes.type === "crossReference") {
+                if (lastTag !== "reference")
+                    out += processCrossReference(t);
+                else {
+                    out += "<a href=\"?type=crossReference&osisRef=" + currentRef.attributes.osisRef + "&n=" + currentNote.attributes.n + "\">" + t + "</a>";
+                }
+            } else {
+                if(lastTag === "note") {
+                    if (!footnotesData.hasOwnProperty(currentNote.attributes.osisRef))
+                        footnotesData[currentNote.attributes.osisRef] = [{note: t, n: currentNote.attributes.n}];
+                    else
+                        footnotesData[currentNote.attributes.osisRef].push({note: t, n: currentNote.attributes.n});
+                } else {
+                    if (!footnotesData.hasOwnProperty(currentNote.attributes.osisRef))
+                        footnotesData[currentNote.attributes.osisRef] = [{note: t, n: currentNote.attributes.n}];
+                    else
+                        if (footnotesData[currentNote.attributes.osisRef][footnotesData[currentNote.attributes.osisRef].length-1].n === currentNote.attributes.n)
+                            footnotesData[currentNote.attributes.osisRef][footnotesData[currentNote.attributes.osisRef].length-1]["note"] += t;
+                        else
+                            footnotesData[currentNote.attributes.osisRef].push({note: t, n: currentNote.attributes.n});
+                }
+
+            }
+        }
+        return out;
     }
+
+    function processCrossReference(inText) {
+        var out = "";
+        if (bcv.parse(inText).osis() !== "")
+            out += "<a href=\"?type=crossReference&osisRef=" + bcv.parse(inText).osis() + "&n=" + currentNote.attributes.n + "\">" + inText + "</a>";
+        else
+            out += inText;
+        return out;
+    }
+
+    //Return osis filter methods
     return osis;
 });

@@ -39,8 +39,16 @@ define(["bcv", "versificationMgr"], function (bcv, versificationMgr) {
             key = parseVkey(inVKey);
 
         //Check if we have a passage range like John.3.10-John.3.16 or Gen.3-Gen.4
-        if (key.osis.split("-").length > 1) {
+        if (key.osis.search("-") !== -1) {
+            var singlePassages = key.osis.split("-"),
+                start = singlePassages[0].split("."),
+                end = singlePassages[1].split(".");
 
+            if(!isNaN(key.verse) && end.length === 3) {
+                for (var z=key.verse;z<parseInt(end[2], 10)+1; z++) {
+                    verseList.push({osis: key.book+"."+key.chapter+"."+(z), book: key.book, bookNum: bookNum, chapter: key.chapter, verse: z});
+                }
+            }
         //check if we have a passage like Mt 3 or Ps 123
         } else if (isNaN(key.verse)) {
             var bookNum = versificationMgr.getBookNum(key.book);
