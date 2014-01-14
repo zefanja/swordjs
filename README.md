@@ -60,8 +60,9 @@ This property contains the all the module information that is normally found in 
 
 ```javascript
 {
-    oneVersePerLine: false,
+    oneVersePerLine: true,
     footnotes: false,
+    headings: true
 }
 ```
 

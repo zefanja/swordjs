@@ -141,7 +141,7 @@ define(["sax", "bcv"], function (sax, bcv) {
 
         var tmp = "";
         for (var i=0; i<inRaw.length; i++) {
-            //console.log(inRaw[i].text);
+            console.log(inRaw[i].text);
             tmp = "<xml osisRef='" + inRaw[i].osis + "' verseNum = '" + inRaw[i].verse + "'>" + inRaw[i].text + "</xml>";
             parser.write(tmp);
             parser.close();
@@ -164,21 +164,18 @@ define(["sax", "bcv"], function (sax, bcv) {
                     out += "<a href=\"?type=crossReference&osisRef=" + currentRef.attributes.osisRef + "&n=" + currentNote.attributes.n + "\">" + t + "</a>";
                 }
             } else {
-                if(lastTag === "note") {
-                    if (!footnotesData.hasOwnProperty(currentNote.attributes.osisRef))
-                        footnotesData[currentNote.attributes.osisRef] = [{note: t, n: currentNote.attributes.n}];
-                    else
-                        footnotesData[currentNote.attributes.osisRef].push({note: t, n: currentNote.attributes.n});
-                } else {
-                    if (!footnotesData.hasOwnProperty(currentNote.attributes.osisRef))
-                        footnotesData[currentNote.attributes.osisRef] = [{note: t, n: currentNote.attributes.n}];
-                    else
-                        if (footnotesData[currentNote.attributes.osisRef][footnotesData[currentNote.attributes.osisRef].length-1].n === currentNote.attributes.n)
-                            footnotesData[currentNote.attributes.osisRef][footnotesData[currentNote.attributes.osisRef].length-1]["note"] += t;
-                        else
-                            footnotesData[currentNote.attributes.osisRef].push({note: t, n: currentNote.attributes.n});
+                if (lastTag === "hi") {
+                    t = tagHi(currentNode, t);
                 }
 
+                if (!footnotesData.hasOwnProperty(currentNote.attributes.osisRef))
+                    footnotesData[currentNote.attributes.osisRef] = [{note: t, n: currentNote.attributes.n}];
+                else {
+                    if (footnotesData[currentNote.attributes.osisRef][footnotesData[currentNote.attributes.osisRef].length-1].n === currentNote.attributes.n)
+                        footnotesData[currentNote.attributes.osisRef][footnotesData[currentNote.attributes.osisRef].length-1]["note"] += t;
+                    else
+                        footnotesData[currentNote.attributes.osisRef].push({note: t, n: currentNote.attributes.n});
+                }
             }
         }
         return out;
@@ -191,6 +188,31 @@ define(["sax", "bcv"], function (sax, bcv) {
         else
             out += inText;
         return out;
+    }
+
+    function tagHi (node, t) {
+        switch (node.attributes.type) {
+            case "italic":
+                t = "<i>"+t+"</i>";
+            break;
+            case "bold":
+                t = "<b>"+t+"</b>";
+            break;
+            case "line-through":
+                t = "<s>"+t+"</s>";
+            break;
+            case "underline":
+                t = "<u>"+t+"</u>";
+            break;
+            case "sub":
+                t = "<sub>"+t+"</sub>";
+            break;
+            case "super":
+                t = "<sup>"+t+"</sup>";
+            break;
+        }
+
+        return t;
     }
 
     //Return osis filter methods

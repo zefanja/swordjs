@@ -43,6 +43,10 @@ require(["sword"], function (sword) {
                 inModules[0].renderText(document.getElementById("passageInput").value, {footnotes: true, oneVersePerLine: true, headings: true}, function (inError, inResult) {
                     console.log(inError, inResult);
                     document.getElementById("out").innerHTML = inResult.text;
+                    if(inResult.footnotes)
+                        for (var key in inResult.footnotes) {
+                            document.getElementById("notes").innerHTML += inResult.footnotes[key][0].note + "<br><br>";
+                        }
                 });
             } else {
                 document.getElementById("out").innerHTML = "No modules installed";
