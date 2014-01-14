@@ -40,7 +40,9 @@ require(["sword"], function (sword) {
         //console.log(document.getElementById("passageInput").value);
         sword.moduleMgr.getModules(function (inError, inModules) {
             if(inModules.length !== 0) {
-                inModules[0].renderText(document.getElementById("passageInput").value, {footnotes: true, oneVersePerLine: true, headings: true}, function (inError, inResult) {
+                inModules[0].renderText(document.getElementById("passageInput").value, {
+                    footnotes: true, crossReferences: true, oneVersePerLine: true, headings: true
+                }, function (inError, inResult) {
                     console.log(inError, inResult);
                     document.getElementById("out").innerHTML = inResult.text;
                     if(inResult.footnotes)
