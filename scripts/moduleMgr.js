@@ -22,7 +22,17 @@ define(["dataMgr", "swmodule"], function (dataMgr, Module) {
         dataMgr.getModules(function (inError, inModules) {
             if(!inError) {
                 inModules.forEach(function (mod) {
-                    modules.push(new Module(mod.moduleKey, mod.id, mod));
+                    modules.push(new Module(mod.moduleKey, mod.id, {
+                        id: mod.id,
+                        Versification: mod.Versification,
+                        Encoding: mod.Encoding,
+                        Direction: mod.Direction,
+                        SourceType: mod.SourceType,
+                        bcvPosID: mod.bcvPosID,
+                        ot: mod.ot,
+                        nt: mod.nt,
+                        moduleKey: mod.moduleKey
+                    }));
                 });
                 inCallback(null, modules);
             } else
