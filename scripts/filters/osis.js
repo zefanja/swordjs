@@ -16,12 +16,14 @@ define(["sax", "bcv"], function (sax, bcv) {
         currentNode = null,
         currentNote = null,
         currentRef = null,
+        quote = null,
         verseData = null,
         noteText = "",
         outText = "",
         renderedText = "",
         verseNumber = "",
         footnotesData = {},
+        isSelfClosing = false,
         isTitle = false;
 
     osis.processText = function (inRaw, inDirection, inOptions) {
@@ -40,6 +42,7 @@ define(["sax", "bcv"], function (sax, bcv) {
         currentNode = null;
         currentNote = null;
         currentRef = null;
+        quote = null;
         verseData = null;
         noteText = "";
         outText = "";
@@ -58,6 +61,11 @@ define(["sax", "bcv"], function (sax, bcv) {
             //console.log("TEXT:", t, currentNode);
             if (currentNote) {
                 outText += processFootnotes(t, inOptions);
+            } else if (quote) {
+                if (quote.attributes.who === "Jesus" && inOptions.wordsOfChristInRed) {
+                    outText += "<span style='color: red'><span class='sword-woc'>" + t + "</span></span>";
+                } else
+                    outText += t;
             } else if (currentNode) {
                 switch (currentNode.name) {
                     case "title":
@@ -107,6 +115,10 @@ define(["sax", "bcv"], function (sax, bcv) {
                 case "reference":
                     currentRef = node;
                 break;
+                case "q":
+                    if(!node.isSelfClosing)
+                        quote = node;
+                break;
             }
         };
 
@@ -124,6 +136,11 @@ define(["sax", "bcv"], function (sax, bcv) {
                 break;
                 case "reference":
                     currentRef = null;
+                break;
+                case "q":
+                    /*if (!quote.isSelfClosing && inOptions.wordsOfChristInRed) {
+                        outText += "</span>";
+                    }*/
                 break;
                 case "xml":
                     if(inDirection === "RtoL")

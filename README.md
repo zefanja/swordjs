@@ -63,7 +63,8 @@ This property contains the all the module information that is normally found in 
     oneVersePerLine: false,
     footnotes: false,
     crossReferences: false,
-    headings: false
+    headings: false,
+    wordsOfChristInRed: false
 }
 ```
 
