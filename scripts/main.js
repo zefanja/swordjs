@@ -46,7 +46,8 @@ require(["sword"], function (sword) {
                     crossReferences: true,
                     oneVersePerLine: true,
                     headings: true,
-                    wordsOfChristInRed: true
+                    wordsOfChristInRed: true,
+                    intro: true
                 }, function (inError, inResult) {
                     console.log(inError, inResult);
                     document.getElementById("out").innerHTML = inResult.text;

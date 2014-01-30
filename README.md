@@ -64,7 +64,8 @@ This property contains the all the module information that is normally found in 
     footnotes: false,
     crossReferences: false,
     headings: false,
-    wordsOfChristInRed: false
+    wordsOfChristInRed: false,
+    intro: false, //show book or chapter introductions
 }
 ```
 

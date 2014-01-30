@@ -98,12 +98,17 @@ define(["sax", "bcv"], function (sax, bcv) {
             switch (node.name) {
                 case "xml":
                     verseData = {osisRef: node.attributes.osisRef, verseNum: node.attributes.verseNum};
-                    if (inDirection === "RtoL")
-                        //outText += "<span dir='rtl' class='verse-number'> " + verseData.verseNum + " </span><span dir='rtl'>";
-                        outText += "<span dir='rtl'><a href=\"?type=verseNum&osisRef=" + verseData.osisRef + "\" class='verse-number'> " + verseData.verseNum + " </a><span dir='rtl'>";
-                    else
-                        //outText += "<span class='verse-number'> " + verseData.verseNum + " </span>";
-                        outText += "<a href=\"?type=verseNum&osisRef=" + verseData.osisRef + "\" class='verse-number'> " + verseData.verseNum + " </a>";
+                    if (parseInt(verseData.verseNum, 10) === 0) {
+                        if (inDirection === "RtoL")
+                            outText += "<span dir='rtl'><div class='sword-intro'>";
+                        else
+                            outText += "<span class='sword-intro'>";
+                    } else {
+                        if (inDirection === "RtoL")
+                            outText += "<span dir='rtl'><a href=\"?type=verseNum&osisRef=" + verseData.osisRef + "\" class='verse-number'> " + verseData.verseNum + " </a></span><span dir='rtl'>";
+                        else
+                            outText += "<a href=\"?type=verseNum&osisRef=" + verseData.osisRef + "\" class='verse-number'> " + verseData.verseNum + " </a>";
+                    }
                 break;
                 case "note":
                     if (node.attributes.type === "crossReference" && inOptions.crossReferences)
@@ -118,6 +123,12 @@ define(["sax", "bcv"], function (sax, bcv) {
                 case "q":
                     if(!node.isSelfClosing)
                         quote = node;
+                break;
+                case "div":
+                    if(node.isSelfClosing && node.attributes.type === "paragraph" && node.attributes.sID)
+                        outText += "<p>";
+                    if(node.isSelfClosing && node.attributes.type === "paragraph" && node.attributes.eID)
+                        outText += "</p>";
                 break;
             }
         };
@@ -143,6 +154,8 @@ define(["sax", "bcv"], function (sax, bcv) {
                     }*/
                 break;
                 case "xml":
+                    if(parseInt(verseData.verseNum, 10) === 0)
+                        outText += "</div>";
                     if(inDirection === "RtoL")
                         outText += "</span>";
                 break;
@@ -204,9 +217,10 @@ define(["sax", "bcv"], function (sax, bcv) {
     }
 
     function processCrossReference(inText) {
-        var out = "";
-        if (bcv.parse(inText).osis() !== "")
-            out += "<a href=\"?type=crossReference&osisRef=" + bcv.parse(inText).osis() + "&n=" + currentNote.attributes.n + "\">" + inText + "</a>";
+        var out = "",
+            osisRef = bcv.parse(inText).osis();
+        if (osisRef !== "")
+            out += "<a href=\"?type=crossReference&osisRef=" + osisRef + "&n=" + currentNote.attributes.n + "\">" + inText + "</a>";
         else
             out += inText;
         return out;

@@ -70,13 +70,14 @@ define(["dataMgr", "verseKey", "zText", "filterMgr", "versificationMgr"], functi
                             bcvPos = inBcv.ot[vList[0].book];
                             blobId = self.config.ot;
                         }
+                        //console.log(bcvPos);
 
                         if(bcvPos === null) {
                             inCallback({message: "The requested chapter is not available in this module."});
                         } else {
                             getBinaryBlob(blobId, function (inError, inBlob) {
                                 if (!inError) {
-                                    zText.getRawEntry(inBlob, bcvPos, vList, self.config.Encoding, function (inError, inRaw) {
+                                    zText.getRawEntry(inBlob, bcvPos, vList, self.config.Encoding, inOptions.intro ? inOptions.intro : false, function (inError, inRaw) {
                                         //console.log(inError, inRaw);
                                         if (!inError)
                                             inCallback(null, filterMgr.processText(inRaw, self.config.SourceType, self.config.Direction, inOptions));

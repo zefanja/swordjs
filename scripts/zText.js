@@ -20,7 +20,7 @@ define(["inflateStream", "async"], function (Zlib, async) {
         textReader = new FileReader();
 
 
-    zText.getRawEntry = function (inBlob, inPos, inVList, inEcoding, inCallback) {
+    zText.getRawEntry = function (inBlob, inPos, inVList, inEcoding, inIntro, inCallback) {
         //console.log(inPos, inVList, inEcoding);
         if (!inPos[inVList[0].chapter-1]) {
             inCallback({message: "Wrong passage. The requested chapter is not available in this module."});
@@ -31,13 +31,6 @@ define(["inflateStream", "async"], function (Zlib, async) {
                 chapterStartPos = bookStartPos + startPos,
                 chapterEndPos = chapterStartPos + length,
                 blob = inBlob.slice(bookStartPos, chapterEndPos);
-
-            /*if(!isNaN(inVList[0].verse)) {
-                startPos = startPos + inPos[inVList[0].chapter-1].verses[inVList[0].verse-1].startPos;
-                length = inPos[inVList[0].chapter-1].verses[inVList[0].verse-1].length;
-            }*/
-
-            //console.log(bookStartPos, startPos, length, chapterStartPos, chapterEndPos, blob);
 
             zlibReader.readAsArrayBuffer(blob);
             zlibReader.onload = function (evt) {
@@ -50,19 +43,30 @@ define(["inflateStream", "async"], function (Zlib, async) {
                 var rawText = [],
                     verseStart = 0,
                     verseEnd = 0,
-                    z = 0;
+                    z = 0,
+                    gotIntro = false;
                 async.whilst(
                     function () {return z < inVList.length;},
                     function (cb) {
-                        verseStart = startPos + inPos[inVList[z].chapter-1].verses[inVList[z].verse-1].startPos;
-                        verseEnd = verseStart + inPos[inVList[z].chapter-1].verses[inVList[z].verse-1].length;
+                        if(inIntro && !gotIntro) {
+                            verseStart = (inVList[z].chapter === 1) ? 0 : inPos[inVList[z].chapter-2].startPos + inPos[inVList[z].chapter-2].length;
+                            verseEnd = startPos;
+                        } else {
+                            verseStart = startPos + inPos[inVList[z].chapter-1].verses[inVList[z].verse-1].startPos;
+                            verseEnd = verseStart + inPos[inVList[z].chapter-1].verses[inVList[z].verse-1].length;
+                        }
                         if (!inEcoding)
                             textReader.readAsText(infBlob.slice(verseStart, verseEnd), "CP1252");
                         else
                             textReader.readAsText(infBlob.slice(verseStart, verseEnd), inEcoding);
                         textReader.onload = function(e) {
-                            rawText.push({text: e.target.result, osis: inVList[z].osis, verse: inVList[z].verse});
-                            z++;
+                            if(inIntro && !gotIntro) {
+                                rawText.push({text: e.target.result, osis: inVList[z].book + "." + inVList[z].chapter + ".0", verse: 0});
+                                gotIntro = true;
+                            } else {
+                                rawText.push({text: e.target.result, osis: inVList[z].osis, verse: inVList[z].verse});
+                                z++;
+                            }
                             cb();
                         };
                     },
