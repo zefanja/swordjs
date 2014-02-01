@@ -50,6 +50,7 @@ define(["dataMgr", "verseKey", "zText", "filterMgr", "versificationMgr"], functi
     Module.prototype = {
         constructor: Module,
         self: this,
+        data: {},
 
         renderText: function (inVKey, inOptions, inCallback) {
             var bcvPos = null,
@@ -75,18 +76,19 @@ define(["dataMgr", "verseKey", "zText", "filterMgr", "versificationMgr"], functi
                         if(bcvPos === null) {
                             inCallback({message: "The requested chapter is not available in this module."});
                         } else {
-                            getBinaryBlob(blobId, function (inError, inBlob) {
-                                if (!inError) {
-                                    zText.getRawEntry(inBlob, bcvPos, vList, self.config.Encoding, inOptions.intro ? inOptions.intro : false, function (inError, inRaw) {
-                                        //console.log(inError, inRaw);
-                                        if (!inError)
-                                            inCallback(null, filterMgr.processText(inRaw, self.config.SourceType, self.config.Direction, inOptions));
-                                        else
-                                            inCallback(inError);
-                                    });
-                                }
+                            if(self.data.id === blobId) {
+                                self.getRaw(self.data.blob, bcvPos, vList, self.config.Encoding, inOptions.intro ? inOptions.intro : false, self.config.SourceType, self.config.Direction, inOptions, inCallback);
+                            } else {
+                                getBinaryBlob(blobId, function (inError, inBlob) {
+                                    if (!inError) {
+                                        self.data["id"] = blobId;
+                                        self.data["blob"] = inBlob;
+                                        self.getRaw(inBlob, bcvPos, vList, self.config.Encoding, inOptions.intro ? inOptions.intro : false, self.config.SourceType, self.config.Direction, inOptions, inCallback);
+                                    }
 
-                            });
+                                });
+                            }
+
                         }
                     } else {
                         inCallback(inError);
@@ -96,6 +98,16 @@ define(["dataMgr", "verseKey", "zText", "filterMgr", "versificationMgr"], functi
             } else {
                 inCallback({message: "Wrong passage. The requested chapter is not available in this module."});
             }
+        },
+
+        getRaw: function (inBlob, bcvPos, vList, inEncoding, inIntro, inSourceType, inDir, inOptions, inCallback) {
+            zText.getRawEntry(inBlob, bcvPos, vList, inEncoding, inIntro, function (inError, inRaw) {
+                //console.log(inError, inRaw);
+                if (!inError)
+                    inCallback(null, filterMgr.processText(inRaw, inSourceType, inDir, inOptions));
+                else
+                    inCallback(inError);
+            });
         },
 
         getAllBooks: function () {

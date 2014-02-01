@@ -61,7 +61,8 @@ define(["inflateStream", "async"], function (Zlib, async) {
                             textReader.readAsText(infBlob.slice(verseStart, verseEnd), inEcoding);
                         textReader.onload = function(e) {
                             if(inIntro && !gotIntro) {
-                                rawText.push({text: e.target.result, osis: inVList[z].book + "." + inVList[z].chapter + ".0", verse: 0});
+                                if (e.target.result !== "")
+                                    rawText.push({text: e.target.result, osis: inVList[z].book + "." + inVList[z].chapter + ".0", verse: 0});
                                 gotIntro = true;
                             } else {
                                 rawText.push({text: e.target.result, osis: inVList[z].osis, verse: inVList[z].verse});
