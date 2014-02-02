@@ -22,9 +22,18 @@ define(["async", "tools", "idbPluginWrapper"], function (async, tools, IDB) {
         IDB.getDB(function (inError, db) {
             if(!inError)
                 db.get(inId,
-                    function (inResponse) {
-                        inCallback(null, inResponse);
-                    },
+                    function (inResponse) {inCallback(null, inResponse);},
+                    function (inError) {inCallback(inError);}
+                );
+            else inCallback(inError);
+        });
+    }
+
+    function put(inObject, inCallback) {
+        IDB.getDB(function (inError, db) {
+            if(!inError)
+                db.put(inObject,
+                    function (inId) {inCallback(null, inId);},
                     function (inError) {inCallback(inError);}
                 );
             else inCallback(inError);
@@ -82,17 +91,15 @@ define(["async", "tools", "idbPluginWrapper"], function (async, tools, IDB) {
         });
     }
 
-    function updateBinaryIds(inIds, inCallback) {
+    function updateBinaryIds(inId, inBlobIds, inCallback) {
         //console.log("updateBinaryIds", inIds, inCallback);
         IDB.getDB(function (inError, db) {
             if(!inError)
-                db.get(inIds.docId,
+                db.get(inId,
                     function (inModule) {
-                        inModule.nt = inIds.nt;
-                        inModule.ot = inIds.ot;
-                        db.put(inModule, function(inResponse) {
-                                inCallback(null);
-                            },
+                        inModule["blobIds"] = inBlobIds;
+                        db.put(inModule,
+                            function(id) {inCallback(null);},
                             function (inError) {inCallback(inError);}
                         );
                     },
@@ -215,9 +222,11 @@ define(["async", "tools", "idbPluginWrapper"], function (async, tools, IDB) {
         clearDatabase: clearDatabase,
         saveConfig: saveConfig,
         saveModule: saveModule,
+        updateBinaryIds: updateBinaryIds,
         saveBCVPos: saveBCVPos,
         getBlob: getBlob,
         get: get,
+        put: put,
         remove: remove,
         removeModule: removeModule,
         getModules: getModules,

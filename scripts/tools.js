@@ -64,10 +64,20 @@ define([], function () {
         return newArray;
     }
 
+    function convertArray(inArray) {
+        var obj = {};
+        inArray.forEach(function (item) {
+            if(item)
+                obj[item.book] = item.id;
+        });
+        return obj;
+    }
+
     return {
         readConf: readConf,
         dynamicSort: dynamicSort,
         dynamicSortMultiple: dynamicSortMultiple,
-        cleanArray: cleanArray
+        cleanArray: cleanArray,
+        convertArray: convertArray
     };
 });

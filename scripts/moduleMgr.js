@@ -29,8 +29,7 @@ define(["dataMgr", "swmodule"], function (dataMgr, Module) {
                         Direction: mod.Direction,
                         SourceType: mod.SourceType,
                         bcvPosID: mod.bcvPosID,
-                        ot: mod.ot,
-                        nt: mod.nt,
+                        blobIds: mod.blobIds,
                         moduleKey: mod.moduleKey
                     }));
                 });

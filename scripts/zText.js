@@ -25,7 +25,7 @@ define(["inflateStream", "async"], function (Zlib, async) {
         if (!inPos[inVList[0].chapter-1]) {
             inCallback({message: "Wrong passage. The requested chapter is not available in this module."});
         } else {
-            var bookStartPos = inPos[inVList[0].chapter-1].bookStartPos,
+            var bookStartPos = 0, //inPos[inVList[0].chapter-1].bookStartPos,
                 startPos = inPos[inVList[0].chapter-1].startPos,
                 length = inPos[inVList[0].chapter-1].length,
                 chapterStartPos = bookStartPos + startPos,

@@ -63,7 +63,7 @@ define(["sax", "bcv"], function (sax, bcv) {
                 outText += processFootnotes(t, inOptions);
             } else if (quote) {
                 if (quote.attributes.who === "Jesus" && inOptions.wordsOfChristInRed) {
-                    outText += "<span style='color: red'><span class='sword-woc'>" + t + "</span></span>";
+                    outText += "<span style='color: red'><span class='sword-woc'>" + t + " </span></span>";
                 } else
                     outText += t;
             } else if (currentNode) {
