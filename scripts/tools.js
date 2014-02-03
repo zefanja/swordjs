@@ -73,11 +73,20 @@ define([], function () {
         return obj;
     }
 
+    function convertObject(inObject) {
+        var a = [];
+        for (var key in inObject) {
+            a.push(inObject[key]);
+        }
+        return a;
+    }
+
     return {
         readConf: readConf,
         dynamicSort: dynamicSort,
         dynamicSortMultiple: dynamicSortMultiple,
         cleanArray: cleanArray,
-        convertArray: convertArray
+        convertArray: convertArray,
+        convertObject: convertObject
     };
 });

@@ -264,7 +264,7 @@ define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], func
                     if(!inError) inCallback(null, inDoc.id);
                     else {
                         //If we got an error while saving the blob files, delete the config entry in the database
-                        dataMgr.remove(inDoc.id);
+                        dataMgr.removeModule(inDoc.modKey);
                         inCallback(inError);
                     }
                 });

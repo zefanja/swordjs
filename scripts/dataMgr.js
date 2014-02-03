@@ -178,13 +178,11 @@ define(["async", "tools", "idbPluginWrapper"], function (async, tools, IDB) {
                         inModules.forEach(function(mod) {
                             if(mod.moduleKey === inModuleKey) {
                                 found = true;
-                                db.removeBatch([mod.bcvPosID, mod.nt, mod.ot, mod.id],
-                                    function() {
-                                        if(inCallback) inCallback(null);
-                                    },
-                                    function(inError) {
-                                        if (inCallback) inCallback(inError);
-                                    }
+                                var a = tools.convertObject(mod.blobIds);
+                                a.push(mod.bcvPosID, mod.id);
+                                db.removeBatch(a,
+                                    function() {if(inCallback) inCallback(null);},
+                                    function(inError) {if (inCallback) inCallback(inError);}
                                 );
                             }
                         });

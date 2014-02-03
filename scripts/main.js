@@ -29,7 +29,7 @@ require(["sword"], function (sword) {
     }
 
     function removeModule(evt) {
-        sword.installMgr.removeModule("GerSch", function (inError) {
+        sword.installMgr.removeModule("GerNeUe", function (inError) {
             console.log(inError);
             if(!inError)
                 console.log("Removed Module");
