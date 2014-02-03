@@ -22,6 +22,7 @@ define(["sax", "bcv"], function (sax, bcv) {
         outText = "",
         renderedText = "",
         verseNumber = "",
+        osisRef = "",
         footnotesData = {},
         isSelfClosing = false,
         isTitle = false;
@@ -48,6 +49,7 @@ define(["sax", "bcv"], function (sax, bcv) {
         outText = "";
         renderedText = "";
         verseNumber = "";
+        osisRef = "";
         footnotesData = {};
         isTitle = false;
 
@@ -113,8 +115,11 @@ define(["sax", "bcv"], function (sax, bcv) {
                 case "note":
                     if (node.attributes.type === "crossReference" && inOptions.crossReferences)
                         outText += "<span class='sword-cross-reference'>[";
-                    else if (inOptions.footnotes && node.attributes.type !== "crossReference")
-                        outText += "<a class='sword-footnote' href=\"?type=footnote&osisRef=" + node.attributes.osisRef + "&n=" + node.attributes.n + "\"><sup>" + "*n" + node.attributes.n + "</sup></a>";
+                    else if (inOptions.footnotes && node.attributes.type !== "crossReference") {
+                        osisRef = node.attributes.osisRef || node.attributes.annotateRef;
+                        outText += "<a class='sword-footnote' href=\"?type=footnote&osisRef=" + osisRef + "&n=" + node.attributes.n + "\"><sup>" + "*n" + node.attributes.n + "</sup></a>";
+                    }
+
                     currentNote = node;
                 break;
                 case "reference":
@@ -203,14 +208,14 @@ define(["sax", "bcv"], function (sax, bcv) {
             if (lastTag === "hi") {
                 t = tagHi(currentNode, t);
             }
-
-            if (!footnotesData.hasOwnProperty(currentNote.attributes.osisRef))
-                footnotesData[currentNote.attributes.osisRef] = [{note: t, n: currentNote.attributes.n}];
+            osisRef = currentNote.attributes.osisRef || currentNote.attributes.annotateRef;
+            if (!footnotesData.hasOwnProperty(osisRef))
+                footnotesData[osisRef] = [{note: t, n: currentNote.attributes.n}];
             else {
-                if (footnotesData[currentNote.attributes.osisRef][footnotesData[currentNote.attributes.osisRef].length-1].n === currentNote.attributes.n)
-                    footnotesData[currentNote.attributes.osisRef][footnotesData[currentNote.attributes.osisRef].length-1]["note"] += t;
+                if (footnotesData[osisRef][footnotesData[osisRef].length-1].n === currentNote.attributes.n)
+                    footnotesData[osisRef][footnotesData[osisRef].length-1]["note"] += t;
                 else
-                    footnotesData[currentNote.attributes.osisRef].push({note: t, n: currentNote.attributes.n});
+                    footnotesData[osisRef].push({note: t, n: currentNote.attributes.n});
             }
         }
         return out;
@@ -220,7 +225,7 @@ define(["sax", "bcv"], function (sax, bcv) {
         var out = "",
             osisRef = bcv.parse(inText).osis();
         if (osisRef !== "")
-            out += "<a href=\"?type=crossReference&osisRef=" + osisRef + "&n=" + currentNote.attributes.n + "\">" + inText + "</a>";
+            out += "<a href=\"?type=crossReference&osisRef=" + osisRef + "&n=" + currentRef.attributes.n + "\">" + inText + "</a>";
         else
             out += inText;
         return out;
