@@ -139,6 +139,10 @@ define(["sax", "bcv"], function (sax, bcv) {
                     if(node.isSelfClosing && node.attributes.type === "paragraph" && node.attributes.eID)
                         outText += "</p>";
                 break;
+                case "l":
+                    if(node.isSelfClosing && node.attributes.type === "x-br")
+                        outText += "<br>";
+                break;
             }
         };
 
@@ -185,7 +189,7 @@ define(["sax", "bcv"], function (sax, bcv) {
 
         var tmp = "";
         for (var i=0; i<inRaw.length; i++) {
-            console.log(inRaw[i].text);
+            //console.log(inRaw[i].text);
             tmp = "<xml osisRef='" + inRaw[i].osis + "' verseNum = '" + inRaw[i].verse + "'>" + inRaw[i].text + "</xml>";
             parser.write(tmp);
             parser.close();

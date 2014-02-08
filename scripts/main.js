@@ -42,8 +42,8 @@ require(["sword"], function (sword) {
             if(inModules.length !== 0) {
                 console.log(inModules);
                 inModules[0].renderText(document.getElementById("passageInput").value, {
-                    footnotes: true,
-                    crossReferences: true,
+                    footnotes: false,
+                    crossReferences: false,
                     oneVersePerLine: true,
                     headings: true,
                     wordsOfChristInRed: true,
