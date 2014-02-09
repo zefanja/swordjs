@@ -178,7 +178,7 @@ define(["async", "tools", "idbPluginWrapper"], function (async, tools, IDB) {
                         inModules.forEach(function(mod) {
                             if(mod.moduleKey === inModuleKey) {
                                 found = true;
-                                var a = tools.convertObject(mod.blobIds);
+                                var a = (mod.blobIds) ? tools.convertObject(mod.blobIds) : [mod.nt, mod.ot];
                                 a.push(mod.bcvPosID, mod.id);
                                 db.removeBatch(a,
                                     function() {if(inCallback) inCallback(null);},

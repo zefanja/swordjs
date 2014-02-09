@@ -68,11 +68,13 @@ define(["dataMgr", "verseKey", "zText", "filterMgr", "versificationMgr"], functi
                         } else if (inBcv.ot && inBcv.ot.hasOwnProperty(vList[0].book)) {
                             bcvPos = inBcv.ot[vList[0].book];
                         }
-                        blobId = self.config.blobIds[vList[0].book];
+                        blobId = (self.config.blobIds) ? self.config.blobIds[vList[0].book] : null;
                         //console.log(bcvPos);
 
                         if(bcvPos === null) {
                             inCallback({message: "The requested chapter is not available in this module."});
+                        } else if (blobId === null) {
+                            inCallback({message: "The internal handling of modules changed. Please remove and reinstall the module!", code: 123});
                         } else {
                             getBinaryBlob(blobId, function (inError, inBlob) {
                                 if (!inError) {
