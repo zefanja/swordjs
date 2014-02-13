@@ -61,30 +61,30 @@ define(["dataMgr", "verseKey", "zText", "filterMgr", "versificationMgr"], functi
             //console.log(vList);
             if(vList.length !== 0 && vList[0].osis !== "") {
                 dataMgr.get(self.config.bcvPosID, function(inError, inBcv) {
-                    //console.log(inBcv);
+                    console.log(inBcv);
                     if(!inError) {
                         if (inBcv.nt && inBcv.nt.hasOwnProperty(vList[0].book)) {
                             bcvPos = inBcv.nt[vList[0].book];
+                            blobId = self.config.nt;
                         } else if (inBcv.ot && inBcv.ot.hasOwnProperty(vList[0].book)) {
                             bcvPos = inBcv.ot[vList[0].book];
+                            blobId = self.config.ot;
                         }
-                        blobId = (self.config.blobIds) ? self.config.blobIds[vList[0].book] : null;
-                        //console.log(bcvPos);
 
                         if(bcvPos === null) {
                             inCallback({message: "The requested chapter is not available in this module."});
-                        } else if (blobId === null) {
-                            inCallback({message: "The internal handling of modules changed. Please remove and reinstall the module!", code: 123});
                         } else {
                             getBinaryBlob(blobId, function (inError, inBlob) {
                                 if (!inError) {
                                     zText.getRawEntry(inBlob, bcvPos, vList, self.config.Encoding, inOptions.intro ? inOptions.intro : false, function (inError, inRaw) {
-                                        //console.log("RAW", inError, inRaw);
+                                        //console.log(inError, inRaw);
                                         if (!inError)
                                             inCallback(null, filterMgr.processText(inRaw, self.config.SourceType, self.config.Direction, inOptions));
                                         else
                                             inCallback(inError);
                                     });
+                                } else {
+                                    inCallback(inError);
                                 }
 
                             });

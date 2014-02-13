@@ -22,18 +22,9 @@ define(["async", "tools", "idbPluginWrapper"], function (async, tools, IDB) {
         IDB.getDB(function (inError, db) {
             if(!inError)
                 db.get(inId,
-                    function (inResponse) {inCallback(null, inResponse);},
-                    function (inError) {inCallback(inError);}
-                );
-            else inCallback(inError);
-        });
-    }
-
-    function put(inObject, inCallback) {
-        IDB.getDB(function (inError, db) {
-            if(!inError)
-                db.put(inObject,
-                    function (inId) {inCallback(null, inId);},
+                    function (inResponse) {
+                        inCallback(null, inResponse);
+                    },
                     function (inError) {inCallback(inError);}
                 );
             else inCallback(inError);
@@ -91,15 +82,17 @@ define(["async", "tools", "idbPluginWrapper"], function (async, tools, IDB) {
         });
     }
 
-    function updateBinaryIds(inId, inBlobIds, inCallback) {
+    function updateBinaryIds(inIds, inCallback) {
         //console.log("updateBinaryIds", inIds, inCallback);
         IDB.getDB(function (inError, db) {
             if(!inError)
-                db.get(inId,
+                db.get(inIds.docId,
                     function (inModule) {
-                        inModule["blobIds"] = inBlobIds;
-                        db.put(inModule,
-                            function(id) {inCallback(null);},
+                        inModule.nt = inIds.nt;
+                        inModule.ot = inIds.ot;
+                        db.put(inModule, function(inResponse) {
+                                inCallback(null);
+                            },
                             function (inError) {inCallback(inError);}
                         );
                     },
@@ -178,11 +171,13 @@ define(["async", "tools", "idbPluginWrapper"], function (async, tools, IDB) {
                         inModules.forEach(function(mod) {
                             if(mod.moduleKey === inModuleKey) {
                                 found = true;
-                                var a = (mod.blobIds) ? tools.convertObject(mod.blobIds) : [mod.nt, mod.ot];
-                                a.push(mod.bcvPosID, mod.id);
-                                db.removeBatch(a,
-                                    function() {if(inCallback) inCallback(null);},
-                                    function(inError) {if (inCallback) inCallback(inError);}
+                                db.removeBatch([mod.bcvPosID, mod.nt, mod.ot, mod.id],
+                                    function() {
+                                        if(inCallback) inCallback(null);
+                                    },
+                                    function(inError) {
+                                        if (inCallback) inCallback(inError);
+                                    }
                                 );
                             }
                         });
@@ -220,11 +215,9 @@ define(["async", "tools", "idbPluginWrapper"], function (async, tools, IDB) {
         clearDatabase: clearDatabase,
         saveConfig: saveConfig,
         saveModule: saveModule,
-        updateBinaryIds: updateBinaryIds,
         saveBCVPos: saveBCVPos,
         getBlob: getBlob,
         get: get,
-        put: put,
         remove: remove,
         removeModule: removeModule,
         getModules: getModules,

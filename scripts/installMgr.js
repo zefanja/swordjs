@@ -141,11 +141,11 @@ define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], func
                 } else inCallback(inError);
             });
         } else {
-            _installModule(inUrl, inCallback, inProgressCallback);
+            _installModule(inUrl, inCallback);
         }
     }
 
-    function _installModule(inBlob, inCallback, inProgressCallback) {
+    function _installModule(inBlob, inCallback) {
         var blob = null;
         var zipReader = new FileReader();
         zipReader.onload = function(evt) {
@@ -155,7 +155,7 @@ define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], func
                 if(name.search(".conf") !== -1) {
                     dataMgr.saveConfig(new Blob([unzip.decompress(name)]),
                         function (inError, inDoc) {
-                            if(!inError) buildIndex(unzip, inDoc.v11n, inDoc, inCallback, inProgressCallback);
+                            if(!inError) buildIndex(unzip, inDoc.v11n, inDoc, inCallback);
                             else inCallback(inError);
                         });
                 }
@@ -173,8 +173,9 @@ define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], func
     }
 
     //Build the index with all entry points for a book or chapter
-    function buildIndex(inUnzip, inV11n, inDoc, inCallback, inProgressCallback) {
+    function buildIndex(inUnzip, inV11n, inDoc, inCallback) {
         var files = {};
+        files["bin"] = [];
 
         var filenames = inUnzip.getFilenames();
         filenames.forEach(function (name, index) {
@@ -186,93 +187,11 @@ define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], func
                 files["otB"] = name;
             else if(name.search("ot.bzv") !== -1)
                 files["otCV"] = name;
-            else if (name.search("ot.bzz") !== -1)
-                files["otBlob"] = new Blob([inUnzip.decompress(name)]);
-            else if (name.search("nt.bzz") !== -1)
-                files["ntBlob"] = new Blob([inUnzip.decompress(name)]);
+            else if (name.search(".conf") === -1)
+                files.bin.push({blob: new Blob([inUnzip.decompress(name)]), name: name});
         });
 
-        //Get the position data
-        var chapterVersePosOT = null,
-            chapterVersePosNT = null,
-            metaOT = null,
-            metaNT = null;
-
-        if (files.otB) {
-            var bookPosOT = getBookPositions(inUnzip.decompress(files.otB));
-            var otPos = getChapterVersePositions(inUnzip.decompress(files.otCV), bookPosOT, "ot", inV11n);
-            chapterVersePosOT = otPos.data;
-            metaOT = otPos.meta;
-
-        }
-        if (files.ntB) {
-            var bookPosNT = getBookPositions(inUnzip.decompress(files.ntB));
-            var ntPos = getChapterVersePositions(inUnzip.decompress(files.ntCV), bookPosNT, "nt", inV11n);
-            chapterVersePosNT = ntPos.data;
-            metaNT = ntPos.meta;
-        }
-        //console.log(metaNT);
-
-        //Split the binary data in book chunks
-        var tasks = [],
-            bookBlob = null;
-
-        tasks.push(function (cb) {
-            dataMgr.saveBCVPos(chapterVersePosOT, chapterVersePosNT, inDoc, function (inError, inResponse) {
-                if(!inError) cb(null);
-                else cb(inError);
-            });
-        });
-        if(metaOT) {
-            for (var o in metaOT) {
-                bookBlob = files["otBlob"].slice(metaOT[o].startPos, metaOT[o].startPos + metaOT[o].length);
-                tasks.push((function (blob, o) {
-                    return function (cb) {
-                        dataMgr.put({blob: blob}, function (inError, inId) {
-                            if(!inError) {
-                                //inProgressCallback()
-                                cb(null, {id: inId, book: o});
-                            }
-                            else cb(inError);
-                        });
-                    };
-                })(bookBlob, o));
-            }
-        }
-
-        if(metaNT) {
-            for (var n in metaNT) {
-                bookBlob = files["ntBlob"].slice(metaNT[n].startPos, metaNT[n].startPos + metaNT[n].length);
-                tasks.push((function (blob, n) {
-                    return function (cb) {
-                        dataMgr.put({blob: blob}, function (inError, inId) {
-                            if(!inError) {
-                                //inProgressCallback()
-                                cb(null, {id: inId, book: n});
-                            }
-                            else cb(inError);
-                        });
-                    };
-                })(bookBlob, n));
-            }
-        }
-
-        async.parallel(tasks, function (inError, inBlobIds) {
-            if(!inError) {
-                //console.log(tools.convertArray(inBlobIds));
-                dataMgr.updateBinaryIds(inDoc.id, tools.convertArray(inBlobIds), function (inError, inResponse) {
-                    if(!inError) inCallback(null, inDoc.id);
-                    else {
-                        //If we got an error while saving the blob files, delete the config entry in the database
-                        dataMgr.removeModule(inDoc.modKey);
-                        inCallback(inError);
-                    }
-                });
-            }
-        });
-
-
-        /*async.series([
+        async.series([
             function (cb) {
                 dataMgr.saveModule(files.bin, inDoc, function (inError, inResponse) {
                     if(!inError) cb(null);
@@ -280,7 +199,20 @@ define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], func
                 });
             },
             function (cb) {
+                var bookPosOT = null,
+                    chapterVersePosOT = null,
+                    bookPosNT = null,
+                    chapterVersePosNT = null;
 
+                if (files.otB) {
+                    bookPosOT = getBookPositions(inUnzip.decompress(files.otB));
+                    chapterVersePosOT = getChapterVersePositions(inUnzip.decompress(files.otCV), bookPosOT, "ot", inV11n);
+                }
+                if (files.ntB) {
+                    bookPosNT = getBookPositions(inUnzip.decompress(files.ntB));
+                    chapterVersePosNT = getChapterVersePositions(inUnzip.decompress(files.ntCV), bookPosNT, "nt", inV11n);
+                }
+                //console.log(chapterVersePosOT, chapterVersePosNT);
 
                 dataMgr.saveBCVPos(chapterVersePosOT, chapterVersePosNT, inDoc, function (inError, inResponse) {
                     if(!inError) cb(null);
@@ -298,7 +230,7 @@ define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], func
                 }
 
             }
-        );*/
+        );
     }
 
     //Get the positions of each book
@@ -361,8 +293,7 @@ define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], func
             bookData = null,
             startPos = 0,
             chapt = {},
-            chapters = {},
-            meta = {};
+            chapters = {};
 
         for (var b = booksStart; b<booksEnd; b++) {
             bookData = versificationMgr.getBook(b, inV11n);
@@ -394,8 +325,7 @@ define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], func
                         chapt["startPos"] = chapterStartPos;
                         chapt["booknum"] = b;
                         //chapt["bookRelativeChapterNum"] = c;
-                        //chapt["bookStartPos"] = bookStartPos;
-
+                        chapt["bookStartPos"] = bookStartPos;
                     }
                     if (booknum === 0 && startPos === 0 && length === 0) {
                         if (chapt !== {}) {
@@ -413,9 +343,6 @@ define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], func
                     if (!isNaN(chapterLength) && chapterLength !== 0) {
                         chapt["length"] = chapterLength;
                         chapters[bookData.abbrev].push(chapt);
-                        meta[bookData.abbrev] = {};
-                        meta[bookData.abbrev]["length"] = inBookPositions[booknum].length;
-                        meta[bookData.abbrev]["startPos"] = bookStartPos;
                     } else {
                         delete chapters[bookData.abbrev];
                     }
@@ -431,7 +358,7 @@ define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], func
             getInt48FromStream(inBuf);
             getShortIntFromStream(inBuf);
         } //end books
-        return {data: chapters, meta: meta};
+        return chapters;
     }
 
     function getIntFromStream(inBuf, inCallback) {
