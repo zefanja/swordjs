@@ -171,7 +171,10 @@ define(["async", "tools", "idbPluginWrapper"], function (async, tools, IDB) {
                         inModules.forEach(function(mod) {
                             if(mod.moduleKey === inModuleKey) {
                                 found = true;
-                                db.removeBatch([mod.bcvPosID, mod.nt, mod.ot, mod.id],
+                                var a = (mod.blobIds) ? tools.convertObject(mod.blobIds) : [mod.bcvPosID, mod.nt, mod.ot, mod.id];
+                                //Remove undefined values
+                                a = a.filter(function(e){return e;});
+                                db.removeBatch(a,
                                     function() {
                                         if(inCallback) inCallback(null);
                                     },
