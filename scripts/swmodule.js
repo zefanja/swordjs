@@ -61,7 +61,7 @@ define(["dataMgr", "verseKey", "zText", "filterMgr", "versificationMgr"], functi
             //console.log(vList);
             if(vList.length !== 0 && vList[0].osis !== "") {
                 dataMgr.get(self.config.bcvPosID, function(inError, inBcv) {
-                    console.log(inBcv);
+                    //console.log(inBcv);
                     if(!inError) {
                         if (inBcv.nt && inBcv.nt.hasOwnProperty(vList[0].book)) {
                             bcvPos = inBcv.nt[vList[0].book];
