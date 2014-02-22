@@ -14,7 +14,7 @@
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE*/
 
-define(["dataMgr", "verseKey", "zText", "filterMgr", "versificationMgr"], function (dataMgr, verseKey, zText, filterMgr, versificationMgr) {
+define(["dataMgr", "verseKey", "zText", "filterMgr", "versificationMgr", "worker"], function (dataMgr, verseKey, zText, filterMgr, versificationMgr, worker) {
     var otBin = null,
         ntBin = null;
 
@@ -70,6 +70,7 @@ define(["dataMgr", "verseKey", "zText", "filterMgr", "versificationMgr"], functi
                             bcvPos = inBcv.ot[vList[0].book];
                             blobId = self.config.ot;
                         }
+                        //console.log(blobId);
 
                         if(bcvPos === null) {
                             inCallback({message: "The requested chapter is not available in this module."});
@@ -79,7 +80,9 @@ define(["dataMgr", "verseKey", "zText", "filterMgr", "versificationMgr"], functi
                                     zText.getRawEntry(inBlob, bcvPos, vList, self.config.Encoding, inOptions.intro ? inOptions.intro : false, function (inError, inRaw) {
                                         //console.log(inError, inRaw);
                                         if (!inError)
-                                            inCallback(null, filterMgr.processText(inRaw, self.config.SourceType, self.config.Direction, inOptions));
+                                            worker.processText(inRaw, self.config.SourceType, self.config.Direction, inOptions, function (inError, inResult) {
+                                                inCallback(null, inResult);
+                                            });
                                         else
                                             inCallback(inError);
                                     });

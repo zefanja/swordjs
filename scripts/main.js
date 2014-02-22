@@ -72,10 +72,15 @@ require(["sword"], function (sword) {
         document.getElementById("out").innerHTML = sword.verseKey.previous(document.getElementById("passageInput").value);
     }
 
+    function worker () {
+        sword.worker.test();
+    }
+
     document.getElementById("files").addEventListener('change', handleModuleSelect, false);
     document.getElementById("btnClear").addEventListener('click', clearDatabase, false);
     document.getElementById("btnRemove").addEventListener('click', removeModule, false);
     document.getElementById("btnPassage").addEventListener('click', getText, false);
     document.getElementById("btnNext").addEventListener('click', next, false);
     document.getElementById("btnPrev").addEventListener('click', prev, false);
+    document.getElementById("btnWorker").addEventListener('click', worker, false);
 });
