@@ -1,23 +1,37 @@
-define([], function () {
+define(["has", "module"], function (has, module) {
     var cb = {};
-    var worker = new Worker("scripts/workerScript.js");
-    //worker.postMessage("");
+    var path = "";
+    if(has("biblez")) {
+        path = module.config().scriptsPath + "/swordWorker.js";
+    } else {
+        path = "scripts/swordWorker.js";
+    }
+    var worker = new Worker(path);
+    if(has("biblez")) {
+        worker.postMessage({"cmd": "init", "path": module.config().scriptsPath});
+    } else {
+        worker.postMessage({"cmd": "init"});
+    }
     worker.addEventListener('message', function(e) {
         var cmd = e.data.cmd,
             result = e.data.result;
-
-        switch (cmd) {
-            case "processText":
-                cb[cmd](null, result);
-            break;
+        if(cmd) {
+            cb[cmd](null, result);
+            delete cb[cmd];
+        } else {
+            console.log(e.data);
         }
+
+        return true;
     }, false);
 
     worker.addEventListener('error', function(e) {
         console.log('ERROR: ', e);
+        return true;
     }, false);
 
-    function getRawEntry(inBlob, bcvPos, vList, inEncoding, inIntro) {
+    function getRawEntry(inBlob, bcvPos, vList, inEncoding, inIntro, inCallback) {
+        cb["getRawEntry"] = inCallback;
         worker.postMessage({"cmd": "getRawEntry", "blob": inBlob, "bcvPos": bcvPos, "vList": vList, "encoding": inEncoding, "intro": inIntro});
     }
 

@@ -77,7 +77,8 @@ define(["dataMgr", "verseKey", "zText", "filterMgr", "versificationMgr", "worker
                         } else {
                             getBinaryBlob(blobId, function (inError, inBlob) {
                                 if (!inError) {
-                                    zText.getRawEntry(inBlob, bcvPos, vList, self.config.Encoding, inOptions.intro ? inOptions.intro : false, function (inError, inRaw) {
+                                    worker.getRawEntry(inBlob, bcvPos, vList, self.config.Encoding, inOptions.intro ? inOptions.intro : false, function (inError, inRaw) {
+                                    //zText.getRawEntry(inBlob, bcvPos, vList, self.config.Encoding, inOptions.intro ? inOptions.intro : false, function (inError, inRaw) {
                                         //console.log(inError, inRaw);
                                         if (!inError)
                                             worker.processText(inRaw, self.config.SourceType, self.config.Direction, inOptions, function (inError, inResult) {

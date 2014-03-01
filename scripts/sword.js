@@ -23,8 +23,14 @@ require.config({
         "unzip": "libs/zlib/bin/unzip.min",
         "inflateStream": "libs/zlib/bin/inflate_stream.min",
         "sax": "libs/sax/lib/sax",
-        "idb": "libs/IDBWrapper/idbstore.min"
+        "idb": "libs/IDBWrapper/idbstore.min",
+        "has": "libs/has/has"
 
+    },
+    config: {
+        "worker":  {
+            scriptsPath: "lib/sword/scripts"
+        }
     },
     shim: {
         "bcv": {

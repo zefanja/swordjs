@@ -25,3 +25,6 @@
 [submodule "scripts/libs/IDBWrapper"]
 	path = scripts/libs/IDBWrapper
 	url = https://github.com/jensarps/IDBWrapper.git
+[submodule "scripts/libs/has"]
+	path = scripts/libs/has
+	url = https://github.com/phiggins42/has.js.git
