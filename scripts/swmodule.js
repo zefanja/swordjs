@@ -14,7 +14,7 @@
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE*/
 
-define(["dataMgr", "verseKey", "zText", "filterMgr", "versificationMgr", "worker"], function (dataMgr, verseKey, zText, filterMgr, versificationMgr, worker) {
+define(["has", "dataMgr", "verseKey", "zText", "filterMgr", "versificationMgr"], function (has, dataMgr, verseKey, zText, filterMgr, versificationMgr) {
     var otBin = null,
         ntBin = null;
 
@@ -77,16 +77,28 @@ define(["dataMgr", "verseKey", "zText", "filterMgr", "versificationMgr", "worker
                         } else {
                             getBinaryBlob(blobId, function (inError, inBlob) {
                                 if (!inError) {
-                                    worker.getRawEntry(inBlob, bcvPos, vList, self.config.Encoding, inOptions.intro ? inOptions.intro : false, function (inError, inRaw) {
-                                    //zText.getRawEntry(inBlob, bcvPos, vList, self.config.Encoding, inOptions.intro ? inOptions.intro : false, function (inError, inRaw) {
-                                        //console.log(inError, inRaw);
-                                        if (!inError)
-                                            worker.processText(inRaw, self.config.SourceType, self.config.Direction, inOptions, function (inError, inResult) {
-                                                inCallback(null, inResult);
+                                    if(has("worker")) {
+                                        require(["worker"], function (worker) {
+                                            worker.getRawEntry(inBlob, bcvPos, vList, self.config.Encoding, inOptions.intro ? inOptions.intro : false, function (inError, inRaw) {
+                                                if (!inError)
+                                                    worker.processText(inRaw, self.config.SourceType, self.config.Direction, inOptions, function (inError, inResult) {
+                                                        inCallback(null, inResult);
+                                                    });
+                                                else
+                                                    inCallback(inError);
                                             });
-                                        else
-                                            inCallback(inError);
-                                    });
+                                        });
+                                    } else {
+                                        zText.getRawEntry(inBlob, bcvPos, vList, self.config.Encoding, inOptions.intro ? inOptions.intro : false, function (inError, inRaw) {
+                                            //console.log(inError, inRaw);
+                                            if (!inError) {
+                                                var result = filterMgr.processText(inRaw, self.config.SourceType, self.config.Direction, inOptions);
+                                                inCallback(null, result);
+                                            } else
+                                                inCallback(inError);
+                                        });
+                                    }
+
                                 } else {
                                     inCallback(inError);
                                 }

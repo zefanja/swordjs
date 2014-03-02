@@ -27,11 +27,6 @@ require.config({
         "has": "libs/has/has"
 
     },
-    config: {
-        "worker":  {
-            scriptsPath: "lib/sword/scripts"
-        }
-    },
     shim: {
         "bcv": {
             exports: "bcv_parser",
@@ -51,15 +46,15 @@ require.config({
     }
 });
 
-define(["installMgr", "moduleMgr", "dataMgr", "versificationMgr", "verseKey", "worker"],
-    function (installMgr, moduleMgr, dataMgr, versificationMgr, verseKey, worker) {
+define(["installMgr", "moduleMgr", "dataMgr", "versificationMgr", "verseKey", "config"],
+    function (installMgr, moduleMgr, dataMgr, versificationMgr, verseKey, worker, config) {
         var sword = {};
         sword.installMgr = installMgr;
         sword.moduleMgr = moduleMgr;
         sword.versificationMgr = versificationMgr;
         sword.dataMgr = dataMgr;
         sword.verseKey = verseKey;
-        sword.worker = worker;
+        sword.config = config;
 
         //check if sword is supported in your environment
         sword.isSupported = function () {

@@ -2,14 +2,15 @@
     baseUrl: ".",
     name: "almond",
     include: ['sword'],
-    out: "../sword.min.js",
     optimize: "none",
+    out: "../sword.min.js",
     wrap: {
         startFile: 'start.frag',
         endFile: 'end.frag'
     },
     has: {
-        biblez: true
+        build: true,
+        worker: false
     },
     paths: {
         "text": "libs/text/text",

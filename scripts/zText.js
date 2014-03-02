@@ -21,7 +21,6 @@ define(["inflateStream", "async"], function (Zlib, async) {
 
 
     zText.getRawEntry = function (inBlob, inPos, inVList, inEcoding, inIntro, inCallback) {
-        //console.log(inPos, inVList, inEcoding);
         if (!inPos[inVList[0].chapter-1]) {
             inCallback({message: "Wrong passage. The requested chapter is not available in this module."});
         } else {

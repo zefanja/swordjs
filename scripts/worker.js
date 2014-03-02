@@ -1,21 +1,21 @@
-define(["has", "module"], function (has, module) {
+define(["has", "config"], function (has, config) {
     var cb = {};
     var path = "";
-    if(has("biblez")) {
-        path = module.config().scriptsPath + "/swordWorker.js";
+    if(has("build")) {
+        path = config.scriptsPath + "/swordWorker.js";
     } else {
         path = "scripts/swordWorker.js";
     }
     var worker = new Worker(path);
-    if(has("biblez")) {
-        worker.postMessage({"cmd": "init", "path": module.config().scriptsPath});
+    if(has("build")) {
+        worker.postMessage({"cmd": "init", "path": config.scriptsPath});
     } else {
         worker.postMessage({"cmd": "init"});
     }
     worker.addEventListener('message', function(e) {
         var cmd = e.data.cmd,
             result = e.data.result;
-        if(cmd) {
+        if(cmd && cb[cmd]) {
             cb[cmd](null, result);
             delete cb[cmd];
         } else {
