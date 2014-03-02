@@ -1,8 +1,7 @@
 ({
     baseUrl: ".",
     name: "almond",
-    include: ['sword'],
-    optimize: "none",
+    include: ['sword', "worker"],
     out: "../sword.min.js",
     wrap: {
         startFile: 'start.frag',
@@ -10,7 +9,7 @@
     },
     has: {
         build: true,
-        worker: false
+        worker: true
     },
     paths: {
         "text": "libs/text/text",

@@ -12,13 +12,13 @@ To build ```sword.js``` you have to install ```node.js``` and ```r.js``` [Read m
 
 You will find a ```sword.min.js``` file in the root dir.
 
-```sword.js``` will be build without web worker support by default. If you want to enable web workers in ```sword.js``` you need to set the worker option in ```scripts/build.js``` to ```true```
+```sword.js``` will be build with web worker support by default. If you want to disable web workers in ```sword.js``` you need to set the worker option in ```scripts/build.js``` to ```false```
 
 ```javascript
 //...
 has: {
     build: true,
-    worker: true, //set this to true
+    worker: false, //set this to false
 }
 ```
 To use ```sword.js``` with web workers support you'll need to add some more files next to ```sword.min.js```. See ```deploy.json``` to get the list and paths of the files.

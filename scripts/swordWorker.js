@@ -1,11 +1,11 @@
 function init(inPath) {
     //postMessage({"cmd": null, "result": inPath});
-    var rjsPath = (inPath) ? "./scripts/libs/require/require.js" : "./libs/require/require.js";
-    var zlibPath = (inPath) ? "./scripts/libs/zlib/bin/inflate_stream.min.js" : "./libs/zlib/bin/inflate_stream.min.js";
-    importScripts(rjsPath);
-    importScripts(zlibPath);
+    //var rjsPath = (inPath) ? "./scripts/libs/require/require.js" : "./libs/require/require.js";
+    //var zlibPath = (inPath) ? "./scripts/libs/zlib/bin/inflate_stream.min.js" : "./libs/zlib/bin/inflate_stream.min.js";
+    importScripts("./libs/require/require.js");
+    importScripts("./libs/zlib/bin/inflate_stream.min.js");
     require.config({
-        baseUrl: (inPath) ? "./scripts" : ".",
+        //baseUrl: (inPath) ? "./scripts" : ".",
         paths: {
             "text": "libs/text/text",
             "json": "libs/json/src/json",
