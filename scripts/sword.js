@@ -24,7 +24,8 @@ require.config({
         "inflateStream": "libs/zlib/bin/inflate_stream.min",
         "sax": "libs/sax/lib/sax",
         "idb": "libs/IDBWrapper/idbstore.min",
-        "has": "libs/has/has"
+        "has": "libs/has/has",
+        "pako": "libs/pako/dist/pako"
 
     },
     shim: {

@@ -14,7 +14,7 @@
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE*/
 
-define(["inflateStream", "async"], function (Zlib, async) {
+define(["async", "inflateStream"], function (async, Zlib) {
     var zText = {},
         zlibReader = new FileReader(),
         textReader = new FileReader();
@@ -37,6 +37,15 @@ define(["inflateStream", "async"], function (Zlib, async) {
                 //We need to initialize a new InflateStream on every request
                 var inflator = new Zlib.InflateStream();
                 var infBlob = new Blob([inflator.decompress(view)]);
+
+                /*console.log(pako);
+                var inflator = pako.inflateRaw(view);
+                //inflator.push(view, false);
+                inflator.onData = function(data) {
+                    console.log(data);
+                };
+                if (inflator.err) { throw new Error(inflator.err); }
+                var infBlob = new Blob([inflator.result]);*/
 
                 //Read raw text entry
                 var rawText = [],

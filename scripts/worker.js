@@ -1,17 +1,13 @@
 define(["has", "config"], function (has, config) {
     var cb = {};
     var path = "";
-    if(has("build")) {
-        path = config.scriptsPath + "/swordWorker.js";
+    if (has("build") && config.hasOwnProperty("workerPath")) {
+        path = config.workerPath + "/swordWorker.min.js";
     } else {
-        path = "scripts/swordWorker.js";
+        path = "swordWorker.min.js";
     }
     var worker = new Worker(path);
-    if(has("build")) {
-        worker.postMessage({"cmd": "init", "path": config.scriptsPath});
-    } else {
-        worker.postMessage({"cmd": "init"});
-    }
+
     worker.addEventListener('message', function(e) {
         var cmd = e.data.cmd,
             result = e.data.result;

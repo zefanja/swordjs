@@ -1,5 +1,5 @@
 {
 	"packagejs": "./package.js",
-	"assets": ["sword.min.js", "scripts/swordWorker.js", "scripts/filterMgr.js", "scripts/filters", "scripts/libs/require/require.js", "scripts/libs/async/lib/async.js", "scripts/libs/text/text.js", "scripts/libs/zlib/bin/inflate_stream.min.js", "scripts/libs/json/src/json.js", "scripts/libs/async/lib/async.js", "scripts/libs/bible-reference-parser/js/en_bcv_parser.min.js", "scripts/libs/sax/lib/sax.js"],
+	"assets": ["sword.min.js", "swordWorker.min.js"],
 	"libs": []
 }

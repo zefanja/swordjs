@@ -1,9 +1,9 @@
 define([], function () {
     var config = {};
     config.version = "0.2";
-    config.scriptsPath = "lib/sword/scripts";
-    config.setScriptsPath = function (inPath) {
-        config.scriptsPath = inPath;
+    config.workerPath = "lib/sword";
+    config.setWorkerPath = function (inPath) {
+        config.workerPath = inPath;
     };
 
     return config;

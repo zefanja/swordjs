@@ -1,35 +1,28 @@
-function init(inPath) {
-    //postMessage({"cmd": null, "result": inPath});
-    //var rjsPath = (inPath) ? "./scripts/libs/require/require.js" : "./libs/require/require.js";
-    //var zlibPath = (inPath) ? "./scripts/libs/zlib/bin/inflate_stream.min.js" : "./libs/zlib/bin/inflate_stream.min.js";
-    importScripts("./libs/require/require.js");
-    importScripts("./libs/zlib/bin/inflate_stream.min.js");
-    require.config({
-        //baseUrl: (inPath) ? "./scripts" : ".",
-        paths: {
-            "text": "libs/text/text",
-            "json": "libs/json/src/json",
-            "async": "libs/async/lib/async",
-            "bcv": "libs/bible-reference-parser/js/en_bcv_parser.min",
-            "inflateStream": "libs/zlib/bin/inflate_stream.min",
-            "sax": "libs/sax/lib/sax"
-        },
-        shim: {
-            "bcv": {
-                exports: "bcv_parser",
-                init: function () {
-                    return new this.bcv_parser();
-                }
-            },
-            "sax": {
-                exports: "sax"
+require.config({
+    //baseUrl: (inPath) ? "./scripts" : ".",
+    paths: {
+        "text": "libs/text/text",
+        "json": "libs/json/src/json",
+        "async": "libs/async/lib/async",
+        "bcv": "libs/bible-reference-parser/js/en_bcv_parser.min",
+        "inflateStream": "libs/zlib/bin/inflate_stream.min",
+        "sax": "libs/sax/lib/sax"
+    },
+    shim: {
+        "bcv": {
+            exports: "bcv_parser",
+            init: function () {
+                return new this.bcv_parser();
             }
+        },
+        "sax": {
+            exports: "sax"
         }
-    });
-}
+    }
+});
 
 function getRawEntry(inBlob, inPos, inVList, inEcoding, inIntro) {
-    requirejs(["async"], function(async) {
+    requirejs(["async", "inflateStream"], function(async, Zlib) {
         var zlibReader = new FileReaderSync(),
             textReader = new FileReaderSync();
 

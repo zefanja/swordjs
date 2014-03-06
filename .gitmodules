@@ -28,3 +28,6 @@
 [submodule "scripts/libs/has"]
 	path = scripts/libs/has
 	url = https://github.com/phiggins42/has.js.git
+[submodule "scripts/libs/pako"]
+	path = scripts/libs/pako
+	url = https://github.com/nodeca/pako.git
