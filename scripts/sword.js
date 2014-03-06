@@ -48,7 +48,7 @@ require.config({
 });
 
 define(["installMgr", "moduleMgr", "dataMgr", "versificationMgr", "verseKey", "config"],
-    function (installMgr, moduleMgr, dataMgr, versificationMgr, verseKey, worker, config) {
+    function (installMgr, moduleMgr, dataMgr, versificationMgr, verseKey, config) {
         var sword = {};
         sword.installMgr = installMgr;
         sword.moduleMgr = moduleMgr;
