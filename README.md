@@ -8,7 +8,7 @@ Build
 
 To build ```sword.js``` you have to install ```node.js``` and ```r.js``` [Read more](http://requirejs.org/docs/optimization.html#download).
 
-```./build.sh```
+```sh build.sh```
 
 You will find a ```sword.min.js``` and a ```swordWorker.min.js``` file in the root dir.
 
@@ -25,7 +25,7 @@ has: {
 Usage
 -----
 
-Include ```sword.min.js``` in your index.html. There is a global ```sword``` variable you can use to access the API.
+Include ```sword.min.js``` in your index.html. The worker file should be in the same directory (you can set a custom worker path with ```sword.config.setWorkerPath(/*your relative path to the baseUrl*/)```). There is a global ```sword``` variable you can use to access the API.
 
 API
 ---
