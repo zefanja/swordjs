@@ -38,14 +38,13 @@ define(["async", "inflateStream"], function (async, Zlib) {
                 var inflator = new Zlib.InflateStream();
                 var infBlob = new Blob([inflator.decompress(view)]);
 
-                /*console.log(pako);
-                var inflator = pako.inflateRaw(view);
-                //inflator.push(view, false);
-                inflator.onData = function(data) {
-                    console.log(data);
-                };
-                if (inflator.err) { throw new Error(inflator.err); }
-                var infBlob = new Blob([inflator.result]);*/
+
+                /*inflator.push(view, true);
+                if (inflator.err) {
+                    inCallback(inflator.err);
+                    throw new Error(inflator.err);
+                }*/
+                //var infBlob = new Blob([pako.inflate(view)]); //inflator.result
 
                 //Read raw text entry
                 var rawText = [],

@@ -77,7 +77,7 @@ define(["has", "dataMgr", "verseKey", "zText", "filterMgr", "versificationMgr"],
                         } else {
                             getBinaryBlob(blobId, function (inError, inBlob) {
                                 if (!inError) {
-                                    if(!has("worker")) {
+                                    if(has("worker")) {
                                         require(["worker"], function (worker) {
                                             worker.getRawEntry(inBlob, bcvPos, vList, self.config.Encoding, inOptions.intro ? inOptions.intro : false, function (inError, inRaw) {
                                                 if (!inError)

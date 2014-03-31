@@ -6,7 +6,8 @@ require.config({
         "async": "libs/async/lib/async",
         "bcv": "libs/bible-reference-parser/js/en_bcv_parser.min",
         "inflateStream": "libs/zlib/bin/inflate_stream.min",
-        "sax": "libs/sax/lib/sax"
+        "sax": "libs/sax/lib/sax",
+        "pako": "libs/pako/dist/pako"
     },
     shim: {
         "bcv": {

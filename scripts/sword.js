@@ -25,7 +25,7 @@ require.config({
         "sax": "libs/sax/lib/sax",
         "idb": "libs/IDBWrapper/idbstore.min",
         "has": "libs/has/has",
-        "pako": "libs/pako/dist/pako"
+        //"pako": "libs/pako/dist/pako"
 
     },
     shim: {
