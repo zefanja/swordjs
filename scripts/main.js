@@ -48,7 +48,8 @@ require(["sword"], function (sword) {
                     oneVersePerLine: true,
                     headings: true,
                     wordsOfChristInRed: true,
-                    intro: true
+                    intro: true,
+                    array: true
                 }, function (inError, inResult) {
                     console.log(inError, inResult);
                     document.getElementById("out").innerHTML = inResult.text;

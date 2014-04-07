@@ -17,18 +17,18 @@
 define(["bcv", "versificationMgr"], function (bcv, versificationMgr) {
     function parseVkey(inVKey, inV11n) {
         var key = {};
-        key.osis = bcv.parse(inVKey).osis();
-        if (key.osis === "") {
+        key.osisRef = bcv.parse(inVKey).osis();
+        if (key.osisRef === "") {
             //bcv.parse().osis() returns "" for passages it cannot resolve
-            key.osis = "Matt.1"; //bcv.parse(inVKey + " 1").osis();
+            key.osisRef = "Matt.1"; //bcv.parse(inVKey + " 1").osis();
         }
-        var split = key.osis.split("-")[0].split(".");
+        var split = key.osisRef.split("-")[0].split(".");
 
         key.book = split[0];
         key.chapter = (isNaN(parseInt(split[1], 10))) ? 1 : parseInt(split[1], 10);
         key.verse = parseInt(split[2], 10);
         key.bookNum = versificationMgr.getBookNum(key.book, inV11n);
-        //console.log(key, key.osis, split);
+        //console.log(key, key.osisRef, split);
         return key;
     }
 
@@ -39,8 +39,8 @@ define(["bcv", "versificationMgr"], function (bcv, versificationMgr) {
             key = parseVkey(inVKey);
 
         //Check if we have a passage range like John.3.10-John.3.16 or Gen.3-Gen.4
-        if (key.osis.search("-") !== -1) {
-            var singlePassages = key.osis.split("-"),
+        if (key.osisRef.search("-") !== -1) {
+            var singlePassages = key.osisRef.split("-"),
                 start = singlePassages[0].split("."),
                 end = singlePassages[1].split(".");
 
@@ -74,7 +74,7 @@ define(["bcv", "versificationMgr"], function (bcv, versificationMgr) {
             key.chapter = (key.bookNum < 65) ? 1 : maxChapter;
             key.book = versificationMgr.getBook(key.bookNum, inV11n).abbrev;
         }
-        key.osis = key.book+"."+key.chapter;
+        key.osisRef = key.book+"."+key.chapter;
 
         return key;
     }
@@ -90,7 +90,7 @@ define(["bcv", "versificationMgr"], function (bcv, versificationMgr) {
             key.chapter = (key.bookNum === 0) ? 1 : maxChapter;
             key.book = versificationMgr.getBook(key.bookNum, inV11n).abbrev;
         }
-        key.osis = key.book+"."+key.chapter;
+        key.osisRef = key.book+"."+key.chapter;
 
         return key;
     }

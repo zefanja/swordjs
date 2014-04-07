@@ -59,7 +59,7 @@ define(["has", "dataMgr", "verseKey", "zText", "filterMgr", "versificationMgr"],
                 inCallback = inOptions;
             var vList = verseKey.parseVerseList(inVKey, this.config.Versification);
             //console.log(vList);
-            if(vList.length !== 0 && vList[0].osis !== "") {
+            if(vList.length !== 0 && vList[0].osisRef !== "") {
                 dataMgr.get(self.config.bcvPosID, function(inError, inBcv) {
                     //console.log(inBcv);
                     if(!inError) {

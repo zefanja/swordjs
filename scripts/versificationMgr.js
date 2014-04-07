@@ -75,10 +75,14 @@ define(["json!../data/kjv.json", "json!../data/german.json"], function (kjv, ger
 
     function getAllBooks(v11n) {
         var books = [];
-        if (v11n !== undefined && versificationMgr[v11n])
-            return books.concat(versificationMgr[v11n].ot,versificationMgr[v11n].nt);
-        else
-            return books.concat(versificationMgr.kjv.ot,versificationMgr.kjv.nt);
+        if (v11n !== undefined && versificationMgr[v11n]) {
+            books.push.apply(books, versificationMgr[v11n].ot);
+            books.push.apply(books, versificationMgr[v11n].nt);
+        } else {
+            books.push.apply(books, versificationMgr.kjv.ot);
+            books.push.apply(books, versificationMgr.kjv.nt);
+        }
+        return books;
     }
 
     return {

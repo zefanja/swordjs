@@ -10,6 +10,7 @@ define(["sax", "bcv"], function (sax, bcv) {
         strongsNumbers: false,
         wordsOfChristInRed: false,
         oneVersePerLine: false,
+        array: false
     };
 
     var lastTag = "",
@@ -21,6 +22,7 @@ define(["sax", "bcv"], function (sax, bcv) {
         noteText = "",
         outText = "",
         renderedText = "",
+        verseArray = [],
         verseNumber = "",
         osisRef = "",
         footnotesData = {},
@@ -38,6 +40,7 @@ define(["sax", "bcv"], function (sax, bcv) {
             inOptions.strongsNumbers = (inOptions.strongsNumbers) ? inOptions.strongsNumbers : swFilterOptions.strongsNumbers;
             inOptions.wordsOfChristInRed = (inOptions.wordsOfChristInRed) ? inOptions.wordsOfChristInRed : swFilterOptions.wordsOfChristInRed;
             inOptions.oneVersePerLine = (inOptions.oneVersePerLine) ? inOptions.oneVersePerLine : swFilterOptions.oneVersePerLine;
+            inOptions.array = (inOptions.array) ? inOptions.array : swFilterOptions.array;
         }
 
         lastTag = "";
@@ -49,6 +52,7 @@ define(["sax", "bcv"], function (sax, bcv) {
         noteText = "";
         outText = "";
         renderedText = "";
+        verseArray = [];
         verseNumber = "";
         osisRef = "";
         footnotesData = {};
@@ -193,13 +197,19 @@ define(["sax", "bcv"], function (sax, bcv) {
             tmp = "<xml osisRef='" + inRaw[i].osis + "' verseNum = '" + inRaw[i].verse + "'>" + inRaw[i].text + "</xml>";
             parser.write(tmp);
             parser.close();
-            renderedText += (inOptions.oneVersePerLine) ? "<div class='verse' id = '" + inRaw[i].osis + "'>" + outText + "</div>" : "<span class='verse' id = '" + inRaw[i].osis + "'>" + outText + "</span>";
+            if (!inOptions.array)
+                renderedText += (inOptions.oneVersePerLine) ? "<div class='verse' id = '" + inRaw[i].osis + "'>" + outText + "</div>" : "<span class='verse' id = '" + inRaw[i].osis + "'>" + outText + "</span>";
+            else
+                verseArray.push({text: (inOptions.oneVersePerLine) ? "<div class='verse' id = '" + inRaw[i].osis + "'>" + outText + "</div>" : "<span class='verse' id = '" + inRaw[i].osis + "'>" + outText + "</span>", osisRef: inRaw[i].osis});
             outText = "";
         }
 
         if(inDirection === "RtoL")
             renderedText = "<div style='text-align: right;'>" + renderedText + "</div>";
-        return {text: renderedText, footnotes: footnotesData};
+        if(!inOptions.array)
+            return {text: renderedText, footnotes: footnotesData};
+        else
+            return {verses: verseArray, footnotes: footnotesData};
     };
 
     /* FUNCTIONS TO PROCESS SPECIFIC OSIS TAGS */
