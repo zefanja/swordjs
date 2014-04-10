@@ -193,7 +193,7 @@ define(["sax", "bcv"], function (sax, bcv) {
 
         var tmp = "";
         for (var i=0; i<inRaw.length; i++) {
-            console.log(inRaw[i].text);
+            //console.log(inRaw[i].text);
             tmp = "<xml osisRef='" + inRaw[i].osis + "' verseNum = '" + inRaw[i].verse + "'>" + inRaw[i].text + "</xml>";
             parser.write(tmp);
             parser.close();
