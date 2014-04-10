@@ -3,14 +3,13 @@
     name: "almond",
     include: ['sword', "worker"],
     out: "../sword.min.js",
-    optimize: "none",
     wrap: {
         startFile: 'start.frag',
         endFile: 'end.frag'
     },
     has: {
         build: true,
-        worker: true
+        worker: false
     },
     paths: {
         "text": "libs/text/text",

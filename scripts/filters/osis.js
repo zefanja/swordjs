@@ -209,7 +209,7 @@ define(["sax", "bcv"], function (sax, bcv) {
         if(!inOptions.array)
             return {text: renderedText, footnotes: footnotesData};
         else
-            return {verses: verseArray, footnotes: footnotesData};
+            return {verses: verseArray, footnotes: footnotesData, rtol: (inDirection === "RtoL") ? true : false};
     };
 
     /* FUNCTIONS TO PROCESS SPECIFIC OSIS TAGS */

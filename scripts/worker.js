@@ -1,7 +1,7 @@
 define(["has", "config"], function (has, config) {
     var cb = {};
     var path = "";
-    if (has("build") && config.hasOwnProperty("workerPath")) {
+    if (has("build")) {
         path = config.workerPath + "/swordWorker.min.js";
     } else {
         path = "swordWorker.min.js";
