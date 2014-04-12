@@ -86,8 +86,8 @@ define(["bcv", "versificationMgr"], function (bcv, versificationMgr) {
         if (key.chapter > 1) {
             --key.chapter;
         } else {
-            key.bookNum = (key.bookNum > 0) ? --key.bookNum : 0;
             key.chapter = (key.bookNum === 0) ? 1 : maxChapter;
+            key.bookNum = (key.bookNum > 0) ? --key.bookNum : 0;
             key.book = versificationMgr.getBook(key.bookNum, inV11n).abbrev;
         }
         key.osisRef = key.book+"."+key.chapter;
