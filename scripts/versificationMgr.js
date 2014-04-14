@@ -14,7 +14,7 @@
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE*/
 
-define(["json!../data/kjv.json", "json!../data/german.json"], function (kjv, german) {
+define(["json!../data/kjv.json", "json!../data/german.json", "dataMgr"], function (kjv, german, dataMgr) {
     var versificationMgr = {};
 
     versificationMgr.kjv = kjv;
@@ -73,16 +73,35 @@ define(["json!../data/kjv.json", "json!../data/german.json"], function (kjv, ger
             return versificationMgr.kjv.osisToBookNum[inOsis];
     }
 
-    function getAllBooks(v11n) {
+    function getAllBooks(inId, v11n, inCallback) {
         var books = [];
-        if (v11n !== undefined && versificationMgr[v11n]) {
+        /*if (v11n !== undefined && versificationMgr[v11n]) {
             books.push.apply(books, versificationMgr[v11n].ot);
             books.push.apply(books, versificationMgr[v11n].nt);
         } else {
             books.push.apply(books, versificationMgr.kjv.ot);
             books.push.apply(books, versificationMgr.kjv.nt);
         }
-        return books;
+        return books;*/
+        var v11nData = (v11n && versificationMgr[v11n]) ? versificationMgr[v11n] : versificationMgr.kjv;
+        dataMgr.get(inId, function (inError, inResult) {
+            if(!inError) {
+                if(inResult.hasOwnProperty("ot")) {
+                    for (var otBook in inResult.ot) {
+                        books.push(v11nData.ot[inResult.ot[otBook][0].booknum]);
+                    }
+                }
+                if(inResult.hasOwnProperty("nt")) {
+                    var booksMax = getBooksInOT(v11n);
+                    for (var ntBook in inResult.nt) {
+                        books.push(v11nData.nt[inResult.nt[ntBook][0].booknum-booksMax]);
+                    }
+                }
+                if (inCallback) inCallback(null, books);
+            } else {
+                if (inCallback) inCallback(inError);
+            }
+        });
     }
 
     return {

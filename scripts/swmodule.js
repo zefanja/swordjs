@@ -115,8 +115,10 @@ define(["has", "dataMgr", "verseKey", "zText", "filterMgr", "versificationMgr"],
             }
         },
 
-        getAllBooks: function () {
-            return versificationMgr.getAllBooks(this.config.Versification);
+        getAllBooks: function (inCallback) {
+            versificationMgr.getAllBooks(this.config.bcvPosID, this.config.Versification, function (inError, inResult) {
+                inCallback(inError, inResult);
+            });
         },
 
         //inOsis can be Matt.3

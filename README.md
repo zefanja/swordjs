@@ -93,7 +93,7 @@ Example:
 }
 ```
 
-#### getAllBooks() ####
+#### getAllBooks(inCallback) ####
 Returns a list of all books in a module.
 
 ###verseKey###
@@ -103,7 +103,7 @@ Takes a passage (e.g. Matt 1:1) as argument an returns an object like this:
 
 ```javascript
 {
-    osis: "Matt.1.1",
+    osisRef: "Matt.1.1",
     book: "Matt",
     bookNum: 39,
     chapter: 1

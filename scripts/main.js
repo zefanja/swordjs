@@ -75,7 +75,15 @@ require(["sword"], function (sword) {
     }
 
     function worker () {
-        sword.worker.test();
+        sword.moduleMgr.getModules(function (inError, inModules) {
+            if(inModules.length !== 0) {
+                inModules[0].getAllBooks(function (inError, inResult) {
+                    console.log(inError, inResult);
+                });
+            } else {
+                document.getElementById("out").innerHTML = "No modules installed";
+            }
+        });
     }
 
     document.getElementById("files").addEventListener('change', handleModuleSelect, false);
