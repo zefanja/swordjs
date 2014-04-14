@@ -87,14 +87,20 @@ define(["json!../data/kjv.json", "json!../data/german.json", "dataMgr"], functio
         dataMgr.get(inId, function (inError, inResult) {
             if(!inError) {
                 if(inResult.hasOwnProperty("ot")) {
+                    var bnOt = 0;
                     for (var otBook in inResult.ot) {
-                        books.push(v11nData.ot[inResult.ot[otBook][0].booknum]);
+                        bnOt = inResult.ot[otBook][0].booknum;
+                        v11nData.ot[bnOt]["bookNum"] = bnOt;
+                        books.push(v11nData.ot[bnOt]);
                     }
                 }
                 if(inResult.hasOwnProperty("nt")) {
-                    var booksMax = getBooksInOT(v11n);
+                    var booksMax = getBooksInOT(v11n),
+                        bnNt = 0;
                     for (var ntBook in inResult.nt) {
-                        books.push(v11nData.nt[inResult.nt[ntBook][0].booknum-booksMax]);
+                        bnNt = inResult.nt[ntBook][0].booknum-booksMax;
+                        v11nData.nt[bnNt]["bookNum"] = bnNt+booksMax;
+                        books.push(v11nData.nt[bnNt]);
                     }
                 }
                 if (inCallback) inCallback(null, books);
