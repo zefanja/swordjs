@@ -161,6 +161,9 @@ define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], func
                 }
             });
         };
+        zipReader.onerror = function (inError) {
+            inCallback(inError);
+        };
         zipReader.readAsArrayBuffer(inBlob);
     }
 
