@@ -29,7 +29,7 @@ define(["dataMgr", "swmodule"], function (dataMgr, Module) {
                         Direction: mod.Direction,
                         SourceType: mod.SourceType,
                         bcvPosID: mod.bcvPosID,
-                        //blobIds: mod.blobIds,
+                        description: mod.Description,
                         ot: mod.ot,
                         nt: mod.nt,
                         moduleKey: mod.moduleKey

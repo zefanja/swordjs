@@ -33,7 +33,7 @@ define([], function () {
         if(!inOptions.array)
             return {text: renderedText};
         else
-            return {verses: verseArray};
+            return {verses: verseArray, rtol: (inDirection === "RtoL") ? true : false};
 
 
     };
