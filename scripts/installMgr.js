@@ -341,7 +341,7 @@ define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], func
                     }
                 } //end verse
                 if (chapt != {}) {
-                    //console.log("LENGTH:", lastNonZeroStartPos, chapterStartPos, length);
+                    //console.log("LENGTH:", lastNonZeroStartPos, chapterStartPos, length, chapt, chapters);
                     chapterLength = lastNonZeroStartPos - chapterStartPos + length;
                     if (!isNaN(chapterLength) && chapterLength !== 0) {
                         chapt["length"] = chapterLength;
@@ -355,7 +355,7 @@ define(["unzip", "dataMgr", "zText", "versificationMgr", "async", "tools"], func
                 getShortIntFromStream(inBuf);
                 getInt48FromStream(inBuf);
                 getShortIntFromStream(inBuf);
-            } //end chpaters
+            } //end chapters
             // dump a post for the book break
             getShortIntFromStream(inBuf);
             getInt48FromStream(inBuf);

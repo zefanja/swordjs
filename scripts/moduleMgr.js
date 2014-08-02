@@ -30,6 +30,7 @@ define(["dataMgr", "swmodule"], function (dataMgr, Module) {
                         SourceType: mod.SourceType,
                         bcvPosID: mod.bcvPosID,
                         description: mod.Description,
+                        language: mod.Lang,
                         ot: mod.ot,
                         nt: mod.nt,
                         moduleKey: mod.moduleKey

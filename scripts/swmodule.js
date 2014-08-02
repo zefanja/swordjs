@@ -25,6 +25,7 @@ define(["has", "dataMgr", "verseKey", "zText", "filterMgr", "versificationMgr"],
         }
 
         this.modKey = inModName;
+        this.language = inConfig.language;
         this.id = inId;
         this.config = inConfig;
     }
