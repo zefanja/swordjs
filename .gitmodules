@@ -1,0 +1,3 @@
+[submodule "libs/bcv"]
+	path = libs/bcv
+	url = git@github.com:openbibleinfo/Bible-Passage-Reference-Parser.git
