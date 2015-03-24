@@ -1,3 +1,39 @@
+<<<<<<< HEAD
 [submodule "libs/bcv"]
 	path = libs/bcv
 	url = git@github.com:openbibleinfo/Bible-Passage-Reference-Parser.git
+=======
+[submodule "scripts/libs/zlib"]
+	path = scripts/libs/zlib
+	url = https://github.com/imaya/zlib.js.git
+[submodule "scripts/libs/require"]
+	path = scripts/libs/require
+	url = https://github.com/jrburke/requirejs.git
+[submodule "scripts/libs/domReady"]
+	path = scripts/libs/domReady
+	url = https://github.com/requirejs/domReady.git
+[submodule "scripts/libs/text"]
+	path = scripts/libs/text
+	url = https://github.com/requirejs/text.git
+[submodule "scripts/libs/json"]
+	path = scripts/libs/json
+	url = https://github.com/millermedeiros/requirejs-plugins.git
+[submodule "scripts/libs/async"]
+	path = scripts/libs/async
+	url = https://github.com/caolan/async.git
+[submodule "scripts/libs/bible-reference-parser"]
+	path = scripts/libs/bible-reference-parser
+	url = https://github.com/openbibleinfo/Bible-Passage-Reference-Parser.git
+[submodule "scripts/libs/sax"]
+	path = scripts/libs/sax
+	url = https://github.com/isaacs/sax-js.git
+[submodule "scripts/libs/IDBWrapper"]
+	path = scripts/libs/IDBWrapper
+	url = https://github.com/jensarps/IDBWrapper.git
+[submodule "scripts/libs/has"]
+	path = scripts/libs/has
+	url = https://github.com/phiggins42/has.js.git
+[submodule "scripts/libs/pako"]
+	path = scripts/libs/pako
+	url = https://github.com/nodeca/pako.git
+>>>>>>> 6d9a7151db2b21149cb059d40e14fc9a09060b8b

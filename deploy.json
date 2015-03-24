@@ -1,0 +1,5 @@
+{
+	"packagejs": "./package.js",
+	"assets": ["sword.min.js", "swordWorker.min.js"],
+	"libs": []
+}
