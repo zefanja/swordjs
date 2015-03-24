@@ -8,6 +8,7 @@ var zlibReader = new FileReader(),
 
 
 function getRawEntry(inBlob, inPos, inVList, inEcoding, inIntro, inCallback) {
+    //console.log("inPos, inVList, inEcoding, inIntro", inPos, inVList, inEcoding, inIntro)
     if (!inPos[inVList[0].chapter-1]) {
         inCallback({message: "Wrong passage. The requested chapter is not available in this module."});
     } else {
@@ -20,18 +21,17 @@ function getRawEntry(inBlob, inPos, inVList, inEcoding, inIntro, inCallback) {
 
         zlibReader.readAsArrayBuffer(blob);
         zlibReader.onload = function (evt) {
+            var inflator = new pako.Inflate();
             var view = new Uint8Array(evt.target.result);
-            //We need to initialize a new InflateStream on every request
-            var inflator = new Zlib.InflateStream();
-            var infBlob = new Blob([inflator.decompress(view)]);
 
-
-            /*inflator.push(view, true);
+            inflator.push(view, true);
             if (inflator.err) {
                 inCallback(inflator.err);
                 throw new Error(inflator.err);
-            }*/
-            //var infBlob = new Blob([pako.inflate(view)]); //inflator.result
+            }
+
+            //console.log(inflator.result);
+            var infBlob = new Blob([inflator.result]);
 
             //Read raw text entry
             var rawText = [],
@@ -56,10 +56,10 @@ function getRawEntry(inBlob, inPos, inVList, inEcoding, inIntro, inCallback) {
                     textReader.onload = function(e) {
                         if(inIntro && !gotIntro) {
                             if (e.target.result !== "")
-                                rawText.push({text: e.target.result, osis: inVList[z].book + "." + inVList[z].chapter + ".0", verse: 0});
+                                rawText.push({text: e.target.result, osisRef: inVList[z].book + "." + inVList[z].chapter + ".0", verse: 0});
                             gotIntro = true;
                         } else {
-                            rawText.push({text: e.target.result, osis: inVList[z].osis, verse: inVList[z].verse});
+                            rawText.push({text: e.target.result, osisRef: inVList[z].osisRef, verse: inVList[z].verse});
                             z++;
                         }
                         cb();

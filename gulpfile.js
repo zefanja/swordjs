@@ -16,6 +16,7 @@ var gulp = require('gulp'),
     reload = browserSync.reload,
     p = {
       js: './scripts/main.js',
+      jsBuild: './scripts/sword.js',
       bundle: 'sword.js',
       distJs: 'dist/js'
     };
@@ -57,13 +58,22 @@ gulp.task('browserify', function() {
     .pipe(gulp.dest(p.distJs));
 });
 
+gulp.task('browserifyBuild', function() {
+  browserify(p.jsBuild)
+    .bundle()
+    .pipe(source(p.bundle))
+    .pipe(buffer())
+    .pipe(uglify())
+    .pipe(gulp.dest(p.distJs));
+});
+
 gulp.task('watch', ['clean'], function() {
   gulp.start(['browserSync', 'watchify']);
 });
 
 gulp.task('build', ['clean'], function() {
   process.env.NODE_ENV = 'production';
-  gulp.start(['browserify']);
+  gulp.start(['browserifyBuild']);
 });
 
 gulp.task('default', function() {

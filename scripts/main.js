@@ -1,7 +1,6 @@
 'use strict';
 
 var sword = require("./sword");
-console.log("Hallo sword.js", sword);
 
 function handleModuleSelect(evt) {
     sword.installMgr.installModule(evt.target.files[0], function (inError, inId) {

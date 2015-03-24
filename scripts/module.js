@@ -70,28 +70,14 @@ Module.prototype = {
                     } else {
                         getBinaryBlob(blobId, function (inError, inBlob) {
                             if (!inError) {
-                                /*if(has("worker")) {
-                                    require(["worker"], function (worker) {
-                                        worker.getRawEntry(inBlob, bcvPos, vList, self.config.Encoding, inOptions.intro ? inOptions.intro : false, function (inError, inRaw) {
-                                            if (!inError)
-                                                worker.processText(inRaw, self.config.SourceType, self.config.Direction, inOptions, function (inError, inResult) {
-                                                    inCallback(null, inResult);
-                                                });
-                                            else
-                                                inCallback(inError);
-                                        });
-                                    });
-                                } else { */
-                                    zText.getRawEntry(inBlob, bcvPos, vList, self.config.Encoding, inOptions.intro ? inOptions.intro : false, function (inError, inRaw) {
-                                        //console.log(inError, inRaw);
-                                        if (!inError) {
-                                            var result = filterMgr.processText(inRaw, self.config.SourceType, self.config.Direction, inOptions);
-                                            inCallback(null, result);
-                                        } else
-                                            inCallback(inError);
-                                    });
-                                //}
-
+                                zText.getRawEntry(inBlob, bcvPos, vList, self.config.Encoding, inOptions.intro ? inOptions.intro : false, function (inError, inRaw) {
+                                    //console.log(inError, inRaw);
+                                    if (!inError) {
+                                        var result = filterMgr.processText(inRaw, self.config.SourceType, self.config.Direction, inOptions);
+                                        inCallback(null, result);
+                                    } else
+                                        inCallback(inError);
+                                });
                             } else {
                                 inCallback(inError);
                             }
@@ -120,4 +106,4 @@ Module.prototype = {
     }
 };
 
-return Module;
+module.exports = Module;
