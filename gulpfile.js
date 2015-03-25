@@ -21,6 +21,13 @@ var gulp = require('gulp'),
       distJs: 'dist/js'
     };
 
+var browserifyTransform = [
+      "deglobalify"
+    ];
+if (gulp.env.production) {
+  browserifyTransform.push("uglifyify");
+}
+
 gulp.task('clean', function(cb) {
   del(['dist'], cb);
 });
@@ -38,6 +45,7 @@ gulp.task('watchify', function() {
 
   function rebundle() {
     return bundler
+      .transform("deglobalify")
       .bundle()
       .on('error', notify.onError())
       .pipe(source(p.bundle))
@@ -51,15 +59,17 @@ gulp.task('watchify', function() {
 
 gulp.task('browserify', function() {
   browserify(p.js)
+    .transform("deglobalify")
     .bundle()
     .pipe(source(p.bundle))
     .pipe(buffer())
-    .pipe(uglify())
+    //.pipe(uglify())
     .pipe(gulp.dest(p.distJs));
 });
 
 gulp.task('browserifyBuild', function() {
   browserify(p.jsBuild)
+    .transform("deglobalify")
     .bundle()
     .pipe(source(p.bundle))
     .pipe(buffer())

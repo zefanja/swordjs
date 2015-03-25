@@ -1,6 +1,5 @@
 'use strict';
 
-require("bcv");
 var installMgr = require("./installMgr");
 var dataMgr = require("./dataMgr");
 var moduleMgr = require("./moduleMgr");
@@ -17,6 +16,7 @@ var sword = {
 	versificationMgr: versificationMgr
 };
 
+//BAD, but will be replaced in future, when BibleZ NG got a new frontend
 window.sword = sword;
 
 module.exports = sword;

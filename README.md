@@ -6,31 +6,17 @@ sword.js
 Build
 -----
 
-To build ```sword.js``` you have to install ```node.js``` and ```r.js``` [Read more](http://requirejs.org/docs/optimization.html#download).
-
-```sh build.sh```
-
-You will find a ```sword.min.js``` and a ```swordWorker.min.js``` file in the root dir.
-
-```sword.js``` will be build with web worker support by default. If you want to disable web workers in ```sword.js``` you need to set the worker option in ```scripts/build.js``` to ```false```
-
-```javascript
-//...
-has: {
-    build: true,
-    worker: false, //set this to false
-}
-```
+Install ```gulp``` an run ```gulp build```.
 
 Usage
 -----
 
-Include ```sword.min.js``` in your index.html. The worker file should be in the same directory (you can set a custom worker path with ```sword.config.setWorkerPath(/*your relative path to the baseUrl*/)```). There is a global ```sword``` variable you can use to access the API.
+Include ```dist/js/sword.js``` in your index.html. There is a global ```sword``` variable you can use to access the API.
 
 API
 ---
 
-```sword.js``` is currently in a pre-alpha version, so the API will likely change in the future.
+```sword.js``` is currently in a alpha version, so the API will likely change in the future.
 
 Most API calls take a callback as the last argument. The callback will return ```null``` or an ```error``` as first argument. The second, third, ... argument is the reponse from the API.
 
