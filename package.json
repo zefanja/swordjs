@@ -45,9 +45,6 @@
   "browser": {
     "bcv": "./libs/bcv/js/en_bcv_parser.min.js"
   },
-  "browserify-shim": {
-    "bcv": "bcv_parser"
-  },
   "browserify": {
     "transform": [ "browserify-shim" ]
   }

@@ -1,7 +1,6 @@
 'use strict';
 var versificationMgr = require("./versificationMgr");
-var bcvParser = require("bcv");
-var bcv = new bcvParser.bcv_parser();
+var bcv = new bcv_parser();
 
 function parseVkey(inVKey, inV11n) {
     var key = {};
