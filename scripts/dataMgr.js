@@ -31,7 +31,7 @@ function saveConfig(inConfBlob, inCallback) {
             if(!inError)
                 db.put(configData,
                     function (inId) {
-                        inCallback(null, {id: inId, modKey: configData.moduleKey, v11n: configData.Versification});
+                        inCallback(null, {id: inId, modKey: configData.moduleKey, modDrv: configData.ModDrv, v11n: configData.Versification});
                     },
                     function (inError) {inCallback(inError);}
                 );

@@ -176,17 +176,28 @@ function buildIndex(inZip, inV11n, inDoc, inCallback) {
     files["bin"] = [];
 
     for (var name in inZip.files) {
-        if(name.search("nt.bzs") !== -1)
-            files["ntB"] = name;
-        else if(name.search("nt.bzv") !== -1)
-            files["ntCV"] = name;
-        else if(name.search("ot.bzs") !== -1)
-            files["otB"] = name;
-        else if(name.search("ot.bzv") !== -1)
-            files["otCV"] = name;
-        else if (name.search(".conf") === -1)
-            files.bin.push({blob: new Blob([inZip.files[name].asUint8Array()]), name: name});
+        if(inDoc.modDrv === "zText") { // || inDoc.modDrv === "zCom") {
+            if(name.search(/nt.[bc]zs/) !== -1)
+                files["ntB"] = name;
+            else if(name.search(/nt.[bc]zv/) !== -1)
+                files["ntCV"] = name;
+            else if(name.search(/ot.[bc]zs/) !== -1)
+                files["otB"] = name;
+            else if(name.search(/ot.[bc]zv/) !== -1)
+                files["otCV"] = name;
+            else if (name.search(".conf") === -1)
+                files.bin.push({blob: new Blob([inZip.files[name].asUint8Array()]), name: name});
+        } else if (inDoc.modDrv === "RawCom") {
+            if(name.search("nt.vss") !== -1)
+                files["ntIdx"] = name;
+            else if(name.search("ot.vss") !== -1)
+                files["otIdx"] = name;
+            else if (name.search(".conf") === -1)
+                files.bin.push({blob: new Blob([inZip.files[name].asUint8Array()]), name: name});
+        }
     }
+
+    //console.log(files);
 
     async.series([
         function (cb) {
@@ -199,19 +210,29 @@ function buildIndex(inZip, inV11n, inDoc, inCallback) {
             var bookPosOT = null,
                 chapterVersePosOT = null,
                 bookPosNT = null,
-                chapterVersePosNT = null;
+                chapterVersePosNT = null,
+                rawPosNT = null,
+                rawPosOT = null;
 
             if (files.otB) {
                 bookPosOT = getBookPositions(inZip.files[files.otB].asUint8Array());
-                chapterVersePosOT = getChapterVersePositions(inZip.files[files.otCV].asUint8Array(), bookPosOT, "ot", inV11n);
+                rawPosOT = getChapterVersePositions(inZip.files[files.otCV].asUint8Array(), bookPosOT, "ot", inV11n);
             }
             if (files.ntB) {
                 bookPosNT = getBookPositions(inZip.files[files.ntB].asUint8Array());
-                chapterVersePosNT = getChapterVersePositions(inZip.files[files.ntCV].asUint8Array(), bookPosNT, "nt", inV11n);
+                rawPosNT = getChapterVersePositions(inZip.files[files.ntCV].asUint8Array(), bookPosNT, "nt", inV11n);
             }
-            console.log(chapterVersePosOT, chapterVersePosNT);
 
-            dataMgr.saveBCVPos(chapterVersePosOT, chapterVersePosNT, inDoc, function (inError, inResponse) {
+            if (inDoc.modDrv === "RawCom" && files.otIdx) {
+                rawPosOT = getRawPositions(inZip.files[files.otIdx].asUint8Array(), "ot");
+            }
+
+            if (inDoc.modDrv === "RawCom" && files.ntIdx) {
+                rawPosNT = getRawPositions(inZip.files[files.ntIdx].asUint8Array(), "nt");
+            }
+            //console.log(rawPosOT, rawPosNT);
+
+            dataMgr.saveBCVPos(rawPosOT, rawPosNT, inDoc, function (inError, inResponse) {
                 if(!inError) cb(null);
                 else cb(inError);
             });
@@ -278,9 +299,7 @@ function getChapterVersePositions(inBuf, inBookPositions, inTestament, inV11n) {
     dumpBytes(inBuf);
     var booksStart = (inTestament === "ot") ? 0 : versificationMgr.getBooksInOT(inV11n);
     var booksEnd = (inTestament === "ot") ? versificationMgr.getBooksInOT(inV11n) : versificationMgr.getBooksInOT(inV11n)+versificationMgr.getBooksInNT(inV11n);
-    var chapterZ = 0,
-        verseZ = 0,
-        chapterStartPos = 0,
+    var chapterStartPos = 0,
         lastNonZeroStartPos = 0,
         length = 0,
         chapterLength = 0,
@@ -291,6 +310,8 @@ function getChapterVersePositions(inBuf, inBookPositions, inTestament, inV11n) {
         startPos = 0,
         chapt = {},
         chapters = {};
+
+
 
     for (var b = booksStart; b<booksEnd; b++) {
         bookData = versificationMgr.getBook(b, inV11n);
@@ -356,6 +377,48 @@ function getChapterVersePositions(inBuf, inBookPositions, inTestament, inV11n) {
         getShortIntFromStream(inBuf);
     } //end books
     return chapters;
+}
+
+function getRawPositions(inFile, inTestament, inV11n) {
+    start = 0;
+    //Dump the first 12 bytes
+    getInt48FromStream(inFile);
+    getInt48FromStream(inFile);
+
+    var booksStart = (inTestament === "ot") ? 0 : versificationMgr.getBooksInOT(inV11n);
+    var booksEnd = (inTestament === "ot") ? versificationMgr.getBooksInOT(inV11n) : versificationMgr.getBooksInOT(inV11n)+versificationMgr.getBooksInNT(inV11n);
+    var length = 0,
+        verseMax = 0,
+        bookData = null,
+        startPos = 0,
+        data = {},
+        osis = "";
+
+    for (var b = booksStart; b<booksEnd; b++) {
+        bookData = versificationMgr.getBook(b, inV11n);
+        //Skip Book Record (6 bytes)
+        getIntFromStream(inFile);
+        getShortIntFromStream(inFile);
+        for (var c = 0; c<bookData.maxChapter; c++) {
+            verseMax = versificationMgr.getVersesInChapter(b,c+1, inV11n);
+
+            //Skip Chapter Record
+            getIntFromStream(inFile);
+            getShortIntFromStream(inFile);
+
+
+            for (var v = 0; v<verseMax; v++) {
+                startPos = getIntFromStream(inFile)[0];
+                length = getShortIntFromStream(inFile)[0];
+                if (length !== 0) {
+                    //console.log("VERSE", startPos, length);
+                    osis = bookData.abbrev + "." + parseInt(c+1, 10) + "." + parseInt(v+1, 10);
+                    data[osis] = {startPos: startPos, length: length};
+                }
+            } //end verse
+        } //end chapters
+    } //end books
+    return data;
 }
 
 function getIntFromStream(inBuf, inCallback) {
