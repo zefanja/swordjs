@@ -17,7 +17,8 @@ function processText(inRaw, inDirection, inOptions) {
     }
 
     for (var i=0; i<inRaw.length; i++) {
-        outText = (inDirection !== "RtoL") ? "<a href=\"?type=verseNum&osisRef=" + inRaw[i].osisRef + "\" class='verse-number'> " + inRaw[i].verse + " </a>" : "<span dir='rtl'><a href=\"?type=verseNum&osisRef=" + inRaw[i].osisRef + "\" class='verse-number'> " + inRaw[i].verse + " </a></span>";
+        //outText = (inDirection !== "RtoL") ? "<a href=\"?type=verseNum&osisRef=" + inRaw[i].osisRef + "\" class='verse-number'> " + inRaw[i].verse + " </a>" : "<span dir='rtl'><a href=\"?type=verseNum&osisRef=" + inRaw[i].osisRef + "\" class='verse-number'> " + inRaw[i].verse + " </a></span>";
+        inRaw[i].text = inRaw[i].text.replace(/\n\n/g, "<br /><br />");
         outText += (inDirection !== "RtoL") ? inRaw[i].text : "<span dir='rtl'>" + inRaw[i].text + "</span>";
         if (!inOptions.array)
             renderedText += (inOptions.oneVersePerLine) ? "<div class='verse' id = '" + inRaw[i].osisRef + "'>" + outText + "</div>" : "<span class='verse' id = '" + inRaw[i].osisRef + "'>" + outText + "</span>";
@@ -35,8 +36,8 @@ function processText(inRaw, inDirection, inOptions) {
         return {verses: verseArray, rtol: (inDirection === "RtoL") ? true : false};
 }
 
-var plain = {
+var thml = {
     processText: processText
 };
 
-module.exports = plain;
+module.exports = thml;

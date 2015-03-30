@@ -3,6 +3,7 @@
 var dataMgr = require("./dataMgr");
 var verseKey = require("./verseKey");
 var zText = require("./zText");
+var rawCom = require("./rawCom");
 var filterMgr = require("./filterMgr");
 var versificationMgr = require("./versificationMgr");
 
@@ -56,28 +57,40 @@ Module.prototype = {
             dataMgr.get(self.config.bcvPosID, function(inError, inBcv) {
                 //console.log(inBcv);
                 if(!inError) {
-                    if (inBcv.nt && inBcv.nt.hasOwnProperty(vList[0].book)) {
-                        bcvPos = inBcv.nt[vList[0].book];
+                    if (inBcv.nt && (inBcv.nt.hasOwnProperty(vList[0].book) || inBcv.nt.hasOwnProperty(vList[0].osisRef))) {
+                        bcvPos = inBcv.nt[vList[0].book] || inBcv.nt[vList[0].osisRef];
                         blobId = self.config.nt;
-                    } else if (inBcv.ot && inBcv.ot.hasOwnProperty(vList[0].book)) {
-                        bcvPos = inBcv.ot[vList[0].book];
+                    } else if (inBcv.ot && (inBcv.ot.hasOwnProperty(vList[0].book) || inBcv.ot.hasOwnProperty(vList[0].osisRef))) {
+                        bcvPos = inBcv.ot[vList[0].book] || inBcv.ot[vList[0].osisRef];
                         blobId = self.config.ot;
                     }
-                    //console.log(blobId);
+                    console.log(bcvPos);
 
                     if(bcvPos === null) {
                         inCallback({message: "The requested chapter is not available in this module."});
                     } else {
                         getBinaryBlob(blobId, function (inError, inBlob) {
                             if (!inError) {
-                                zText.getRawEntry(inBlob, bcvPos, vList, self.config.Encoding, inOptions.intro ? inOptions.intro : false, function (inError, inRaw) {
-                                    //console.log(inError, inRaw);
-                                    if (!inError) {
-                                        var result = filterMgr.processText(inRaw, self.config.SourceType, self.config.Direction, inOptions);
-                                        inCallback(null, result);
-                                    } else
-                                        inCallback(inError);
-                                });
+                                if (self.config.modDrv === "zText") {
+                                    zText.getRawEntry(inBlob, bcvPos, vList, self.config.Encoding, inOptions.intro ? inOptions.intro : false, function (inError, inRaw) {
+                                        //console.log(inError, inRaw);
+                                        if (!inError) {
+                                            var result = filterMgr.processText(inRaw, self.config.SourceType, self.config.Direction, inOptions);
+                                            inCallback(null, result);
+                                        } else
+                                            inCallback(inError);
+                                    });
+                                } else if (self.config.modDrv === "RawCom") {
+                                    rawCom.getRawEntry(inBlob, bcvPos, vList, self.config.Encoding, inOptions.intro ? inOptions.intro : false, function (inError, inRaw) {
+                                        //console.log(inError, inRaw);
+                                        if (!inError) {
+                                            var result = filterMgr.processText(inRaw, self.config.SourceType, self.config.Direction, inOptions);
+                                            inCallback(null, result);
+                                        } else
+                                            inCallback(inError);
+                                    });
+                                }
+
                             } else {
                                 inCallback(inError);
                             }
@@ -87,7 +100,6 @@ Module.prototype = {
                 } else {
                     inCallback(inError);
                 }
-
             });
         } else {
             inCallback({message: "Wrong passage. The requested chapter is not available in this module."});

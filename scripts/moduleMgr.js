@@ -20,7 +20,9 @@ function getModules(inCallback) {
                     language: mod.Lang,
                     ot: mod.ot,
                     nt: mod.nt,
-                    moduleKey: mod.moduleKey
+                    moduleKey: mod.moduleKey,
+                    modDrv: mod.ModDrv,
+                    conf: mod
                 }));
             });
             inCallback(null, modules);

@@ -85,7 +85,7 @@ document.getElementById("btnNext").addEventListener('click', next, false);
 document.getElementById("btnPrev").addEventListener('click', prev, false);
 document.getElementById("btnWorker").addEventListener('click', worker, false);
 },{"./sword":"/home/zefanja/Projekte/common-sword/scripts/sword.js"}],"/home/zefanja/Projekte/common-sword/data/german.json":[function(require,module,exports){
-module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports={
+module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports={
 "ot": [
     {"name": "Genesis", "abbrev": "Gen", "maxChapter": 50},
     {"name": "Exodus", "abbrev": "Exod", "maxChapter": 40},
@@ -263,7 +263,7 @@ module.exports=module.exports=module.exports=module.exports=module.exports=modul
 }
 
 },{}],"/home/zefanja/Projekte/common-sword/data/kjv.json":[function(require,module,exports){
-module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports={
+module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports={
 "ot": [
     {"name": "Genesis", "abbrev": "Gen", "maxChapter": 50},
     {"name": "Exodus", "abbrev": "Exod", "maxChapter": 40},
@@ -574,7 +574,7 @@ module.exports=module.exports=module.exports=module.exports=module.exports=modul
 ]
 }
 },{}],"/home/zefanja/Projekte/common-sword/data/vulg.json":[function(require,module,exports){
-module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports={
+module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports=module.exports={
 "ot": [
   {"name": "Genesis", "abbrev": "Gen", "maxChapter": 50},
   {"name": "Exodus", "abbrev": "Exod", "maxChapter": 40},
@@ -17998,11 +17998,14 @@ module.exports = dataMgr;
 "use strict";
 var osis = require("./filters/osis");
 var plain = require("./filters/plain");
+var thml = require("./filters/thml");
 
 function processText(inRaw, inSource, inDirection, inOptions) {
 	//console.log(inRaw, inSource, inDirection, inOptions);
     if(inSource && inSource.toLowerCase() === "osis")
         return osis.processText(inRaw, inDirection, inOptions);
+    if(inSource && inSource.toLowerCase() === "thml")
+        return thml.processText(inRaw, inDirection, inOptions);
     else
         return plain.processText(inRaw, inDirection, inOptions);
 }
@@ -18013,7 +18016,7 @@ var filterMgr = {
 
 module.exports = filterMgr;
 
-},{"./filters/osis":"/home/zefanja/Projekte/common-sword/scripts/filters/osis.js","./filters/plain":"/home/zefanja/Projekte/common-sword/scripts/filters/plain.js"}],"/home/zefanja/Projekte/common-sword/scripts/filters/osis.js":[function(require,module,exports){
+},{"./filters/osis":"/home/zefanja/Projekte/common-sword/scripts/filters/osis.js","./filters/plain":"/home/zefanja/Projekte/common-sword/scripts/filters/plain.js","./filters/thml":"/home/zefanja/Projekte/common-sword/scripts/filters/thml.js"}],"/home/zefanja/Projekte/common-sword/scripts/filters/osis.js":[function(require,module,exports){
 var bcvParser = require('../../libs/bcv/js/en_bcv_parser.min.js');
 var bcv = new bcvParser.bcv_parser();
 var sax = require("sax");
@@ -18327,6 +18330,7 @@ var swFilterOptions = {
 
 function processText(inRaw, inDirection, inOptions) {
     var renderedText = "",
+        outText = "",
         verseArray = [];
 
     if (!inOptions || inOptions === {}) {
@@ -18360,6 +18364,50 @@ var plain = {
 };
 
 module.exports = plain;
+},{}],"/home/zefanja/Projekte/common-sword/scripts/filters/thml.js":[function(require,module,exports){
+//* SWFilter Options
+var swFilterOptions = {
+    oneVersePerLine: false,
+    array: false
+};
+
+function processText(inRaw, inDirection, inOptions) {
+    var renderedText = "",
+        outText = "",
+        verseArray = [];
+
+    if (!inOptions || inOptions === {}) {
+        inOptions = swFilterOptions;
+    } else {
+        inOptions.oneVersePerLine = (inOptions.oneVersePerLine) ? inOptions.oneVersePerLine : swFilterOptions.oneVersePerLine;
+        inOptions.array = (inOptions.array) ? inOptions.array : swFilterOptions.array;
+    }
+
+    for (var i=0; i<inRaw.length; i++) {
+        //outText = (inDirection !== "RtoL") ? "<a href=\"?type=verseNum&osisRef=" + inRaw[i].osisRef + "\" class='verse-number'> " + inRaw[i].verse + " </a>" : "<span dir='rtl'><a href=\"?type=verseNum&osisRef=" + inRaw[i].osisRef + "\" class='verse-number'> " + inRaw[i].verse + " </a></span>";
+        inRaw[i].text = inRaw[i].text.replace(/\n\n/g, "<br /><br />");
+        outText += (inDirection !== "RtoL") ? inRaw[i].text : "<span dir='rtl'>" + inRaw[i].text + "</span>";
+        if (!inOptions.array)
+            renderedText += (inOptions.oneVersePerLine) ? "<div class='verse' id = '" + inRaw[i].osisRef + "'>" + outText + "</div>" : "<span class='verse' id = '" + inRaw[i].osisRef + "'>" + outText + "</span>";
+        else
+            verseArray.push({text: (inOptions.oneVersePerLine) ? "<div class='verse' id = '" + inRaw[i].osisRef + "'>" + outText + "</div>" : "<span class='verse' id = '" + inRaw[i].osisRef + "'>" + outText + "</span>", osisRef: inRaw[i].osisRef});
+        outText = "";
+    }
+
+    if(inDirection === "RtoL")
+        renderedText = "<div style='text-align: right;'>" + renderedText + "</div>";
+
+    if(!inOptions.array)
+        return {text: renderedText};
+    else
+        return {verses: verseArray, rtol: (inDirection === "RtoL") ? true : false};
+}
+
+var thml = {
+    processText: processText
+};
+
+module.exports = thml;
 },{}],"/home/zefanja/Projekte/common-sword/scripts/idbPluginWrapper.js":[function(require,module,exports){
 var IDB = require("idb-wrapper");
 
@@ -18870,6 +18918,7 @@ module.exports = InstallMgr;
 var dataMgr = require("./dataMgr");
 var verseKey = require("./verseKey");
 var zText = require("./zText");
+var rawCom = require("./rawCom");
 var filterMgr = require("./filterMgr");
 var versificationMgr = require("./versificationMgr");
 
@@ -18923,28 +18972,40 @@ Module.prototype = {
             dataMgr.get(self.config.bcvPosID, function(inError, inBcv) {
                 //console.log(inBcv);
                 if(!inError) {
-                    if (inBcv.nt && inBcv.nt.hasOwnProperty(vList[0].book)) {
-                        bcvPos = inBcv.nt[vList[0].book];
+                    if (inBcv.nt && (inBcv.nt.hasOwnProperty(vList[0].book) || inBcv.nt.hasOwnProperty(vList[0].osisRef))) {
+                        bcvPos = inBcv.nt[vList[0].book] || inBcv.nt[vList[0].osisRef];
                         blobId = self.config.nt;
-                    } else if (inBcv.ot && inBcv.ot.hasOwnProperty(vList[0].book)) {
-                        bcvPos = inBcv.ot[vList[0].book];
+                    } else if (inBcv.ot && (inBcv.ot.hasOwnProperty(vList[0].book) || inBcv.ot.hasOwnProperty(vList[0].osisRef))) {
+                        bcvPos = inBcv.ot[vList[0].book] || inBcv.ot[vList[0].osisRef];
                         blobId = self.config.ot;
                     }
-                    //console.log(blobId);
+                    console.log(bcvPos);
 
                     if(bcvPos === null) {
                         inCallback({message: "The requested chapter is not available in this module."});
                     } else {
                         getBinaryBlob(blobId, function (inError, inBlob) {
                             if (!inError) {
-                                zText.getRawEntry(inBlob, bcvPos, vList, self.config.Encoding, inOptions.intro ? inOptions.intro : false, function (inError, inRaw) {
-                                    //console.log(inError, inRaw);
-                                    if (!inError) {
-                                        var result = filterMgr.processText(inRaw, self.config.SourceType, self.config.Direction, inOptions);
-                                        inCallback(null, result);
-                                    } else
-                                        inCallback(inError);
-                                });
+                                if (self.config.modDrv === "zText") {
+                                    zText.getRawEntry(inBlob, bcvPos, vList, self.config.Encoding, inOptions.intro ? inOptions.intro : false, function (inError, inRaw) {
+                                        //console.log(inError, inRaw);
+                                        if (!inError) {
+                                            var result = filterMgr.processText(inRaw, self.config.SourceType, self.config.Direction, inOptions);
+                                            inCallback(null, result);
+                                        } else
+                                            inCallback(inError);
+                                    });
+                                } else if (self.config.modDrv === "RawCom") {
+                                    rawCom.getRawEntry(inBlob, bcvPos, vList, self.config.Encoding, inOptions.intro ? inOptions.intro : false, function (inError, inRaw) {
+                                        //console.log(inError, inRaw);
+                                        if (!inError) {
+                                            var result = filterMgr.processText(inRaw, self.config.SourceType, self.config.Direction, inOptions);
+                                            inCallback(null, result);
+                                        } else
+                                            inCallback(inError);
+                                    });
+                                }
+
                             } else {
                                 inCallback(inError);
                             }
@@ -18954,7 +19015,6 @@ Module.prototype = {
                 } else {
                     inCallback(inError);
                 }
-
             });
         } else {
             inCallback({message: "Wrong passage. The requested chapter is not available in this module."});
@@ -18974,7 +19034,7 @@ Module.prototype = {
 };
 
 module.exports = Module;
-},{"./dataMgr":"/home/zefanja/Projekte/common-sword/scripts/dataMgr.js","./filterMgr":"/home/zefanja/Projekte/common-sword/scripts/filterMgr.js","./verseKey":"/home/zefanja/Projekte/common-sword/scripts/verseKey.js","./versificationMgr":"/home/zefanja/Projekte/common-sword/scripts/versificationMgr.js","./zText":"/home/zefanja/Projekte/common-sword/scripts/zText.js"}],"/home/zefanja/Projekte/common-sword/scripts/moduleMgr.js":[function(require,module,exports){
+},{"./dataMgr":"/home/zefanja/Projekte/common-sword/scripts/dataMgr.js","./filterMgr":"/home/zefanja/Projekte/common-sword/scripts/filterMgr.js","./rawCom":"/home/zefanja/Projekte/common-sword/scripts/rawCom.js","./verseKey":"/home/zefanja/Projekte/common-sword/scripts/verseKey.js","./versificationMgr":"/home/zefanja/Projekte/common-sword/scripts/versificationMgr.js","./zText":"/home/zefanja/Projekte/common-sword/scripts/zText.js"}],"/home/zefanja/Projekte/common-sword/scripts/moduleMgr.js":[function(require,module,exports){
 'use strict';
 
 var dataMgr = require("./dataMgr");
@@ -18997,7 +19057,9 @@ function getModules(inCallback) {
                     language: mod.Lang,
                     ot: mod.ot,
                     nt: mod.nt,
-                    moduleKey: mod.moduleKey
+                    moduleKey: mod.moduleKey,
+                    modDrv: mod.ModDrv,
+                    conf: mod
                 }));
             });
             inCallback(null, modules);
@@ -19019,7 +19081,51 @@ var moduleMgr = {
 };
 
 module.exports = moduleMgr;
-},{"./dataMgr":"/home/zefanja/Projekte/common-sword/scripts/dataMgr.js","./module":"/home/zefanja/Projekte/common-sword/scripts/module.js"}],"/home/zefanja/Projekte/common-sword/scripts/sword.js":[function(require,module,exports){
+},{"./dataMgr":"/home/zefanja/Projekte/common-sword/scripts/dataMgr.js","./module":"/home/zefanja/Projekte/common-sword/scripts/module.js"}],"/home/zefanja/Projekte/common-sword/scripts/rawCom.js":[function(require,module,exports){
+'use strict';
+
+var async = require("async");
+
+var textReader = new FileReader();
+
+function getRawEntry(inBlob, inPos, inVList, inEcoding, inIntro, inCallback) {
+    console.log("inPos, inVList, inEcoding, inIntro", inPos, inVList, inEcoding, inIntro);
+
+    var startPos = inPos.startPos,
+        length = startPos + inPos.length,
+        blob = inBlob.slice(startPos, length),
+    	rawText = [],
+        z = 0;
+
+    async.whilst(
+        function () {return z < inVList.length;},
+        function (cb) {
+            if (!inEcoding)
+                textReader.readAsText(blob, "CP1252");
+            else
+                textReader.readAsText(blob, inEcoding);
+
+            textReader.onload = function(e) {
+                if (e.target.result !== "") {
+                    rawText.push({text: e.target.result, osisRef: inVList[z].osisRef, verseData: inVList[z]});
+                    z++;
+                }
+                cb();
+            };
+        },
+        function (inError) {
+            //console.log(rawText);
+            inCallback(inError, rawText);
+        }
+    );
+}
+
+var rawCom = {
+    getRawEntry: getRawEntry
+};
+
+module.exports = rawCom;
+},{"async":"/home/zefanja/Projekte/common-sword/node_modules/async/lib/async.js"}],"/home/zefanja/Projekte/common-sword/scripts/sword.js":[function(require,module,exports){
 'use strict';
 
 var installMgr = require("./installMgr");
