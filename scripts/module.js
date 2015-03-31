@@ -64,14 +64,14 @@ Module.prototype = {
                         bcvPos = inBcv.ot[vList[0].book] || inBcv.ot[vList[0].osisRef];
                         blobId = self.config.ot;
                     }
-                    console.log(bcvPos);
+                    //console.log(bcvPos);
 
                     if(bcvPos === null) {
                         inCallback({message: "The requested chapter is not available in this module."});
                     } else {
                         getBinaryBlob(blobId, function (inError, inBlob) {
                             if (!inError) {
-                                if (self.config.modDrv === "zText") {
+                                if (self.config.modDrv === "zText" || self.config.modDrv === "zCom") {
                                     zText.getRawEntry(inBlob, bcvPos, vList, self.config.Encoding, inOptions.intro ? inOptions.intro : false, function (inError, inRaw) {
                                         //console.log(inError, inRaw);
                                         if (!inError) {

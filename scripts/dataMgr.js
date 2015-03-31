@@ -45,7 +45,7 @@ function saveConfig(inConfBlob, inCallback) {
 
 //Save the binary module files like *.bzz
 function saveModule(inFiles, inDoc, inCallback) {
-    console.log("saveModule", inFiles, inDoc);
+    //console.log("saveModule", inFiles, inDoc);
     var z = inFiles.length,
         args = {},
         path = null,

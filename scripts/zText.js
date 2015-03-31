@@ -19,6 +19,11 @@ function getRawEntry(inBlob, inPos, inVList, inEcoding, inIntro, inCallback) {
             chapterEndPos = chapterStartPos + length,
             blob = inBlob.slice(bookStartPos, chapterEndPos);
 
+        //Return Intro (=Book.Chapter.0) only, if vList.length > 1 or verseNumber === 1
+        if(inVList.length === 1 && inVList[0].verse !== 1) {
+            inIntro = false;
+        }
+
         zlibReader.readAsArrayBuffer(blob);
         zlibReader.onload = function (evt) {
             var inflator = new pako.Inflate();

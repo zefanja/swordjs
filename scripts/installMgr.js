@@ -176,7 +176,7 @@ function buildIndex(inZip, inV11n, inDoc, inCallback) {
     files["bin"] = [];
 
     for (var name in inZip.files) {
-        if(inDoc.modDrv === "zText") { // || inDoc.modDrv === "zCom") {
+        if(inDoc.modDrv === "zText" || inDoc.modDrv === "zCom") {
             if(name.search(/nt.[bc]zs/) !== -1)
                 files["ntB"] = name;
             else if(name.search(/nt.[bc]zv/) !== -1)
@@ -222,6 +222,7 @@ function buildIndex(inZip, inV11n, inDoc, inCallback) {
                 bookPosNT = getBookPositions(inZip.files[files.ntB].asUint8Array());
                 rawPosNT = getChapterVersePositions(inZip.files[files.ntCV].asUint8Array(), bookPosNT, "nt", inV11n);
             }
+            //console.log(bookPosOT, bookPosNT);
 
             if (inDoc.modDrv === "RawCom" && files.otIdx) {
                 rawPosOT = getRawPositions(inZip.files[files.otIdx].asUint8Array(), "ot");
@@ -309,14 +310,14 @@ function getChapterVersePositions(inBuf, inBookPositions, inTestament, inV11n) {
         bookData = null,
         startPos = 0,
         chapt = {},
+        foundEmptyChapter = 0,
         chapters = {};
-
-
 
     for (var b = booksStart; b<booksEnd; b++) {
         bookData = versificationMgr.getBook(b, inV11n);
         chapters[bookData.abbrev] = [];
-        //console.log(bookData);
+        foundEmptyChapter = 0;
+        //console.log(bookData, chapters);
         for (var c = 0; c<bookData.maxChapter; c++) {
             chapterStartPos = 0;
             lastNonZeroStartPos = 0;
@@ -356,13 +357,12 @@ function getChapterVersePositions(inBuf, inBookPositions, inTestament, inV11n) {
                 }
             } //end verse
             if (chapt != {}) {
-                //console.log("LENGTH:", lastNonZeroStartPos, chapterStartPos, length, chapt, chapters);
+                //console.log("LENGTH:", lastNonZeroStartPos, chapterStartPos, length, c, chapt, chapters);
                 chapterLength = lastNonZeroStartPos - chapterStartPos + length;
-                if (!isNaN(chapterLength) && chapterLength !== 0) {
-                    chapt["length"] = chapterLength;
-                    chapters[bookData.abbrev].push(chapt);
-                } else {
-                    delete chapters[bookData.abbrev];
+                chapt["length"] = chapterLength;
+                chapters[bookData.abbrev].push(chapt);
+                if (isNaN(chapterLength) || chapterLength === 0) {
+                    foundEmptyChapter++;
                 }
 
             }
@@ -371,6 +371,10 @@ function getChapterVersePositions(inBuf, inBookPositions, inTestament, inV11n) {
             getInt48FromStream(inBuf);
             getShortIntFromStream(inBuf);
         } //end chapters
+        //console.log("Empty Chapters:", foundEmptyChapter);
+        if(foundEmptyChapter === bookData.maxChapter) {
+            delete chapters[bookData.abbrev];
+        }
         // dump a post for the book break
         getShortIntFromStream(inBuf);
         getInt48FromStream(inBuf);
