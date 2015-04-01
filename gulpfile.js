@@ -18,6 +18,7 @@ var gulp = require('gulp'),
       js: './scripts/main.js',
       jsBuild: './scripts/sword.js',
       bundle: 'sword.js',
+      bundleMin: 'sword.min.js',
       distJs: 'dist/js'
     };
 
@@ -71,7 +72,7 @@ gulp.task('browserifyBuild', function() {
   browserify(p.jsBuild)
     .transform("deglobalify")
     .bundle()
-    .pipe(source(p.bundle))
+    .pipe(source(p.bundleMin))
     .pipe(buffer())
     .pipe(uglify())
     .pipe(gulp.dest(p.distJs));
@@ -83,7 +84,7 @@ gulp.task('watch', ['clean'], function() {
 
 gulp.task('build', ['clean'], function() {
   process.env.NODE_ENV = 'production';
-  gulp.start(['browserifyBuild']);
+  gulp.start(['browserifyBuild', 'browserify']);
 });
 
 gulp.task('default', function() {

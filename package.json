@@ -1,8 +1,8 @@
 {
   "name": "swordjs",
-  "version": "0.0.1",
+  "version": "0.1.1",
   "description": "swordjs - access modules from crosswire.org/sword in JS",
-  "main": "app.js",
+  "main": "dist/js/sword.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/zefanja/swordjs"
