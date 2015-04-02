@@ -6,12 +6,12 @@ sword.js
 Build
 -----
 
-Install ```gulp``` an run ```gulp build```.
+Install ```webpack``` an run ```npm run build```. For development use ```npm start``` and open ```http://localhost:8080/webpack-dev-server/``` in your browser.
 
 Usage
 -----
 
-Include ```dist/js/sword.js``` in your index.html. There is a global ```sword``` variable you can use to access the API.
+```npm install swordjs``` then you can ```require``` it.
 
 API
 ---

@@ -17,6 +17,6 @@ var sword = {
 };
 
 //BAD, but will be replaced in future, when BibleZ NG got a new frontend
-window.sword = sword;
+// window.sword = sword;
 
 module.exports = sword;

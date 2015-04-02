@@ -1,4 +1,4 @@
-var bcvParser = require("../../libs/bcv/js/en_bcv_parser.min.js", ['bcv_parser']);
+var bcvParser = require("../../libs/bcv/js/en_bcv_parser.min.js");
 var bcv = new bcvParser.bcv_parser();
 var sax = require("sax");
 var parser = sax.parser(true); //strict = true
