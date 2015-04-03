@@ -13,8 +13,13 @@ var start = 0,
     isEnd = false;
 
 //Get a list of all available repos/sources from CrossWire's masterRepoList.conf
-function getRepositories(inCallback) {
-    download("http://crosswire.org/ftpmirror/pub/sword/masterRepoList.conf", "text", function (inError, inResponse) {
+function getRepositories(inUrl, inCallback) {
+    if (inUrl instanceof Function) {
+        inCallback = inUrl;
+        inUrl = "http://crosswire.org/ftpmirror/pub/sword/masterRepoList.conf";
+    }
+
+    download(inUrl, "text", function (inError, inResponse) {
         if (inResponse === "" && !inError) {
             inCallback("Couldn't download master repo list!");
         } else if (!inError) {
@@ -49,7 +54,7 @@ function getRepositories(inCallback) {
                     repos.push({
                         name: repoName,
                         type: type,
-                        url: "http://crosswire.org/ftpmirror" + split[2].replace("raw", "packages") + "/rawzip/",
+                        url: split[1] + split[2],
                         confUrl: "http://crosswire.org/ftpmirror" + split[2] + "/mods.d"
                     });
                 }
@@ -65,38 +70,54 @@ function getRepositories(inCallback) {
 //dirty hack to get a list of modules that is available in a repository.
 //FIXME: unpack mods.d.tar.gz in Javascript (untar is the problem) or ask CrossWire to compress it as zip/gzip
 function getModules(inRepo, inCallback) {
-    download(inRepo.confUrl, "document", function (inError, inResponse) {
-        if (!inError) {
-            var tasks = [],
-                url = "",
-                a = inResponse.getElementsByTagName("a");
-            for(var i=0;i<a.length;i++) {
-                if (a[i].href.search(".conf") !== -1) {
-                    url = a[i].baseURI + "/" + a[i].textContent;
-                    tasks.push((function (url) {
-                        return function (cb) {
-                            download(url, "text", function (inError, inConf) {
-                                var configData = tools.readConf(inConf);
-                                if (configData.ModDrv === "zText") {
-                                    //configData["url"] = inRepo.url + configData.moduleKey + ".zip";
-                                    configData["url"] = "http://www.crosswire.org/sword/servlet/SwordMod.Verify?modName=" + configData.moduleKey + "&" + inRepo.type + "=true&pkgType=raw";
-                                    cb(inError, configData);
-                                } else {
-                                    cb(inError);
-                                }
-                            });
-                        };
-                    })(url));
-                }
-            }
-            async.parallel(tasks, function (inError, inModules) {
-                inCallback(inError, tools.cleanArray(inModules).sort(tools.dynamicSortMultiple("Lang", "moduleKey")));
-            });
-        } else {
-            inCallback(inError);
-        }
+    getRemoteModules(inRepo, inCallback);
+}
 
-    });
+function getRemoteModules(inRepo, inUrl, inCallback) {
+    var customUrl = true;
+    if (inUrl instanceof Function) {
+        inCallback = inUrl;
+        customUrl = false;
+    }
+    if (!customUrl) {
+        download(inRepo.confUrl, "document", function (inError, inResponse) {
+            if (!inError) {
+                var tasks = [],
+                    url = "",
+                    a = inResponse.getElementsByTagName("a");
+                for(var i=0;i<a.length;i++) {
+                    if (a[i].href.search(".conf") !== -1) {
+                        url = a[i].baseURI + "/" + a[i].textContent;
+                        tasks.push((function (url) {
+                            return function (cb) {
+                                download(url, "text", function (inError, inConf) {
+                                    var configData = tools.readConf(inConf);
+                                    if (configData.ModDrv === "zText") {
+                                        configData["url"] = "http://www.crosswire.org/sword/servlet/SwordMod.Verify?modName=" + configData.moduleKey + "&" + inRepo.type + "=true&pkgType=raw";
+                                        cb(inError, configData);
+                                    } else {
+                                        cb(inError);
+                                    }
+                                });
+                            };
+                        })(url));
+                    }
+                }
+                async.parallel(tasks, function (inError, inModules) {
+                    inCallback(inError, tools.cleanArray(inModules).sort(tools.dynamicSortMultiple("Lang", "moduleKey")));
+                });
+            } else {
+                inCallback(inError);
+            }
+        });
+    } else {
+        inUrl = inUrl + "?modUrl=" + inRepo.url;
+        console.log(inUrl);
+        download(inUrl, "json", function(inError, inRemoteModules) {
+            console.log(inRemoteModules);
+            inCallback(inError, tools.cleanArray(inRemoteModules).sort(tools.dynamicSortMultiple("Lang", "moduleKey")));
+        });
+    }
 }
 
 function download(url, reponseType, inCallback, inProgressCallback) {
@@ -461,6 +482,7 @@ function getInt48FromStream(inBuf, inCallback) {
 var InstallMgr = {
     getRepositories: getRepositories,
     getModules: getModules,
+    getRemoteModules: getRemoteModules,
     installModule: installModule,
     removeModule: removeModule
 };

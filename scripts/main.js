@@ -65,14 +65,11 @@ function prev() {
 }
 
 function worker () {
-    sword.moduleMgr.getModules(function (inError, inModules) {
-        if(inModules.length !== 0) {
-            inModules[0].getAllBooks(function (inError, inResult) {
-                console.log(inError, inResult);
-            });
-        } else {
-            document.getElementById("out").innerHTML = "No modules installed";
-        }
+    sword.installMgr.getRepositories("http://biblez.de/swordjs/getMasterlist.php", function (inError, inResult) {
+        console.log(inError, inResult);
+        sword.installMgr.getRemoteModules(inResult[2], "http://biblez.de/swordjs/getRemoteModules.php", function (inError, inModules) {
+            console.log(inError, inModules);
+        })
     });
 }
 
