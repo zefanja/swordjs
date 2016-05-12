@@ -31,8 +31,8 @@ Get a list of all available repositories and takes a callback funtion as argumen
 * Wycliffe
 * av11n attic
 
-#### installMgr.getModules(inRepo, inCallback) ####
-Get a list of all modules in a repository. ```inRepo``` is an object containing the repository url and the repository type. The callback will return an array with all modules.
+#### installMgr.getRemoteModules(inRepo, inUrl, inCallback) ####
+Get a list of all modules in a repository. ```inRepo``` is an object containing the repository url and the repository type. ```inUrl``` is optional. The callback will return an array with all modules.
 
 #### installMgr.installModule(inUrl, inCallback, inProgressCallback) ####
 This will install a module from ```inUrl```. You can also pass a file blob from a zipped module file for offline installation as first argument. The callback will return ```null``` or an ```error``` as the first argument. The second callback is optional. It will report the progress of the module download.
